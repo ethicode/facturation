@@ -7,6 +7,7 @@ import ApproPage from './pages/ApproPage.jsx'
 import ApproTicketCreatePage from './pages/ApproTicketCreatePage.jsx'
 import ApproTicketDetailPage from './pages/ApproTicketDetailPage.jsx'
 import InvoicesPage from './pages/InvoicesPage.jsx'
+import InvoiceCreatePage from './pages/InvoiceCreatePage.jsx'
 import InvoiceDetailPage from './pages/InvoiceDetailPage.jsx'
 import BudgetPage from './pages/BudgetPage.jsx'
 import AdminSettingsPage from './pages/AdminSettingsPage.jsx'
@@ -27,6 +28,7 @@ function App() {
         <Route path="approvisionnement/creation" element={<ApproTicketCreatePage />} />
         <Route path="approvisionnement/:ticketId" element={<ApproTicketDetailPage />} />
         <Route path="facturation" element={<InvoicesPage />} />
+        <Route path="facturation/creation" element={<InvoiceCreatePage />} />
         <Route path="facturation/:invoiceId" element={<InvoiceDetailPage />} />
         <Route path="budget" element={<BudgetPage />} />
         <Route path="parametrages" element={<AdminSettingsPage />} />

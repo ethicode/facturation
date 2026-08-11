@@ -20,6 +20,14 @@ class Invoice(BaseModel):
     centreCout: str
     description: str
     echeance: str
+    priorite: str = ""
+    direction: str = ""
+    resume: str = ""
+    numeroFacture: str = ""
+    compteCharge: str = ""
+    dateReception: str = ""
+    modeReception: str = ""
+    piecesJointes: list[str] = Field(default_factory=list)
     statut: str
     history: list[HistoryEntry] = Field(default_factory=list)
 
@@ -31,6 +39,14 @@ class InvoiceCreate(BaseModel):
     centreCout: str
     description: str
     echeance: str
+    priorite: str = ""
+    direction: str = ""
+    resume: str = ""
+    numeroFacture: str = ""
+    compteCharge: str = ""
+    dateReception: str = ""
+    modeReception: str = ""
+    piecesJointes: list[str] = Field(default_factory=list)
     actor: str = "Systeme"
     role: str = "utilisateur"
 
@@ -179,16 +195,40 @@ class SupplyTicket(BaseModel):
     objet: str
     montant: float
     devise: str
+    titre_demande: str = ""
+    domaine: str = ""
+    sous_domaine: str = ""
+    action_demande: str = ""
+    date_debut_souhaitee: str = ""
+    date_fin_souhaitee: str = ""
+    direction_demandeur: str = ""
+    budget_previsionnel: float = 0
+    priorite: str = ""
+    description: str = ""
+    commentaire: str = ""
+    fichier_nom: str = ""
     statut: str
     linkedInvoiceId: str = ""
     history: list[HistoryEntry] = Field(default_factory=list)
 
 
 class SupplyTicketCreate(BaseModel):
-    direction: str
-    objet: str
-    montant: float
-    devise: str = "EUR"
+    direction: str = ""
+    objet: str = ""
+    montant: float = 0
+    devise: str = "XAF"
+    titre_demande: str = ""
+    domaine: str = ""
+    sous_domaine: str = ""
+    action_demande: str = ""
+    date_debut_souhaitee: str = ""
+    date_fin_souhaitee: str = ""
+    direction_demandeur: str = ""
+    budget_previsionnel: float = 0
+    priorite: str = ""
+    description: str = ""
+    commentaire: str = ""
+    fichier_nom: str = ""
     actor: str = "Demandeur"
 
 

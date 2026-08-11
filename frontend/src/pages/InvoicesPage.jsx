@@ -18,61 +18,19 @@ import {
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import TableActionMenu from '../components/TableActionMenu.jsx'
-import InvoiceFormDialog from '../components/InvoiceFormDialog.jsx'
-import { createInvoice, loadInvoices } from '../services/invoiceStorage.js'
+import { loadInvoices } from '../services/invoiceStorage.js'
 import {
   formatAmount,
   formatDate,
   statusColor,
 } from '../utils/invoiceWorkflow.js'
 
-const emptyForm = {
-  id: '',
-  fournisseur: '',
-  montant: '',
-  devise: 'XOF',
-  centreCout: '',
-  description: '',
-  echeance: '',
-  statut: 'Initialisation',
-}
-
-function validateInvoice(values, currentInvoices, mode) {
-  const errors = {}
-
-  if (!values.fournisseur.trim()) {
-    errors.fournisseur = 'Fournisseur obligatoire'
-  }
-
-  const amount = Number(values.montant)
-  if (!values.montant || Number.isNaN(amount) || amount <= 0) {
-    errors.montant = 'Montant invalide'
-  }
-
-  if (!values.echeance) {
-    errors.echeance = 'Echeance obligatoire'
-  }
-
-  if (!values.centreCout.trim()) {
-    errors.centreCout = 'Centre de cout obligatoire'
-  }
-
-  if (!values.description.trim()) {
-    errors.description = 'Description obligatoire'
-  }
-
-  return errors
-}
 
 function InvoicesPage() {
   const navigate = useNavigate()
   const [invoiceList, setInvoiceList] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [apiError, setApiError] = useState('')
-  const [dialogMode, setDialogMode] = useState('create')
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [formValues, setFormValues] = useState(emptyForm)
-  const [formErrors, setFormErrors] = useState({})
 
   useEffect(() => {
     let isMounted = true
@@ -102,60 +60,8 @@ function InvoicesPage() {
     }
   }, [])
 
-  const openCreateDialog = () => {
-    setDialogMode('create')
-    setFormErrors({})
-    setFormValues({
-      ...emptyForm,
-      id: '',
-    })
-    setIsDialogOpen(true)
-  }
-
-  const closeDialog = () => {
-    setIsDialogOpen(false)
-  }
-
-  const handleFormChange = (field, value) => {
-    setFormValues((prev) => ({
-      ...prev,
-      [field]: value,
-    }))
-
-    if (formErrors[field]) {
-      setFormErrors((prev) => ({
-        ...prev,
-        [field]: undefined,
-      }))
-    }
-  }
-
-  const handleDialogSubmit = async () => {
-    const errors = validateInvoice(formValues, invoiceList, dialogMode)
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors)
-      return
-    }
-
-    const payload = {
-      fournisseur: formValues.fournisseur.trim(),
-      centreCout: formValues.centreCout.trim(),
-      description: formValues.description.trim(),
-      montant: Number(formValues.montant),
-      devise: formValues.devise,
-      echeance: formValues.echeance,
-      actor: 'Utilisateur ORFL',
-      role: 'utilisateur',
-    }
-
-    try {
-      const created = await createInvoice(payload)
-      setInvoiceList((prev) => [created, ...prev])
-      setApiError('')
-      setIsDialogOpen(false)
-    } catch (error) {
-      setApiError(error.message || 'Impossible de créer la facture.')
-    }
+  const openCreatePage = () => {
+    navigate('/facturation/creation')
   }
 
   const openDetails = (invoiceId) => {
@@ -181,7 +87,7 @@ function InvoicesPage() {
             </Stack>
             <Button
               variant="contained"
-              onClick={openCreateDialog}
+              onClick={openCreatePage}
               sx={{
                 bgcolor: 'common.black',
                 color: 'common.white',
@@ -247,15 +153,6 @@ function InvoicesPage() {
         </CardContent>
       </Card>
 
-      <InvoiceFormDialog
-        open={isDialogOpen}
-        mode={dialogMode}
-        values={formValues}
-        errors={formErrors}
-        onClose={closeDialog}
-        onChange={handleFormChange}
-        onSubmit={handleDialogSubmit}
-      />
     </Stack>
   )
 }

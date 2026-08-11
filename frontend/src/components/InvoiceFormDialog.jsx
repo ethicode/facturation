@@ -8,10 +8,15 @@ import {
   MenuItem,
   Stack,
   TextField,
+  Typography,
 } from '@mui/material'
-import { invoiceStatuses } from '../utils/invoiceWorkflow.js'
 
 function InvoiceFormDialog({ open, mode, values, errors, onClose, onChange, onSubmit }) {
+  const handleUploadChange = (event) => {
+    const files = Array.from(event.target.files || [])
+    onChange('piecesJointes', files.map((file) => file.name))
+  }
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>{mode === 'edit' ? 'Modifier la facture' : 'Nouvelle facture'}</DialogTitle>
@@ -21,14 +26,56 @@ function InvoiceFormDialog({ open, mode, values, errors, onClose, onChange, onSu
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="Reference"
-                value={values.id}
-                onChange={(event) => onChange('id', event.target.value)}
-                error={Boolean(errors.id)}
-                helperText={errors.id}
-                disabled={mode === 'edit'}
+                select
+                label="Priorite"
+                value={values.priorite}
+                onChange={(event) => onChange('priorite', event.target.value)}
+                error={Boolean(errors.priorite)}
+                helperText={errors.priorite}
+              >
+                <MenuItem value="Haute">Haute</MenuItem>
+                <MenuItem value="Moyenne">Moyenne</MenuItem>
+                <MenuItem value="Basse">Basse</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Direction"
+                value={values.direction}
+                onChange={(event) => onChange('direction', event.target.value)}
+                error={Boolean(errors.direction)}
+                helperText={errors.direction}
               />
             </Grid>
+          </Grid>
+
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Resume"
+                value={values.resume}
+                onChange={(event) => onChange('resume', event.target.value)}
+                error={Boolean(errors.resume)}
+                helperText={errors.resume}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                multiline
+                minRows={2}
+                label="Description"
+                value={values.description}
+                onChange={(event) => onChange('description', event.target.value)}
+                error={Boolean(errors.description)}
+                helperText={errors.description}
+              />
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
@@ -39,6 +86,16 @@ function InvoiceFormDialog({ open, mode, values, errors, onClose, onChange, onSu
                 helperText={errors.fournisseur}
               />
             </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Numero de facture"
+                value={values.numeroFacture}
+                onChange={(event) => onChange('numeroFacture', event.target.value)}
+                error={Boolean(errors.numeroFacture)}
+                helperText={errors.numeroFacture}
+              />
+            </Grid>
           </Grid>
 
           <Grid container spacing={2}>
@@ -46,35 +103,32 @@ function InvoiceFormDialog({ open, mode, values, errors, onClose, onChange, onSu
               <TextField
                 fullWidth
                 type="number"
-                label="Montant"
-                value={values.montant}
-                onChange={(event) => onChange('montant', event.target.value)}
-                error={Boolean(errors.montant)}
-                helperText={errors.montant}
+                label="Montant de la demande"
+                value={values.montantDemande}
+                onChange={(event) => onChange('montantDemande', event.target.value)}
+                error={Boolean(errors.montantDemande)}
+                helperText={errors.montantDemande}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
-                select
-                label="Devise"
-                value={values.devise}
-                onChange={(event) => onChange('devise', event.target.value)}
-              >
-                <MenuItem value="XOF">XOF</MenuItem>
-                <MenuItem value="EUR">EUR</MenuItem>
-                <MenuItem value="USD">USD</MenuItem>
-              </TextField>
+                label="Compte de charge"
+                value={values.compteCharge}
+                onChange={(event) => onChange('compteCharge', event.target.value)}
+                error={Boolean(errors.compteCharge)}
+                helperText={errors.compteCharge}
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 type="date"
-                label="Echeance"
-                value={values.echeance}
-                onChange={(event) => onChange('echeance', event.target.value)}
-                error={Boolean(errors.echeance)}
-                helperText={errors.echeance}
+                label="Date de reception"
+                value={values.dateReception}
+                onChange={(event) => onChange('dateReception', event.target.value)}
+                error={Boolean(errors.dateReception)}
+                helperText={errors.dateReception}
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
@@ -84,40 +138,32 @@ function InvoiceFormDialog({ open, mode, values, errors, onClose, onChange, onSu
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="Centre de cout"
-                value={values.centreCout}
-                onChange={(event) => onChange('centreCout', event.target.value)}
-                error={Boolean(errors.centreCout)}
-                helperText={errors.centreCout}
-              />
+                select
+                label="Mode de reception"
+                value={values.modeReception}
+                onChange={(event) => onChange('modeReception', event.target.value)}
+                error={Boolean(errors.modeReception)}
+                helperText={errors.modeReception}
+              >
+                <MenuItem value="Email">Email</MenuItem>
+                <MenuItem value="Courrier">Courrier</MenuItem>
+                <MenuItem value="Portail">Portail</MenuItem>
+                <MenuItem value="Depot physique">Depot physique</MenuItem>
+              </TextField>
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                select
-                label="Statut"
-                value={values.statut}
-                onChange={(event) => onChange('statut', event.target.value)}
-              >
-                {invoiceStatuses.map((status) => (
-                  <MenuItem key={status} value={status}>
-                    {status}
-                  </MenuItem>
-                ))}
-              </TextField>
+              <Button variant="outlined" component="label" fullWidth sx={{ mt: 1 }}>
+                Pieces jointes
+                <input hidden type="file" multiple onChange={handleUploadChange} />
+              </Button>
             </Grid>
           </Grid>
 
-          <TextField
-            fullWidth
-            multiline
-            minRows={3}
-            label="Description"
-            value={values.description}
-            onChange={(event) => onChange('description', event.target.value)}
-            error={Boolean(errors.description)}
-            helperText={errors.description}
-          />
+          {values.piecesJointes?.length > 0 && (
+            <Typography variant="caption" color="text.secondary">
+              Fichiers selectionnes: {values.piecesJointes.join(', ')}
+            </Typography>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>

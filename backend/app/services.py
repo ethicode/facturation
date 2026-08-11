@@ -175,14 +175,24 @@ class BackendService:
 
     def create_invoice(self, payload: InvoiceCreate) -> Invoice:
         state = self._state_with_seed()
+        reception_date = payload.dateReception or payload.echeance
+        charge_account = payload.compteCharge or payload.centreCout
         invoice = Invoice(
             id=self._create_invoice_reference(state.invoices),
             fournisseur=payload.fournisseur,
             montant=payload.montant,
             devise=payload.devise,
-            centreCout=payload.centreCout,
+            centreCout=charge_account,
             description=payload.description,
-            echeance=payload.echeance,
+            echeance=reception_date,
+            priorite=payload.priorite,
+            direction=payload.direction,
+            resume=payload.resume,
+            numeroFacture=payload.numeroFacture,
+            compteCharge=charge_account,
+            dateReception=reception_date,
+            modeReception=payload.modeReception,
+            piecesJointes=payload.piecesJointes,
             statut="Initialisation",
             history=[
                 {
@@ -274,12 +284,31 @@ class BackendService:
 
     def create_supply_ticket(self, payload: SupplyTicketCreate) -> SupplyTicket:
         state = self._state_with_seed()
+        direction_value = payload.direction_demandeur or payload.direction
+        title_value = payload.titre_demande or payload.objet
+        amount_value = payload.budget_previsionnel if payload.budget_previsionnel > 0 else payload.montant
+
+        if not direction_value or not title_value or amount_value <= 0:
+            raise HTTPException(status_code=400, detail="Champs obligatoires invalides pour le ticket approvisionnement.")
+
         ticket = SupplyTicket(
             id=self._create_ticket_reference(state.appro.tickets),
-            direction=payload.direction,
-            objet=payload.objet,
-            montant=payload.montant,
+            direction=direction_value,
+            objet=title_value,
+            montant=amount_value,
             devise=payload.devise,
+            titre_demande=payload.titre_demande,
+            domaine=payload.domaine,
+            sous_domaine=payload.sous_domaine,
+            action_demande=payload.action_demande,
+            date_debut_souhaitee=payload.date_debut_souhaitee,
+            date_fin_souhaitee=payload.date_fin_souhaitee,
+            direction_demandeur=direction_value,
+            budget_previsionnel=amount_value,
+            priorite=payload.priorite,
+            description=payload.description,
+            commentaire=payload.commentaire,
+            fichier_nom=payload.fichier_nom,
             statut="Initialisation",
             linkedInvoiceId="",
             history=[

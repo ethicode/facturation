@@ -17,11 +17,24 @@ import PageHeader from '../components/PageHeader.jsx'
 import { createSupplyTicket, loadApproData } from '../services/approStorage.js'
 
 const emptyTicketForm = {
-  direction: '',
-  objet: '',
-  montant: '',
-  devise: 'EUR',
+  titreDemande: '',
+  domaine: '',
+  sousDomaine: '',
+  actionDemande: '',
+  dateDebutSouhaitee: '',
+  dateFinSouhaitee: '',
+  directionDemandeur: '',
+  budgetPrevisionnel: '',
+  priorite: '',
+  description: '',
+  commentaire: '',
+  uploadFileName: '',
 }
+
+const domainOptions = ['Achat', 'Service', 'Infrastructure', 'Maintenance', 'Autre']
+const subDomainOptions = ['IT', 'Finance', 'RH', 'Logistique', 'Juridique', 'Autre']
+const actionOptions = ['Renouvellement', 'Nouvel achat', 'Mise a niveau', 'Reparation', 'Consultance']
+const priorityOptions = ['Basse', 'Normale', 'Haute', 'Critique']
 
 function ApproTicketCreatePage() {
   const [state, setState] = useState({ budgets: [], tickets: [], dirfinHistory: [] })
@@ -61,13 +74,36 @@ function ApproTicketCreatePage() {
     }))
   }
 
-  const handleCreateTicket = async () => {
-    const direction = ticketForm.direction.trim() || state.budgets[0]?.direction || ''
-    const objet = ticketForm.objet.trim()
-    const montant = Number(ticketForm.montant)
+  const handleFileUpload = (event) => {
+    const selectedFile = event.target.files?.[0]
+    handleFormChange('uploadFileName', selectedFile?.name || '')
+  }
 
-    if (!direction || !objet || Number.isNaN(montant) || montant <= 0) {
-      setTicketError('Veuillez renseigner une direction, un objet et un montant valide.')
+  const handleCreateTicket = async () => {
+    const direction = ticketForm.directionDemandeur.trim() || state.budgets[0]?.direction || ''
+    const objet = ticketForm.titreDemande.trim() || ticketForm.description.trim()
+    const montant = Number(ticketForm.budgetPrevisionnel)
+
+    const requiredFields = [
+      ticketForm.titreDemande.trim(),
+      ticketForm.domaine,
+      ticketForm.sousDomaine,
+      ticketForm.actionDemande.trim(),
+      ticketForm.dateDebutSouhaitee,
+      ticketForm.dateFinSouhaitee,
+      direction,
+      ticketForm.priorite,
+      ticketForm.description.trim(),
+    ]
+
+    if (requiredFields.some((value) => !value) || Number.isNaN(montant) || montant <= 0) {
+      setTicketError('Veuillez renseigner tous les champs obligatoires et un budget previsionnel valide.')
+      setTicketSuccess('')
+      return
+    }
+
+    if (ticketForm.dateFinSouhaitee < ticketForm.dateDebutSouhaitee) {
+      setTicketError('La date de fin souhaitee doit etre superieure ou egale a la date de debut souhaitee.')
       setTicketSuccess('')
       return
     }
@@ -77,7 +113,19 @@ function ApproTicketCreatePage() {
         direction,
         objet,
         montant,
-        devise: ticketForm.devise || 'EUR',
+        devise: 'XAF',
+        titre_demande: ticketForm.titreDemande.trim(),
+        domaine: ticketForm.domaine,
+        sous_domaine: ticketForm.sousDomaine,
+        action_demande: ticketForm.actionDemande.trim(),
+        date_debut_souhaitee: ticketForm.dateDebutSouhaitee,
+        date_fin_souhaitee: ticketForm.dateFinSouhaitee,
+        direction_demandeur: direction,
+        budget_previsionnel: montant,
+        priorite: ticketForm.priorite,
+        description: ticketForm.description.trim(),
+        commentaire: ticketForm.commentaire.trim(),
+        fichier_nom: ticketForm.uploadFileName,
         actor: 'Agent Approvisionnement',
       })
 
@@ -98,26 +146,102 @@ function ApproTicketCreatePage() {
   return (
     <Stack spacing={2.5}>
       <PageHeader
-        title="Création ticket approvisionnement"
-        subtitle="Créer un ticket qui sera ensuite vérifié puis transféré vers la facturation."
+        title="Création demande approvisionnement"
       />
 
       <Card>
         <CardContent>
           <Stack spacing={2}>
-            <Typography variant="h6">Nouveau ticket</Typography>
+            
+            <Typography variant="h6">Nouvelle demande</Typography>
             {ticketError && <Alert severity="error">{ticketError}</Alert>}
             {ticketSuccess && <Alert severity="success">{ticketSuccess}</Alert>}
             {apiError && <Alert severity="error">{apiError}</Alert>}
 
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Titre de la demande"
+                  value={ticketForm.titreDemande}
+                  onChange={(event) => handleFormChange('titreDemande', event.target.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <FormControl fullWidth>
-                  <InputLabel>Direction</InputLabel>
+                  <InputLabel>Domaine</InputLabel>
                   <Select
-                    value={ticketForm.direction}
-                    label="Direction"
-                    onChange={(event) => handleFormChange('direction', event.target.value)}
+                    value={ticketForm.domaine}
+                    label="Domaine"
+                    onChange={(event) => handleFormChange('domaine', event.target.value)}
+                  >
+                    {domainOptions.map((option) => (
+                      <MenuItem key={option} value={option}>
+                        {option}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Sous domaine</InputLabel>
+                  <Select
+                    value={ticketForm.sousDomaine}
+                    label="Sous domaine"
+                    onChange={(event) => handleFormChange('sousDomaine', event.target.value)}
+                  >
+                    {subDomainOptions.map((option) => (
+                      <MenuItem key={option} value={option}>
+                        {option}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Action</InputLabel>
+                  <Select
+                    value={ticketForm.actionDemande}
+                    label="Action"
+                    onChange={(event) => handleFormChange('actionDemande', event.target.value)}
+                  >
+                    {actionOptions.map((option) => (
+                      <MenuItem key={option} value={option}>
+                        {option}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Date debut souhaitee"
+                  InputLabelProps={{ shrink: true }}
+                  value={ticketForm.dateDebutSouhaitee}
+                  onChange={(event) => handleFormChange('dateDebutSouhaitee', event.target.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label="Date fin souhaitee"
+                  InputLabelProps={{ shrink: true }}
+                  value={ticketForm.dateFinSouhaitee}
+                  onChange={(event) => handleFormChange('dateFinSouhaitee', event.target.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Direction demandeur</InputLabel>
+                  <Select
+                    value={ticketForm.directionDemandeur}
+                    label="Direction demandeur"
+                    onChange={(event) => handleFormChange('directionDemandeur', event.target.value)}
                   >
                     {state.budgets.map((line) => (
                       <MenuItem key={line.direction} value={line.direction}>
@@ -130,27 +254,58 @@ function ApproTicketCreatePage() {
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
-                  label="Objet"
-                  value={ticketForm.objet}
-                  onChange={(event) => handleFormChange('objet', event.target.value)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 2 }}>
-                <TextField
-                  fullWidth
                   type="number"
-                  label="Montant"
-                  value={ticketForm.montant}
-                  onChange={(event) => handleFormChange('montant', event.target.value)}
+                  label="Budget previsionnel"
+                  value={ticketForm.budgetPrevisionnel}
+                  onChange={(event) => handleFormChange('budgetPrevisionnel', event.target.value)}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 2 }}>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Priorite</InputLabel>
+                  <Select
+                    value={ticketForm.priorite}
+                    label="Priorite"
+                    onChange={(event) => handleFormChange('priorite', event.target.value)}
+                  >
+                    {priorityOptions.map((option) => (
+                      <MenuItem key={option} value={option}>
+                        {option}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
-                  label="Devise"
-                  value={ticketForm.devise}
-                  onChange={(event) => handleFormChange('devise', event.target.value.toUpperCase())}
+                  multiline
+                  minRows={3}
+                  label="Description"
+                  value={ticketForm.description}
+                  onChange={(event) => handleFormChange('description', event.target.value)}
                 />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  label="Commentaire"
+                  value={ticketForm.commentaire}
+                  onChange={(event) => handleFormChange('commentaire', event.target.value)}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Button variant="outlined" component="label" fullWidth>
+                  Upload file
+                  <input type="file" hidden onChange={handleFileUpload} />
+                </Button>
+                {ticketForm.uploadFileName && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    Fichier selectionne: {ticketForm.uploadFileName}
+                  </Typography>
+                )}
               </Grid>
             </Grid>
 
