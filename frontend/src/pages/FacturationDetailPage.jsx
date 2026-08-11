@@ -24,10 +24,10 @@ import {
   roleLabels,
   statusColor,
   userRoles,
-} from '../utils/invoiceWorkflow.js'
+} from '../utils/facturationWorkflow.js'
 import HistoryTimeline from '../components/HistoryTimeline.jsx'
 import { useRoleContext } from '../app/roleContext.js'
-import { loadInvoices, updateInvoiceStatus } from '../services/invoiceStorage.js'
+import { loadInvoices, updateInvoiceStatus } from '../services/facturationStorage.js'
 
 const roleActorMap = {
   administrateur: 'Administrateur ORFL',
@@ -68,7 +68,7 @@ function getWorkflowStep(status) {
   return idx === -1 ? 0 : idx
 }
 
-function InvoiceWorkflowStepper({ currentStatus }) {
+function FacturationWorkflowStepper({ currentStatus }) {
   const activeStep = getWorkflowStep(currentStatus)
 
   return (
@@ -93,7 +93,7 @@ function InvoiceWorkflowStepper({ currentStatus }) {
   )
 }
 
-function InvoiceDetailPage() {
+function FacturationDetailPage() {
   const { invoiceId } = useParams()
   const navigate = useNavigate()
   const { activeRole, setActiveRole } = useRoleContext()
@@ -162,7 +162,6 @@ function InvoiceDetailPage() {
     <Stack spacing={2.5}>
       <PageHeader
         title={`Suivi de la facturation - ${invoice.id}`}
-        subtitle="Cliquez sur une demande pour afficher son détail, son workflow et exécuter les actions."
       />
 
       {apiError && <Alert severity="error">{apiError}</Alert>}
@@ -170,7 +169,7 @@ function InvoiceDetailPage() {
       <Card>
         <CardContent>
           <Stack spacing={1.5}>
-            <InvoiceWorkflowStepper currentStatus={invoice.statut} />
+            <FacturationWorkflowStepper currentStatus={invoice.statut} />
           </Stack>
         </CardContent>
       </Card>
@@ -277,4 +276,4 @@ function InvoiceDetailPage() {
   )
 }
 
-export default InvoiceDetailPage
+export default FacturationDetailPage

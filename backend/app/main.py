@@ -20,7 +20,6 @@ from .schemas import (
     RoleUpdateRequest,
     SupplyTicket,
     SupplyTicketCreate,
-    TicketActionResponse,
     TokenResponse,
     UserCreateRequest,
     UserUpdateRequest,
@@ -222,11 +221,6 @@ def create_supply_ticket(payload: SupplyTicketCreate, user: AuthUserSummary = De
 @app.post("/api/appro/tickets/{ticket_id}/verify", response_model=ApproState, tags=["Approvisionnement"])
 def verify_ticket(ticket_id: str, actor: str = Query(default="Agent Approvisionnement"), user: AuthUserSummary = Depends(get_current_user)) -> ApproState:
     return service.verify_ticket_budget(ticket_id, actor)
-
-
-@app.post("/api/appro/tickets/{ticket_id}/transfer", response_model=TicketActionResponse, tags=["Approvisionnement"])
-def transfer_ticket(ticket_id: str, actor: str = Query(default="Agent Approvisionnement"), user: AuthUserSummary = Depends(get_current_user)) -> TicketActionResponse:
-    return service.transfer_ticket_to_invoicing(ticket_id, actor)
 
 
 @app.post("/api/appro/tickets/{ticket_id}/close", response_model=ApproState, tags=["Approvisionnement"])

@@ -9,10 +9,11 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
-import { createInvoice } from '../services/invoiceStorage.js'
+import { createInvoice } from '../services/facturationStorage.js'
+import { loadWorkflowDirections } from '../services/workflowService.js'
 
 const emptyForm = {
   priorite: '',
@@ -48,7 +49,7 @@ function validateInvoice(values) {
   }
 
   if (!values.numeroFacture.trim()) {
-    errors.numeroFacture = 'Numero de facture obligatoire'
+    errors.numeroFacture = 'Référence de facturation obligatoire'
   }
 
   const amount = Number(values.montantDemande)
@@ -75,11 +76,35 @@ function validateInvoice(values) {
   return errors
 }
 
-function InvoiceCreatePage() {
+function FacturationCreatePage() {
   const navigate = useNavigate()
   const [formValues, setFormValues] = useState(emptyForm)
   const [formErrors, setFormErrors] = useState({})
   const [apiError, setApiError] = useState('')
+  const [directions, setDirections] = useState([])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchDirections = async () => {
+      try {
+        const response = await loadWorkflowDirections()
+        if (isMounted) {
+          setDirections(response || [])
+        }
+      } catch (error) {
+        if (isMounted) {
+          setDirections([])
+        }
+      }
+    }
+
+    fetchDirections()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const handleFormChange = (field, value) => {
     setFormValues((prev) => ({ ...prev, [field]: value }))
@@ -124,13 +149,13 @@ function InvoiceCreatePage() {
       await createInvoice(payload)
       navigate('/facturation')
     } catch (error) {
-      setApiError(error.message || 'Impossible de créer la facture.')
+      setApiError(error.message || 'Impossible de créer la demande de facturation.')
     }
   }
 
   return (
     <Stack spacing={2.5}>
-      <PageHeader title="Nouvelle facture" />
+      <PageHeader title="Nouvelle demande de facturation" />
 
       <Card>
         <CardContent>
@@ -138,7 +163,7 @@ function InvoiceCreatePage() {
             {apiError && <Alert severity="error">{apiError}</Alert>}
 
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   select
@@ -153,15 +178,23 @@ function InvoiceCreatePage() {
                   <MenuItem value="Basse">Basse</MenuItem>
                 </TextField>
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
+                  select
                   label="Direction"
                   value={formValues.direction}
                   onChange={(event) => handleFormChange('direction', event.target.value)}
                   error={Boolean(formErrors.direction)}
                   helperText={formErrors.direction}
-                />
+                >
+                  <MenuItem value="">Sélectionner une direction</MenuItem>
+                  {directions.map((direction) => (
+                    <MenuItem key={direction} value={direction}>
+                      {direction}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
             </Grid>
 
@@ -204,7 +237,7 @@ function InvoiceCreatePage() {
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
-                  label="Numero de facture"
+                  label="Référence de facturation"
                   value={formValues.numeroFacture}
                   onChange={(event) => handleFormChange('numeroFacture', event.target.value)}
                   error={Boolean(formErrors.numeroFacture)}
@@ -303,4 +336,4 @@ function InvoiceCreatePage() {
   )
 }
 
-export default InvoiceCreatePage
+export default FacturationCreatePage

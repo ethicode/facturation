@@ -175,6 +175,7 @@ SEED_DATA = {
     ],
     "facturation_statuses": [
         "Saisie de la demande",
+        "En attente de vérification métier",
         "Vérification métier",
         "Validation N+1",
         "Traitement service approvisionnement",
@@ -185,6 +186,7 @@ SEED_DATA = {
     ],
     "invoice_statuses": [
         "Saisie de la demande",
+        "En attente de vérification métier",
         "Vérification métier",
         "Validation N+1",
         "Traitement service approvisionnement",

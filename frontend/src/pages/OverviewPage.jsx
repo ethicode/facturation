@@ -14,7 +14,7 @@ import MetricCard from '../components/MetricCard.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import { loadDashboard } from '../services/dashboardService.js'
 import { loadApproData } from '../services/approStorage.js'
-import { loadInvoices } from '../services/invoiceStorage.js'
+import { loadInvoices } from '../services/facturationStorage.js'
 
 function CircularProgressChart({ value, size = 120, strokeWidth = 12, color = '#2563eb' }) {
   const radius = (size - strokeWidth) / 2
@@ -81,7 +81,7 @@ function OverviewPage() {
     (facturationSummary.readyForPayment / Math.max(1, facturationSummary.inProgress + facturationSummary.readyForPayment)) * 100,
   )
   const volumeData = [
-    { label: 'Factures', value: facturationSummary.inProgress },
+    { label: 'Demandes', value: facturationSummary.inProgress },
     { label: 'Tickets', value: approSummary.openTickets },
   ]
 
@@ -175,7 +175,7 @@ function OverviewPage() {
                       <Typography variant="subtitle2">Volume actif</Typography>
                       <MiniBarChart data={volumeData} />
                       <Typography variant="caption" color="text.secondary">
-                        Comparaison factures vs tickets ouverts
+                        Comparaison des demandes de facturation vs tickets ouverts
                       </Typography>
                     </Stack>
                   </Grid>
@@ -215,7 +215,7 @@ function OverviewPage() {
               <Typography variant="h6" sx={{ mb: 1.5 }}>Facturation</Typography>
               <Stack spacing={1}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="body2">Factures en cours</Typography>
+                  <Typography variant="body2">Demandes de facturation en cours</Typography>
                   <Chip size="small" color="warning" label={`${facturationSummary.inProgress} éléments`} />
                 </Stack>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">

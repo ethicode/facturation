@@ -12,7 +12,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import PageHeader from '../components/PageHeader.jsx'
 import { loadApproData } from '../services/approStorage.js'
-import { formatAmount } from '../utils/invoiceWorkflow.js'
+import { formatAmount } from '../utils/facturationWorkflow.js'
 
 function BudgetPage() {
   const [state, setState] = useState({ budgets: [], tickets: [], dirfinHistory: [] })

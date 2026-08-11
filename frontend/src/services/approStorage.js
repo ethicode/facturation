@@ -69,19 +69,6 @@ export async function verifyTicketBudget(ticketId, actor = 'Agent Approvisionnem
   return normalizeState(state)
 }
 
-export async function transferTicketToInvoicing(ticketId, actor = 'Agent Approvisionnement') {
-  const params = new URLSearchParams({ actor })
-  const result = await apiRequest(`/api/appro/tickets/${encodeURIComponent(ticketId)}/transfer?${params.toString()}`, {
-    method: 'POST',
-  })
-
-  return {
-    state: normalizeState(result.state),
-    invoiceId: result.invoiceId || '',
-    error: result.error || '',
-  }
-}
-
 export async function closeTicket(ticketId, actor = 'Agent Approvisionnement') {
   const params = new URLSearchParams({ actor })
   const state = await apiRequest(`/api/appro/tickets/${encodeURIComponent(ticketId)}/close?${params.toString()}`, {

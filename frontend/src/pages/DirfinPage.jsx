@@ -29,14 +29,14 @@ import { useEffect, useMemo, useState } from 'react'
 import PageHeader from '../components/PageHeader.jsx'
 import RoleGate from '../components/RoleGate.jsx'
 import TableActionMenu from '../components/TableActionMenu.jsx'
-import DirfinActivityTimeline from '../components/DirfinActivityTimeline.jsx'
 import { useRoleContext } from '../app/roleContext.js'
 import {
   deleteDirectionBudget,
   loadApproData,
   saveDirectionBudget,
 } from '../services/approStorage.js'
-import { formatAmount } from '../utils/invoiceWorkflow.js'
+import { loadWorkflowDirections } from '../services/workflowService.js'
+import { formatAmount } from '../utils/facturationWorkflow.js'
 
 const emptyBudgetForm = {
   direction: '',
@@ -78,8 +78,9 @@ function validateBudgetForm(values, currentBudgets, editingDirection) {
 }
 
 function DirfinPage() {
-  const { activeRole, setActiveRole } = useRoleContext()
+  const { activeRole } = useRoleContext()
   const [state, setState] = useState({ budgets: [], tickets: [], dirfinHistory: [] })
+  const [directions, setDirections] = useState([])
   const [apiError, setApiError] = useState('')
   const [formValues, setFormValues] = useState(emptyBudgetForm)
   const [formErrors, setFormErrors] = useState({})
@@ -94,9 +95,14 @@ function DirfinPage() {
 
     async function fetchApproData() {
       try {
-        const data = await loadApproData()
+        const [data, workflowDirections] = await Promise.all([
+          loadApproData(),
+          loadWorkflowDirections(),
+        ])
+
         if (isMounted) {
           setState(data)
+          setDirections(workflowDirections)
           setApiError('')
         }
       } catch (error) {
@@ -123,6 +129,11 @@ function DirfinPage() {
       remaining: allocated - engaged,
     }
   }, [state.budgets])
+
+  const directionOptions = useMemo(() => {
+    const values = directions.length > 0 ? directions : state.budgets.map((line) => line.direction)
+    return [...new Set(values.filter(Boolean))]
+  }, [directions, state.budgets])
 
   const handleFormChange = (field, value) => {
     setFormValues((prev) => ({
@@ -242,10 +253,6 @@ function DirfinPage() {
         </Stack>
       </Stack>
 
-      <Alert severity="info">
-        DirFin alloue et ajuste les enveloppes. Approvisionnement controle uniquement avant traitement des tickets.
-      </Alert>
-
       {!canEdit && <Alert severity="warning">Le profil courant ne peut que consulter cette page. Les modifications sont reservées aux rôles manageur et administrateur.</Alert>}
 
       {actionError && <Alert severity="error">{actionError}</Alert>}
@@ -290,14 +297,22 @@ function DirfinPage() {
           <DialogContent>
             <Grid container spacing={2} sx={{ pt: 1 }}>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  fullWidth
-                  label="Direction"
-                  value={formValues.direction}
-                  onChange={(event) => handleFormChange('direction', event.target.value)}
-                  error={Boolean(formErrors.direction)}
-                  helperText={formErrors.direction}
-                />
+                <FormControl fullWidth error={Boolean(formErrors.direction)}>
+                  <InputLabel id="dirfin-direction-label">Direction</InputLabel>
+                  <Select
+                    labelId="dirfin-direction-label"
+                    label="Direction"
+                    value={formValues.direction}
+                    onChange={(event) => handleFormChange('direction', event.target.value)}
+                  >
+                    {directionOptions.map((direction) => (
+                      <MenuItem key={direction} value={direction}>
+                        {direction}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {formErrors.direction ? <Typography variant="caption" color="error">{formErrors.direction}</Typography> : null}
+                </FormControl>
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <TextField
@@ -398,15 +413,6 @@ function DirfinPage() {
                 </TableBody>
               </Table>
             </TableContainer>
-          </Stack>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent>
-          <Stack spacing={1.5}>
-            <Typography variant="h6">Historique des modifications DirFin</Typography>
-            <DirfinActivityTimeline entries={state.dirfinHistory || []} />
           </Stack>
         </CardContent>
       </Card>

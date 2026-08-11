@@ -6,9 +6,9 @@ import DirfinPage from './pages/DirfinPage.jsx'
 import ApproPage from './pages/ApproPage.jsx'
 import ApproTicketCreatePage from './pages/ApproTicketCreatePage.jsx'
 import ApproTicketDetailPage from './pages/ApproTicketDetailPage.jsx'
-import InvoicesPage from './pages/InvoicesPage.jsx'
-import InvoiceCreatePage from './pages/InvoiceCreatePage.jsx'
-import InvoiceDetailPage from './pages/InvoiceDetailPage.jsx'
+import FacturationPage from './pages/FacturationPage.jsx'
+import FacturationCreatePage from './pages/FacturationCreatePage.jsx'
+import FacturationDetailPage from './pages/FacturationDetailPage.jsx'
 import BudgetPage from './pages/BudgetPage.jsx'
 import AdminSettingsPage from './pages/AdminSettingsPage.jsx'
 
@@ -27,9 +27,9 @@ function App() {
         <Route path="approvisionnement" element={<ApproPage />} />
         <Route path="approvisionnement/creation" element={<ApproTicketCreatePage />} />
         <Route path="approvisionnement/:ticketId" element={<ApproTicketDetailPage />} />
-        <Route path="facturation" element={<InvoicesPage />} />
-        <Route path="facturation/creation" element={<InvoiceCreatePage />} />
-        <Route path="facturation/:invoiceId" element={<InvoiceDetailPage />} />
+        <Route path="facturation" element={<FacturationPage />} />
+        <Route path="facturation/creation" element={<FacturationCreatePage />} />
+        <Route path="facturation/:invoiceId" element={<FacturationDetailPage />} />
         <Route path="budget" element={<BudgetPage />} />
         <Route path="parametrages" element={<AdminSettingsPage />} />
         <Route path="parametrage" element={<Navigate to="/parametrages#directions" replace />} />

@@ -62,7 +62,7 @@ function HeaderBar({ onOpenSidebar }) {
           <TextField
             size="small"
             fullWidth
-            placeholder="Rechercher facture, mission, centre de cout"
+            placeholder="Rechercher facturation, approvisionnement, centre de coût"
             sx={{
               '& .MuiOutlinedInput-root': {
                 borderRadius: 99,

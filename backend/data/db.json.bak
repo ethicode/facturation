@@ -1,6 +1,52 @@
 {
   "invoices": [
     {
+      "id": "FAC-2026-442",
+      "fournisseur": "test",
+      "montant": 7777.0,
+      "devise": "XAF",
+      "centreCout": "7777",
+      "description": "test",
+      "echeance": "2026-08-27",
+      "priorite": "Moyenne",
+      "direction": "Operations",
+      "resume": "test",
+      "numeroFacture": "testttt",
+      "compteCharge": "7777",
+      "dateReception": "2026-08-27",
+      "modeReception": "Courrier",
+      "piecesJointes": [
+        "1.png"
+      ],
+      "statut": "Vérification métier",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-11T16:07:20.995404Z",
+          "actor": "Administrateur ORFL",
+          "action": "Démarrer la vérification métier",
+          "role": "administrateur",
+          "detail": null
+        },
+        {
+          "id": null,
+          "at": "2026-08-11T16:07:09.481871Z",
+          "actor": "Administrateur ORFL",
+          "action": "Soumettre pour vérification",
+          "role": "administrateur",
+          "detail": null
+        },
+        {
+          "id": null,
+          "at": "2026-08-11T15:25:14.671234Z",
+          "actor": "Utilisateur ORFL",
+          "action": "Facture creee",
+          "role": "utilisateur",
+          "detail": null
+        }
+      ]
+    },
+    {
       "id": "FAC-2026-441",
       "fournisseur": "Delta Consulting",
       "montant": 24400.0,
@@ -363,6 +409,7 @@
   ],
   "invoice_statuses": [
     "Saisie de la demande",
+    "En attente de vérification métier",
     "Vérification métier",
     "Validation N+1",
     "Traitement service approvisionnement",
@@ -503,6 +550,7 @@
   ],
   "facturation_statuses": [
     "Saisie de la demande",
+    "En attente de vérification métier",
     "Vérification métier",
     "Validation N+1",
     "Traitement service approvisionnement",

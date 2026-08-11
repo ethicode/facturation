@@ -11,7 +11,7 @@ import {
   Typography,
 } from '@mui/material'
 
-function InvoiceFormDialog({ open, mode, values, errors, onClose, onChange, onSubmit }) {
+function FacturationFormDialog({ open, mode, values, errors, onClose, onChange, onSubmit }) {
   const handleUploadChange = (event) => {
     const files = Array.from(event.target.files || [])
     onChange('piecesJointes', files.map((file) => file.name))
@@ -19,7 +19,7 @@ function InvoiceFormDialog({ open, mode, values, errors, onClose, onChange, onSu
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>{mode === 'edit' ? 'Modifier la facture' : 'Nouvelle facture'}</DialogTitle>
+      <DialogTitle>{mode === 'edit' ? 'Modifier la demande de facturation' : 'Nouvelle demande de facturation'}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 0.5 }}>
           <Grid container spacing={2}>
@@ -89,7 +89,7 @@ function InvoiceFormDialog({ open, mode, values, errors, onClose, onChange, onSu
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="Numero de facture"
+                label="Référence de facturation"
                 value={values.numeroFacture}
                 onChange={(event) => onChange('numeroFacture', event.target.value)}
                 error={Boolean(errors.numeroFacture)}
@@ -186,4 +186,4 @@ function InvoiceFormDialog({ open, mode, values, errors, onClose, onChange, onSu
   )
 }
 
-export default InvoiceFormDialog
+export default FacturationFormDialog

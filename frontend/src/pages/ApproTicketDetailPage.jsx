@@ -1,4 +1,3 @@
-import CompareArrowsOutlinedIcon from '@mui/icons-material/CompareArrowsOutlined'
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined'
 import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined'
 import {
@@ -19,8 +18,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import HistoryTimeline from '../components/HistoryTimeline.jsx'
-import { closeTicket, loadApproData, transferTicketToInvoicing } from '../services/approStorage.js'
-import { formatAmount } from '../utils/invoiceWorkflow.js'
+import { closeTicket, loadApproData } from '../services/approStorage.js'
+import { formatAmount } from '../utils/facturationWorkflow.js'
 
 const statusColor = {
   Initialisation: 'default',
@@ -49,7 +48,6 @@ function ApproTicketDetailPage() {
   const navigate = useNavigate()
   const [state, setState] = useState({ budgets: [], tickets: [], dirfinHistory: [] })
   const [apiError, setApiError] = useState('')
-  const [transferError, setTransferError] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -77,22 +75,10 @@ function ApproTicketDetailPage() {
 
   const ticket = state.tickets.find((item) => item.id === ticketId)
 
-  const handleTransfer = async () => {
-    try {
-      const result = await transferTicketToInvoicing(ticketId)
-      setState(result.state)
-      setTransferError(result.error || '')
-      setApiError('')
-    } catch (error) {
-      setApiError(error.message || 'Impossible de transférer le ticket.')
-    }
-  }
-
   const handleClose = async () => {
     try {
       const nextState = await closeTicket(ticketId)
       setState(nextState)
-      setTransferError('')
       setApiError('')
     } catch (error) {
       setApiError(error.message || 'Impossible de clôturer le ticket.')
@@ -184,7 +170,7 @@ function ApproTicketDetailPage() {
                       </Typography>
                     </Grid>
                     <Grid size={{ xs: 12, sm: 4 }}>
-                      <Typography variant="caption" color="text.secondary" display="block">Facture liée</Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">Demande de facturation liée</Typography>
                       {ticket.linkedInvoiceId ? (
                         <Button
                           size="small"
@@ -209,23 +195,8 @@ function ApproTicketDetailPage() {
                 <Stack spacing={1.5}>
                   <Typography variant="h6">Actions</Typography>
                   <Divider />
-                  {transferError && <Alert severity="warning">{transferError}</Alert>}
                   {apiError && <Alert severity="error">{apiError}</Alert>}
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                    <Button
-                      variant="contained"
-                      size="large"
-                      startIcon={<CompareArrowsOutlinedIcon />}
-                      disabled={ticket.statut === 'Clôturée' || Boolean(ticket.linkedInvoiceId)}
-                      onClick={handleTransfer}
-                      sx={{
-                        bgcolor: 'common.black',
-                        color: 'common.white',
-                        '&:hover': { bgcolor: 'grey.900' },
-                      }}
-                    >
-                      Envoyer vers facturation
-                    </Button>
                     <Button
                       variant="outlined"
                       size="large"
@@ -243,7 +214,7 @@ function ApproTicketDetailPage() {
                   )}
                   {ticket.statut === 'Transférée en facturation' && (
                     <Alert severity="info">
-                      Ticket transmis à la facturation. Le workflow continue sur la facture liée.
+                      Ticket transmis à la facturation. Le workflow continue sur la demande liée.
                     </Alert>
                   )}
                   {ticket.statut === 'Clôturée' && (

@@ -18,15 +18,15 @@ import {
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import TableActionMenu from '../components/TableActionMenu.jsx'
-import { loadInvoices } from '../services/invoiceStorage.js'
+import { loadInvoices } from '../services/facturationStorage.js'
 import {
   formatAmount,
   formatDate,
   statusColor,
-} from '../utils/invoiceWorkflow.js'
+} from '../utils/facturationWorkflow.js'
 
 
-function InvoicesPage() {
+function FacturationPage() {
   const navigate = useNavigate()
   const [invoiceList, setInvoiceList] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -157,4 +157,4 @@ function InvoicesPage() {
   )
 }
 
-export default InvoicesPage
+export default FacturationPage

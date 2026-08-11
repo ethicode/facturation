@@ -10,7 +10,7 @@ import TimelineDot from '@mui/lab/TimelineDot'
 import TimelineItem from '@mui/lab/TimelineItem'
 import TimelineOppositeContent from '@mui/lab/TimelineOppositeContent'
 import TimelineSeparator from '@mui/lab/TimelineSeparator'
-import { formatDateTime } from '../utils/invoiceWorkflow.js'
+import { formatDateTime } from '../utils/facturationWorkflow.js'
 
 function HistoryTimeline({
   entries = [],

@@ -1,4 +1,3 @@
-import CompareArrowsOutlinedIcon from '@mui/icons-material/CompareArrowsOutlined'
 import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined'
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined'
 import {
@@ -20,8 +19,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import TableActionMenu from '../components/TableActionMenu.jsx'
-import { closeTicket, loadApproData, transferTicketToInvoicing } from '../services/approStorage.js'
-import { formatAmount } from '../utils/invoiceWorkflow.js'
+import { closeTicket, loadApproData } from '../services/approStorage.js'
+import { formatAmount } from '../utils/facturationWorkflow.js'
 
 const statusColor = {
   Initialisation: 'default',
@@ -35,7 +34,6 @@ function ApproPage() {
   const navigate = useNavigate()
   const [state, setState] = useState({ budgets: [], tickets: [], dirfinHistory: [] })
   const [apiError, setApiError] = useState('')
-  const [transferError, setTransferError] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -61,22 +59,10 @@ function ApproPage() {
     }
   }, [])
 
-  const handleTransfer = async (ticketId) => {
-    try {
-      const result = await transferTicketToInvoicing(ticketId)
-      setState(result.state)
-      setTransferError(result.error || '')
-      setApiError('')
-    } catch (error) {
-      setApiError(error.message || 'Impossible de transférer le ticket.')
-    }
-  }
-
   const handleClose = async (ticketId) => {
     try {
       const nextState = await closeTicket(ticketId)
       setState(nextState)
-      setTransferError('')
       setApiError('')
     } catch (error) {
       setApiError(error.message || 'Impossible de clôturer le ticket.')
@@ -90,12 +76,6 @@ function ApproPage() {
         subtitle="Liste des tickets, vérification budgétaire et transfert vers la facturation."
       />
 
-      <Alert severity="info">
-        Règle du process: DirFin alloue les budgets par direction. Approvisionnement contrôle avant traitement.
-        Deux choix sont possibles: fermer le ticket, ou l'envoyer vers la facturation pour poursuivre son workflow.
-      </Alert>
-
-      {transferError && <Alert severity="warning">{transferError}</Alert>}
       {apiError && <Alert severity="error">{apiError}</Alert>}
 
       <Card>
@@ -112,7 +92,7 @@ function ApproPage() {
                   '&:hover': { bgcolor: 'grey.900' },
                 }}
               >
-                Nouveau ticket
+                Nouvelle demande
               </Button>
             </Stack>
 
@@ -167,13 +147,6 @@ function ApproPage() {
                       <TableCell align="right">
                         <TableActionMenu
                           actions={[
-                            {
-                              key: 'transfer',
-                              label: 'Envoyer vers facturation',
-                              icon: <CompareArrowsOutlinedIcon fontSize="small" />,
-                              disabled: Boolean(ticket.linkedInvoiceId) || ticket.statut === 'Clôturée',
-                              onClick: () => handleTransfer(ticket.id),
-                            },
                             {
                               key: 'close',
                               label: 'Clôturer',

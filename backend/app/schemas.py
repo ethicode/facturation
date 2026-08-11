@@ -292,12 +292,6 @@ class WorkflowMetadata(BaseModel):
     facturation_statuses: list[str] = Field(default_factory=list)
 
 
-class TicketActionResponse(BaseModel):
-    state: ApproState
-    invoiceId: str = ""
-    error: str = ""
-
-
 class DeleteBudgetResponse(BaseModel):
     state: ApproState
     error: str = ""

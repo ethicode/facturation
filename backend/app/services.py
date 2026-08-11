@@ -23,7 +23,6 @@ from .schemas import (
     RoleUpdateRequest,
     SupplyTicket,
     SupplyTicketCreate,
-    TicketActionResponse,
     TokenResponse,
     User,
     UserCreateRequest,
@@ -38,6 +37,18 @@ from .storage import JsonStore
 class BackendService:
     def __init__(self, store: JsonStore | None = None):
         self.store = store or JsonStore()
+
+    @staticmethod
+    def _ensure_pending_facturation_step(statuses: list[str]) -> list[str]:
+        pending_status = "En attente de vérification métier"
+        if pending_status in statuses:
+            return statuses
+
+        if "Saisie de la demande" in statuses:
+            insert_at = statuses.index("Saisie de la demande") + 1
+            return [*statuses[:insert_at], pending_status, *statuses[insert_at:]]
+
+        return [pending_status, *statuses]
 
     def _state_with_seed(self) -> AppState:
         state = self.store.read()
@@ -73,6 +84,8 @@ class BackendService:
 
         if not state.facturation_statuses:
             state.facturation_statuses = seed_state.facturation_statuses
+        else:
+            state.facturation_statuses = self._ensure_pending_facturation_step(state.facturation_statuses)
 
         # keep invoice_statuses in sync with facturation_statuses
         if state.facturation_statuses and state.invoice_statuses != state.facturation_statuses:
@@ -193,13 +206,13 @@ class BackendService:
             dateReception=reception_date,
             modeReception=payload.modeReception,
             piecesJointes=payload.piecesJointes,
-            statut="Initialisation",
+            statut="En attente de vérification métier",
             history=[
                 {
                     "at": self._now_iso(),
                     "actor": payload.actor,
                     "role": payload.role,
-                    "action": "Facture creee",
+                    "action": "Demande soumise",
                 }
             ],
         )
@@ -352,76 +365,6 @@ class BackendService:
         ]
         self.store.write(state)
         return state.appro
-
-    def transfer_ticket_to_invoicing(
-        self,
-        ticket_id: str,
-        actor: str = "Agent Approvisionnement",
-    ) -> TicketActionResponse:
-        state = self._state_with_seed()
-        ticket = self._find_ticket(state, ticket_id)
-        if ticket.statut == "Clôturée" or ticket.linkedInvoiceId:
-            return TicketActionResponse(state=state.appro, invoiceId=ticket.linkedInvoiceId, error="")
-
-        budget = next((line for line in state.appro.budgets if line.direction == ticket.direction), None)
-        if budget is None:
-            return TicketActionResponse(state=state.appro, invoiceId="", error="Aucun budget trouve pour cette direction.")
-
-        remaining = budget.allocated - budget.engaged
-        if remaining < ticket.montant:
-            ticket.statut = "En attente de prise en charge"
-            ticket.history = [
-                {
-                    "id": self._event_id(),
-                    "at": self._now_iso(),
-                    "actor": actor,
-                    "action": "Transfert refuse: budget insuffisant",
-                },
-                *ticket.history,
-            ]
-            self.store.write(state)
-            return TicketActionResponse(
-                state=state.appro,
-                invoiceId="",
-                error="Budget insuffisant pour envoyer ce ticket en facturation.",
-            )
-
-        should_increment_budget = ticket.statut != "En cours"
-        if should_increment_budget:
-            budget.engaged += ticket.montant
-        next_invoice_id = self._create_invoice_reference(state.invoices)
-        new_invoice = Invoice(
-            id=next_invoice_id,
-            fournisseur=f"Ticket {ticket.id}",
-            montant=ticket.montant,
-            devise=ticket.devise,
-            centreCout=ticket.direction.upper(),
-            description=f"Issue approvisionnement: {ticket.objet}",
-            echeance=self._today(),
-            statut="Initialisation",
-            history=[
-                {
-                    "at": self._now_iso(),
-                    "actor": actor,
-                    "role": "utilisateur",
-                    "action": f"Facture creee depuis {ticket.id}",
-                }
-            ],
-        )
-        state.invoices = [new_invoice, *state.invoices]
-        ticket.statut = "Transférée en facturation"
-        ticket.linkedInvoiceId = next_invoice_id
-        ticket.history = [
-            {
-                "id": self._event_id(),
-                "at": self._now_iso(),
-                "actor": actor,
-                "action": f"Ticket envoye vers facturation ({next_invoice_id})",
-            },
-            *ticket.history,
-        ]
-        self.store.write(state)
-        return TicketActionResponse(state=state.appro, invoiceId=next_invoice_id, error="")
 
     def close_ticket(self, ticket_id: str, actor: str = "Agent Approvisionnement") -> ApproState:
         state = self._state_with_seed()
