@@ -1,0 +1,454 @@
+{
+  "invoices": [
+    {
+      "id": "FAC-2026-441",
+      "fournisseur": "Delta Consulting",
+      "montant": 24400.0,
+      "devise": "EUR",
+      "centreCout": "IT-OPS",
+      "description": "Maintenance plateforme ORFL",
+      "echeance": "2026-08-08",
+      "statut": "Validation LAD 2",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-05T09:02:00.000Z",
+          "actor": "M. Fall",
+          "action": "Facture creee",
+          "role": "utilisateur",
+          "detail": null
+        },
+        {
+          "id": null,
+          "at": "2026-08-05T10:21:00.000Z",
+          "actor": "M. Fall",
+          "action": "Soumise pour prise en charge",
+          "role": "utilisateur",
+          "detail": null
+        },
+        {
+          "id": null,
+          "at": "2026-08-05T11:00:00.000Z",
+          "actor": "A. Ndiaye",
+          "action": "Prise en charge LAD 1",
+          "role": "manageur",
+          "detail": null
+        },
+        {
+          "id": null,
+          "at": "2026-08-05T14:30:00.000Z",
+          "actor": "A. Ndiaye",
+          "action": "Validation LAD 1 accordee",
+          "role": "manageur",
+          "detail": null
+        }
+      ]
+    },
+    {
+      "id": "FAC-2026-438",
+      "fournisseur": "VoyagePro",
+      "montant": 7920.0,
+      "devise": "EUR",
+      "centreCout": "MISSIONS",
+      "description": "Billetterie missions Dakar et Thies",
+      "echeance": "2026-08-07",
+      "statut": "Validation LAD 3",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-04T08:41:00.000Z",
+          "actor": "A. Ndiaye",
+          "action": "Facture creee",
+          "role": "utilisateur",
+          "detail": null
+        },
+        {
+          "id": null,
+          "at": "2026-08-04T09:26:00.000Z",
+          "actor": "A. Ndiaye",
+          "action": "Soumise pour prise en charge",
+          "role": "utilisateur",
+          "detail": null
+        },
+        {
+          "id": null,
+          "at": "2026-08-04T11:03:00.000Z",
+          "actor": "S. Mbaye",
+          "action": "Validation LAD 1 accordee",
+          "role": "manageur",
+          "detail": null
+        },
+        {
+          "id": null,
+          "at": "2026-08-04T13:20:00.000Z",
+          "actor": "K. Diop",
+          "action": "Validation LAD 2 accordee",
+          "role": "manageur",
+          "detail": null
+        }
+      ]
+    },
+    {
+      "id": "FAC-2026-430",
+      "fournisseur": "Eco Transports",
+      "montant": 12160.0,
+      "devise": "EUR",
+      "centreCout": "LOGISTIQUE",
+      "description": "Location vehicules terrain",
+      "echeance": "2026-08-11",
+      "statut": "Bloquee",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-03T13:10:00.000Z",
+          "actor": "K. Diop",
+          "action": "Facture creee",
+          "role": "utilisateur",
+          "detail": null
+        },
+        {
+          "id": null,
+          "at": "2026-08-03T16:15:00.000Z",
+          "actor": "S. Mbaye",
+          "action": "Facture bloquee - piece justificative manquante",
+          "role": "manageur",
+          "detail": null
+        }
+      ]
+    }
+  ],
+  "appro": {
+    "budgets": [
+      {
+        "direction": "Operations",
+        "allocated": 320000.0,
+        "engaged": 184000.0,
+        "allocatedBy": "DirFin"
+      },
+      {
+        "direction": "Commerciale",
+        "allocated": 210000.0,
+        "engaged": 116000.0,
+        "allocatedBy": "DirFin"
+      },
+      {
+        "direction": "Support",
+        "allocated": 170000.0,
+        "engaged": 89000.0,
+        "allocatedBy": "DirFin"
+      }
+    ],
+    "tickets": [
+      {
+        "id": "TCK-2026-301",
+        "direction": "Operations",
+        "objet": "Achat equipements terrain Q3",
+        "montant": 42000.0,
+        "devise": "EUR",
+        "statut": "Initialisation",
+        "linkedInvoiceId": "",
+        "history": [
+          {
+            "id": null,
+            "at": "2026-08-06T08:10:00.000Z",
+            "actor": "Demandeur Operations",
+            "action": "Ticket cree en approvisionnement",
+            "role": null,
+            "detail": null
+          }
+        ]
+      },
+      {
+        "id": "TCK-2026-298",
+        "direction": "Commerciale",
+        "objet": "Renouvellement abonnements CRM",
+        "montant": 12000.0,
+        "devise": "EUR",
+        "statut": "En cours",
+        "linkedInvoiceId": "",
+        "history": [
+          {
+            "id": null,
+            "at": "2026-08-05T14:22:00.000Z",
+            "actor": "Demandeur Commercial",
+            "action": "Ticket cree en approvisionnement",
+            "role": null,
+            "detail": null
+          },
+          {
+            "id": null,
+            "at": "2026-08-05T15:01:00.000Z",
+            "actor": "Agent Approvisionnement",
+            "action": "Ticket pris en charge - traitement en cours",
+            "role": null,
+            "detail": null
+          }
+        ]
+      },
+      {
+        "id": "TCK-2026-294",
+        "direction": "Support",
+        "objet": "Maintenance climatiseurs salle serveur",
+        "montant": 96000.0,
+        "devise": "EUR",
+        "statut": "En attente de prise en charge",
+        "linkedInvoiceId": "",
+        "history": [
+          {
+            "id": null,
+            "at": "2026-08-05T09:40:00.000Z",
+            "actor": "Demandeur Support",
+            "action": "Ticket cree en approvisionnement",
+            "role": null,
+            "detail": null
+          },
+          {
+            "id": null,
+            "at": "2026-08-05T10:18:00.000Z",
+            "actor": "Agent Approvisionnement",
+            "action": "Budget insuffisant - en attente de prise en charge",
+            "role": null,
+            "detail": null
+          }
+        ]
+      }
+    ],
+    "dirfinHistory": []
+  },
+  "kpi_metrics": [
+    {
+      "label": "Factures en attente",
+      "value": "18",
+      "trend": "+6% vs semaine",
+      "tone": "warning"
+    },
+    {
+      "label": "Frais valides",
+      "value": "142 500 EUR",
+      "trend": "+12% vs mois",
+      "tone": "success"
+    },
+    {
+      "label": "Pieces tracees",
+      "value": "98.4%",
+      "trend": "+1.1 pts",
+      "tone": "info"
+    },
+    {
+      "label": "Budget restant T3",
+      "value": "410 000 EUR",
+      "trend": "-3.8% consommation",
+      "tone": "primary"
+    }
+  ],
+  "missions": [
+    {
+      "code": "MS-0912",
+      "collaborateur": "M. Bernard",
+      "destination": "Lyon",
+      "frais": "1 230 EUR",
+      "statut": "Soumis"
+    },
+    {
+      "code": "MS-0910",
+      "collaborateur": "S. Idrissi",
+      "destination": "Casablanca",
+      "frais": "2 040 EUR",
+      "statut": "Valide"
+    },
+    {
+      "code": "MS-0908",
+      "collaborateur": "L. Garnier",
+      "destination": "Bruxelles",
+      "frais": "1 780 EUR",
+      "statut": "A completer"
+    }
+  ],
+  "trace_events": [
+    {
+      "date": "06/08/2026 09:15",
+      "action": "FACTURE FAC-2026-441 routee vers validation manager",
+      "actor": "Workflow Finance"
+    },
+    {
+      "date": "06/08/2026 08:49",
+      "action": "MISSION MS-0912 justificatifs ajoutes",
+      "actor": "M. Bernard"
+    },
+    {
+      "date": "05/08/2026 17:22",
+      "action": "ALERTE budget Projet ORFL niveau critique",
+      "actor": "Moteur Budget"
+    }
+  ],
+  "budget_lines": [
+    {
+      "poste": "Transport",
+      "consomme": 84,
+      "plafond": "180 000 EUR",
+      "tendance": "Hausse"
+    },
+    {
+      "poste": "Hebergement",
+      "consomme": 61,
+      "plafond": "120 000 EUR",
+      "tendance": "Stable"
+    },
+    {
+      "poste": "Prestations externes",
+      "consomme": 46,
+      "plafond": "420 000 EUR",
+      "tendance": "Maitrisee"
+    }
+  ],
+  "invoice_statuses": [
+    "Saisie de la demande",
+    "Vérification métier",
+    "Validation N+1",
+    "Traitement service approvisionnement",
+    "Signature LAD 1",
+    "Règlement en cours",
+    "Paiement effectué",
+    "Terminé"
+  ],
+  "user_roles": [
+    "administrateur",
+    "utilisateur",
+    "manageur"
+  ],
+  "role_labels": {
+    "administrateur": "Administrateur",
+    "utilisateur": "Utilisateur",
+    "manageur": "Manageur"
+  },
+  "directions": [
+    "Direction Generale",
+    "Informatique",
+    "Operations",
+    "siop",
+    "dcpp",
+    "dmcq"
+  ],
+  "workflow_assignments": [
+    {
+      "step": "Validation LAD 1",
+      "user_ids": [],
+      "workflow_type": "facturation"
+    }
+  ],
+  "users": [
+    {
+      "id": "USR-007",
+      "username": "admin2",
+      "full_name": "Administrateur secondaire",
+      "email": "admin2@sgsn.fr",
+      "role": "administrateur",
+      "roles": [
+        "administrateur"
+      ],
+      "password_hash": "pbkdf2_sha256$Z+qxsXkK16iM2sJQn2AUBg==$QSUaGRVOxFm0b3L+unM0ALha7bH3ndJBq53JOjqeFmY=",
+      "is_active": true
+    },
+    {
+      "id": "USR-000",
+      "username": "admin",
+      "full_name": "Administrateur principal",
+      "email": "admin@sgsn.fr",
+      "role": "administrateur",
+      "roles": [
+        "administrateur"
+      ],
+      "password_hash": "pbkdf2_sha256$6YUqcyUZ2KM3gDpVAWtgnw==$EaDYIY00lxiCn8tAq5NkjfHBBWK/O91JOgfE6VW+qUI=",
+      "is_active": true
+    },
+    {
+      "id": "USR-001",
+      "username": "comptable",
+      "full_name": "Comptable principal",
+      "email": "comptable@sgsn.fr",
+      "role": "utilisateur",
+      "roles": [
+        "utilisateur"
+      ],
+      "password_hash": "pbkdf2_sha256$EQ6meUrllWzpTt/heohciA==$FEinHbFqsRd0Nj/s/3iIc8ASUO+h5huU1CnjhIvYiqY=",
+      "is_active": true
+    },
+    {
+      "id": "USR-002",
+      "username": "lad1",
+      "full_name": "Valideur LAD 1",
+      "email": "lad1@sgsn.fr",
+      "role": "utilisateur",
+      "roles": [
+        "utilisateur"
+      ],
+      "password_hash": "pbkdf2_sha256$3GgNcvApKpqNiu5WgVqDtg==$Fq5shKMJWx70yk37dzEiqNDubOR3hHDawQa+HGLHBTM=",
+      "is_active": true
+    },
+    {
+      "id": "USR-003",
+      "username": "lad2",
+      "full_name": "Valideur LAD 2",
+      "email": "lad2@sgsn.fr",
+      "role": "utilisateur",
+      "roles": [
+        "utilisateur"
+      ],
+      "password_hash": "pbkdf2_sha256$azXxBfcTjFD2KSw0W/dKQQ==$xo8rCpYzcjNoihuzZ/g9RN9T/xCD6P/18viFEb6g+4Q=",
+      "is_active": true
+    },
+    {
+      "id": "USR-004",
+      "username": "lad3",
+      "full_name": "Valideur LAD 3",
+      "email": "lad3@sgsn.fr",
+      "role": "manageur",
+      "roles": [
+        "manageur"
+      ],
+      "password_hash": "pbkdf2_sha256$fhd813NQQ0H7l+fDv4tB+w==$h2nhhUAWv5ML7ikF/35dimj7QH2YQHGlh93Ts14Mn94=",
+      "is_active": true
+    },
+    {
+      "id": "USR-005",
+      "username": "tresorerie",
+      "full_name": "Responsable trésorerie",
+      "email": "tresorerie@sgsn.fr",
+      "role": "manageur",
+      "roles": [
+        "manageur"
+      ],
+      "password_hash": "pbkdf2_sha256$3vNOoATcXm14qkEhRX42Lg==$LMrFmB12yhhZrTeS9MbxGkZDX4VnfwnrIklEOYHD1IA=",
+      "is_active": true
+    },
+    {
+      "id": "USR-006",
+      "username": "dirfin",
+      "full_name": "Direction Financière",
+      "email": "dirfin@sgsn.fr",
+      "role": "manageur",
+      "roles": [
+        "manageur"
+      ],
+      "password_hash": "pbkdf2_sha256$tjkbcAkD9KW02fBheE/kMA==$cr0stavOWAampNf3brtx/DIVv2/F4z4ap36tKsPEtQA=",
+      "is_active": true
+    }
+  ],
+  "appro_statuses": [
+    "Initialisation",
+    "En attente de prise en charge",
+    "En cours",
+    "Terminé",
+    "Clôturé"
+  ],
+  "facturation_statuses": [
+    "Saisie de la demande",
+    "Vérification métier",
+    "Validation N+1",
+    "Traitement service approvisionnement",
+    "Signature LAD 1",
+    "Règlement en cours",
+    "Paiement effectué",
+    "Terminé"
+  ]
+}

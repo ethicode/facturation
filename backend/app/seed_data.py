@@ -1,0 +1,385 @@
+from .auth import hash_password
+
+USER_PASSWORDS = {
+    "admin": "admin123",
+    "comptable": "comptable123",
+    "lad1": "lad1123",
+    "lad2": "lad2123",
+    "lad3": "lad3123",
+    "tresorerie": "tresorerie123",
+    "dirfin": "dirfin123",
+}
+
+
+def build_users() -> list[dict]:
+    return [
+        {
+            "id": "USR-001",
+            "username": "admin",
+            "full_name": "Administrateur principal",
+            "email": "admin@sgsn.fr",
+            "role": "administrateur",
+            "password_hash": hash_password(USER_PASSWORDS["admin"]),
+            "is_active": True,
+        },
+        {
+            "id": "USR-002",
+            "username": "comptable",
+            "full_name": "Comptable principal",
+            "email": "comptable@sgsn.fr",
+            "role": "utilisateur",
+            "password_hash": hash_password(USER_PASSWORDS["comptable"]),
+            "is_active": True,
+        },
+        {
+            "id": "USR-003",
+            "username": "lad1",
+            "full_name": "Valideur LAD 1",
+            "email": "lad1@sgsn.fr",
+            "role": "utilisateur",
+            "password_hash": hash_password(USER_PASSWORDS["lad1"]),
+            "is_active": True,
+        },
+        {
+            "id": "USR-004",
+            "username": "lad2",
+            "full_name": "Valideur LAD 2",
+            "email": "lad2@sgsn.fr",
+            "role": "utilisateur",
+            "password_hash": hash_password(USER_PASSWORDS["lad2"]),
+            "is_active": True,
+        },
+        {
+            "id": "USR-005",
+            "username": "lad3",
+            "full_name": "Valideur LAD 3",
+            "email": "lad3@sgsn.fr",
+            "role": "manageur",
+            "password_hash": hash_password(USER_PASSWORDS["lad3"]),
+            "is_active": True,
+        },
+        {
+            "id": "USR-006",
+            "username": "tresorerie",
+            "full_name": "Responsable trésorerie",
+            "email": "tresorerie@sgsn.fr",
+            "role": "manageur",
+            "password_hash": hash_password(USER_PASSWORDS["tresorerie"]),
+            "is_active": True,
+        },
+        {
+            "id": "USR-007",
+            "username": "dirfin",
+            "full_name": "Direction Financière",
+            "email": "dirfin@sgsn.fr",
+            "role": "manageur",
+            "password_hash": hash_password(USER_PASSWORDS["dirfin"]),
+            "is_active": True,
+        },
+    ]
+
+
+SEED_DATA = {
+    "kpi_metrics": [
+        {
+            "label": "Factures en attente",
+            "value": "18",
+            "trend": "+6% vs semaine",
+            "tone": "warning",
+        },
+        {
+            "label": "Frais valides",
+            "value": "142 500 XAF",
+            "trend": "+12% vs mois",
+            "tone": "success",
+        },
+        {
+            "label": "Pieces tracees",
+            "value": "98.4%",
+            "trend": "+1.1 pts",
+            "tone": "info",
+        },
+        {
+            "label": "Budget restant T3",
+            "value": "410 000 XAF",
+            "trend": "-3.8% consommation",
+            "tone": "primary",
+        },
+    ],
+    "missions": [
+        {
+            "code": "MS-0912",
+            "collaborateur": "M. Bernard",
+            "destination": "Lyon",
+            "frais": "1 230 EUR",
+            "statut": "Soumis",
+        },
+        {
+            "code": "MS-0910",
+            "collaborateur": "S. Idrissi",
+            "destination": "Casablanca",
+            "frais": "2 040 EUR",
+            "statut": "Valide",
+        },
+        {
+            "code": "MS-0908",
+            "collaborateur": "L. Garnier",
+            "destination": "Bruxelles",
+            "frais": "1 780 EUR",
+            "statut": "A completer",
+        },
+    ],
+    "trace_events": [
+        {
+            "date": "06/08/2026 09:15",
+            "action": "FACTURE FAC-2026-441 routee vers validation manager",
+            "actor": "Workflow Finance",
+        },
+        {
+            "date": "06/08/2026 08:49",
+            "action": "MISSION MS-0912 justificatifs ajoutes",
+            "actor": "M. Bernard",
+        },
+        {
+            "date": "05/08/2026 17:22",
+            "action": "ALERTE budget Projet ORFL niveau critique",
+            "actor": "Moteur Budget",
+        },
+    ],
+    "budget_lines": [
+        {
+            "poste": "Transport",
+            "consomme": 84,
+            "plafond": "180 000 EUR",
+            "tendance": "Hausse",
+        },
+        {
+            "poste": "Hebergement",
+            "consomme": 61,
+            "plafond": "120 000 EUR",
+            "tendance": "Stable",
+        },
+        {
+            "poste": "Prestations externes",
+            "consomme": 46,
+            "plafond": "420 000 EUR",
+            "tendance": "Maitrisee",
+        },
+    ],
+    "appro_statuses": [
+        "Initialisation",
+        "En attente de prise en charge",
+        "En cours",
+        "Terminé",
+        "Clôturé",
+    ],
+    "facturation_statuses": [
+        "Saisie de la demande",
+        "Vérification métier",
+        "Validation N+1",
+        "Traitement service approvisionnement",
+        "Signature LAD 1",
+        "Règlement en cours",
+        "Paiement effectué",
+        "Terminé",
+    ],
+    "invoice_statuses": [
+        "Saisie de la demande",
+        "Vérification métier",
+        "Validation N+1",
+        "Traitement service approvisionnement",
+        "Signature LAD 1",
+        "Règlement en cours",
+        "Paiement effectué",
+        "Terminé",
+    ],
+    "user_roles": ["administrateur", "utilisateur", "manageur"],
+    "role_labels": {
+        "administrateur": "Administrateur",
+        "utilisateur": "Utilisateur",
+        "manageur": "Manageur",
+    },
+    "directions": ["Direction Generale", "Informatique", "Finance", "Operations"],
+    "users": build_users(),
+    "invoices": [
+        {
+            "id": "FAC-2026-441",
+            "fournisseur": "Delta Consulting",
+            "montant": 24400,
+            "devise": "EUR",
+            "centreCout": "IT-OPS",
+            "description": "Maintenance plateforme ORFL",
+            "echeance": "2026-08-08",
+            "statut": "Validation LAD 2",
+            "history": [
+                {
+                    "at": "2026-08-05T09:02:00.000Z",
+                    "actor": "M. Fall",
+                    "role": "utilisateur",
+                    "action": "Facture creee",
+                },
+                {
+                    "at": "2026-08-05T10:21:00.000Z",
+                    "actor": "M. Fall",
+                    "role": "utilisateur",
+                    "action": "Soumise pour prise en charge",
+                },
+                {
+                    "at": "2026-08-05T11:00:00.000Z",
+                    "actor": "A. Ndiaye",
+                    "role": "manageur",
+                    "action": "Prise en charge LAD 1",
+                },
+                {
+                    "at": "2026-08-05T14:30:00.000Z",
+                    "actor": "A. Ndiaye",
+                    "role": "manageur",
+                    "action": "Validation LAD 1 accordee",
+                },
+            ],
+        },
+        {
+            "id": "FAC-2026-438",
+            "fournisseur": "VoyagePro",
+            "montant": 7920,
+            "devise": "EUR",
+            "centreCout": "MISSIONS",
+            "description": "Billetterie missions Dakar et Thies",
+            "echeance": "2026-08-07",
+            "statut": "Validation LAD 3",
+            "history": [
+                {
+                    "at": "2026-08-04T08:41:00.000Z",
+                    "actor": "A. Ndiaye",
+                    "role": "utilisateur",
+                    "action": "Facture creee",
+                },
+                {
+                    "at": "2026-08-04T09:26:00.000Z",
+                    "actor": "A. Ndiaye",
+                    "role": "utilisateur",
+                    "action": "Soumise pour prise en charge",
+                },
+                {
+                    "at": "2026-08-04T11:03:00.000Z",
+                    "actor": "S. Mbaye",
+                    "role": "manageur",
+                    "action": "Validation LAD 1 accordee",
+                },
+                {
+                    "at": "2026-08-04T13:20:00.000Z",
+                    "actor": "K. Diop",
+                    "role": "manageur",
+                    "action": "Validation LAD 2 accordee",
+                },
+            ],
+        },
+        {
+            "id": "FAC-2026-430",
+            "fournisseur": "Eco Transports",
+            "montant": 12160,
+            "devise": "EUR",
+            "centreCout": "LOGISTIQUE",
+            "description": "Location vehicules terrain",
+            "echeance": "2026-08-11",
+            "statut": "Bloquee",
+            "history": [
+                {
+                    "at": "2026-08-03T13:10:00.000Z",
+                    "actor": "K. Diop",
+                    "role": "utilisateur",
+                    "action": "Facture creee",
+                },
+                {
+                    "at": "2026-08-03T16:15:00.000Z",
+                    "actor": "S. Mbaye",
+                    "role": "manageur",
+                    "action": "Facture bloquee - piece justificative manquante",
+                },
+            ],
+        },
+    ],
+    "appro": {
+        "budgets": [
+            {
+                "direction": "Operations",
+                "allocated": 320000,
+                "engaged": 184000,
+                "allocatedBy": "DirFin",
+            },
+            {
+                "direction": "Commerciale",
+                "allocated": 210000,
+                "engaged": 116000,
+                "allocatedBy": "DirFin",
+            },
+            {
+                "direction": "Support",
+                "allocated": 170000,
+                "engaged": 89000,
+                "allocatedBy": "DirFin",
+            },
+        ],
+        "tickets": [
+            {
+                "id": "TCK-2026-301",
+                "direction": "Operations",
+                "objet": "Achat equipements terrain Q3",
+                "montant": 42000,
+                "devise": "EUR",
+                "statut": "Initialisation",
+                "linkedInvoiceId": "",
+                "history": [
+                    {
+                        "at": "2026-08-06T08:10:00.000Z",
+                        "actor": "Demandeur Operations",
+                        "action": "Ticket cree en approvisionnement",
+                    }
+                ],
+            },
+            {
+                "id": "TCK-2026-298",
+                "direction": "Commerciale",
+                "objet": "Renouvellement abonnements CRM",
+                "montant": 12000,
+                "devise": "EUR",
+                "statut": "En cours",
+                "linkedInvoiceId": "",
+                "history": [
+                    {
+                        "at": "2026-08-05T14:22:00.000Z",
+                        "actor": "Demandeur Commercial",
+                        "action": "Ticket cree en approvisionnement",
+                    },
+                    {
+                        "at": "2026-08-05T15:01:00.000Z",
+                        "actor": "Agent Approvisionnement",
+                        "action": "Ticket pris en charge - traitement en cours",
+                    },
+                ],
+            },
+            {
+                "id": "TCK-2026-294",
+                "direction": "Support",
+                "objet": "Maintenance climatiseurs salle serveur",
+                "montant": 96000,
+                "devise": "EUR",
+                "statut": "En attente de prise en charge",
+                "linkedInvoiceId": "",
+                "history": [
+                    {
+                        "at": "2026-08-05T09:40:00.000Z",
+                        "actor": "Demandeur Support",
+                        "action": "Ticket cree en approvisionnement",
+                    },
+                    {
+                        "at": "2026-08-05T10:18:00.000Z",
+                        "actor": "Agent Approvisionnement",
+                        "action": "Budget insuffisant - en attente de prise en charge",
+                    },
+                ],
+            },
+        ],
+        "dirfinHistory": [],
+    },
+}
