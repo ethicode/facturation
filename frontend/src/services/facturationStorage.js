@@ -1,12 +1,12 @@
 import { apiRequest } from './apiClient.js'
 
-function ensureInvoiceHistory(invoice) {
-  if (Array.isArray(invoice.history) && invoice.history.length > 0) {
-    return invoice
+function ensureFactureHistory(facture) {
+  if (Array.isArray(facture.history) && facture.history.length > 0) {
+    return facture
   }
 
   return {
-    ...invoice,
+    ...facture,
     history: [
       {
         at: new Date().toISOString(),
@@ -18,40 +18,57 @@ function ensureInvoiceHistory(invoice) {
   }
 }
 
-function normalizeInvoices(invoiceList) {
-  return Array.isArray(invoiceList) ? invoiceList.map((invoice) => ensureInvoiceHistory(invoice)) : []
+function normalizeFactures(factureList) {
+  return Array.isArray(factureList) ? factureList.map((facture) => ensureFactureHistory(facture)) : []
 }
 
-export async function loadInvoices() {
-  const invoices = await apiRequest('/api/invoices')
-  return normalizeInvoices(invoices)
+export async function loadFactures() {
+  const factures = await apiRequest('/api/factures')
+  return normalizeFactures(factures)
 }
 
-export async function createInvoice(payload) {
-  const created = await apiRequest('/api/invoices', {
+export async function loadFacture(factureId) {
+  const facture = await apiRequest(`/api/factures/${encodeURIComponent(factureId)}`)
+  return ensureFactureHistory(facture)
+}
+
+export async function createFacture(payload) {
+  const created = await apiRequest('/api/factures', {
     method: 'POST',
     body: JSON.stringify(payload),
   })
 
-  return ensureInvoiceHistory(created)
+  return ensureFactureHistory(created)
 }
 
-export async function updateInvoiceStatus(invoiceId, nextStatus, metadata = {}) {
+export async function deleteFacture(factureId) {
+  const factures = await apiRequest(`/api/factures/${encodeURIComponent(factureId)}`, {
+    method: 'DELETE',
+  })
+
+  return normalizeFactures(factures)
+}
+
+export async function updateFactureStatus(factureId, nextStatus, metadata = {}) {
   const {
     actor = 'Systeme Workflow',
     role = 'utilisateur',
     actionLabel = `Statut passe a ${nextStatus}`,
+    commentaire = '',
+    piecesJointes = [],
   } = metadata
 
-  const updatedInvoice = await apiRequest(`/api/invoices/${invoiceId}/status`, {
+  const updatedFacture = await apiRequest(`/api/factures/${factureId}/status`, {
     method: 'PATCH',
     body: JSON.stringify({
       next_status: nextStatus,
       actor,
       role,
       action_label: actionLabel,
+      commentaire,
+      piecesJointes,
     }),
   })
 
-  return ensureInvoiceHistory(updatedInvoice)
+  return ensureFactureHistory(updatedFacture)
 }

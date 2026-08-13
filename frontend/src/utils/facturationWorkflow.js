@@ -26,58 +26,89 @@ const approTransitions = {
 // ── Workflow Facturation ──────────────────────────────────────────────────────
 export const facturationStatuses = [
   'Saisie de la demande',
-  'En attente de vérification métier',
   'Vérification métier',
   'Validation N+1',
+  "Demande d'informations complémentaire",
   'Traitement service approvisionnement',
   'Signature LAD 1',
+  'Signature LAD 2',
+  'Signature LAD 3',
   'Règlement en cours',
   'Paiement effectué',
-  'Terminé',
+  'Rejetée',
+  'Clôturée',
 ]
 
 const facturationTransitions = {
   Initialisation: [
     {
-      to: 'En attente de vérification métier',
-      label: 'Soumettre pour vérification',
+      to: 'Vérification métier',
+      label: 'Soumettre pour vérification métier',
       roles: ['utilisateur', 'manageur'],
     },
   ],
   'Saisie de la demande': [
     {
-      to: 'En attente de vérification métier',
-      label: 'Soumettre pour vérification',
+      to: 'Vérification métier',
+      label: 'Soumettre pour vérification métier',
       roles: ['utilisateur', 'manageur'],
     },
   ],
-  'En attente de vérification métier': [
-    { to: 'Vérification métier', label: 'Démarrer la vérification métier', roles: ['manageur'] },
-  ],
   'Vérification métier': [
-    { to: 'Validation N+1', label: 'Valider vérification métier', roles: ['manageur'] },
+    { to: 'Validation N+1', label: 'Valider la vérification métier', roles: ['manageur'] },
   ],
   'Validation N+1': [
-    { to: 'Traitement service approvisionnement', label: 'Valider N+1', roles: ['manageur'] },
+    { to: 'Traitement service approvisionnement', label: 'Valider N+1 (OK)', roles: ['manageur'] },
+    {
+      to: "Demande d'informations complémentaire",
+      label: "Demander des informations complémentaires",
+      roles: ['manageur'],
+    },
+  ],
+  "Demande d'informations complémentaire": [
+    { to: 'Vérification métier', label: 'Informations reçues - reprendre la vérification', roles: ['manageur'] },
   ],
   'Traitement service approvisionnement': [
-    { to: 'Signature LAD 1', label: 'Transmettre pour signature', roles: ['manageur'] },
+    { to: 'Signature LAD 1', label: 'Traitement validé (OK)', roles: ['manageur'] },
+    {
+      to: "Demande d'informations complémentaire",
+      label: "Demander des informations complémentaires",
+      roles: ['manageur'],
+    },
   ],
   'Signature LAD 1': [
-    { to: 'Règlement en cours', label: 'Signer LAD 1', roles: ['manageur'] },
+    { to: 'Signature LAD 2', label: 'Passer à signature LAD 2', roles: ['manageur'] },
+    { to: 'Signature LAD 3', label: 'Passer à signature LAD 3', roles: ['manageur'] },
+    { to: 'Règlement en cours', label: 'Passer directement au règlement', roles: ['manageur'] },
+  ],
+  'Signature LAD 2': [
+    { to: 'Règlement en cours', label: 'Passer au règlement', roles: ['manageur'] },
+  ],
+  'Signature LAD 3': [
+    { to: 'Règlement en cours', label: 'Passer au règlement', roles: ['manageur'] },
+  ],
+  // Legacy statuses mapped to the new signature flow.
+  'Validation LAD 2': [
+    { to: 'Règlement en cours', label: 'Passer au règlement', roles: ['manageur'] },
+  ],
+  'Validation LAD 3': [
+    { to: 'Règlement en cours', label: 'Passer au règlement', roles: ['manageur'] },
   ],
   'Règlement en cours': [
-    { to: 'Paiement effectué', label: 'Confirmer paiement', roles: ['manageur'] },
+    { to: 'Paiement effectué', label: 'Confirmer le paiement (OK)', roles: ['manageur'] },
+    { to: 'Rejetée', label: 'Rejeter la demande', roles: ['manageur'] },
   ],
   'Paiement effectué': [
-    { to: 'Terminé', label: 'Clôturer', roles: ['manageur'] },
+    { to: 'Clôturée', label: 'Clôturer la demande', roles: ['manageur'] },
   ],
-  'Terminé': [],
+  Rejetée: [
+    { to: 'Clôturée', label: 'Clôturer après rejet', roles: ['manageur'] },
+  ],
+  Clôturée: [],
 }
-
-// ── Alias backward-compat (invoice = facturation) ─────────────────────────────
+// ── Alias backward-compat (facture = facturation) ─────────────────────────────
 /** @deprecated utiliser facturationStatuses */
-export const invoiceStatuses = facturationStatuses
+export const factureStatuses = facturationStatuses
 
 export const userRoles = ['administrateur', 'utilisateur', 'manageur']
 
@@ -95,15 +126,22 @@ export const statusColor = {
   'Terminé': 'success',
   'Clôturé': 'info',
   // facturation
-  Initialisation: 'warning',
+  Initialisation: 'default',
   'Saisie de la demande': 'default',
-  'En attente de vérification métier': 'warning',
   'Vérification métier': 'warning',
   'Validation N+1': 'warning',
+  "Demande d'informations complémentaire": 'warning',
   'Traitement service approvisionnement': 'warning',
   'Signature LAD 1': 'warning',
+  'Signature LAD 2': 'warning',
+  'Signature LAD 3': 'warning',
+  'Validation LAD 2': 'warning',
+  'Validation LAD 3': 'warning',
   'Règlement en cours': 'warning',
   'Paiement effectué': 'success',
+  Rejetée: 'error',
+  Clôturée: 'success',
+  Terminé: 'success',
   // legacy
   Bloquee: 'error',
 }
@@ -165,21 +203,25 @@ export function formatDateTime(value) {
   }).format(date)
 }
 
-export function getStatusCounts(invoiceList) {
+export function getStatusCounts(factureList) {
   const counts = {
     'Saisie de la demande': 0,
-    'En attente de prise en charge': 0,
-    'Validation LAD 1': 0,
-    'Validation LAD 2': 0,
-    'Validation LAD 3': 0,
-    Payee: 0,
-    Cloturee: 0,
-    Bloquee: 0,
+    'Vérification métier': 0,
+    'Validation N+1': 0,
+    "Demande d'informations complémentaire": 0,
+    'Traitement service approvisionnement': 0,
+    'Signature LAD 1': 0,
+    'Signature LAD 2': 0,
+    'Signature LAD 3': 0,
+    'Règlement en cours': 0,
+    'Paiement effectué': 0,
+    Rejetée: 0,
+    Clôturée: 0,
   }
 
-  invoiceList.forEach((invoice) => {
-    if (counts[invoice.statut] !== undefined) {
-      counts[invoice.statut] += 1
+  factureList.forEach((facture) => {
+    if (counts[facture.statut] !== undefined) {
+      counts[facture.statut] += 1
     }
   })
 

@@ -16,9 +16,10 @@ import {
   Typography,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import PageHeader from '../components/PageHeader.jsx'
 import TableActionMenu from '../components/TableActionMenu.jsx'
-import { loadInvoices } from '../services/facturationStorage.js'
+import { deleteFacture, loadFactures } from '../services/facturationStorage.js'
 import {
   formatAmount,
   formatDate,
@@ -28,18 +29,18 @@ import {
 
 function FacturationPage() {
   const navigate = useNavigate()
-  const [invoiceList, setInvoiceList] = useState([])
+  const [factureList, setFactureList] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [apiError, setApiError] = useState('')
 
   useEffect(() => {
     let isMounted = true
 
-    async function fetchInvoices() {
+    async function fetchFactures() {
       try {
-        const data = await loadInvoices()
+        const data = await loadFactures()
         if (isMounted) {
-          setInvoiceList(data)
+          setFactureList(data)
           setApiError('')
         }
       } catch (error) {
@@ -53,7 +54,7 @@ function FacturationPage() {
       }
     }
 
-    fetchInvoices()
+    fetchFactures()
 
     return () => {
       isMounted = false
@@ -64,8 +65,23 @@ function FacturationPage() {
     navigate('/facturation/creation')
   }
 
-  const openDetails = (invoiceId) => {
-    navigate(`/facturation/${invoiceId}`)
+  const openDetails = (factureId) => {
+    navigate(`/facturation/${factureId}`)
+  }
+
+  const handleDelete = async (factureId) => {
+    const confirmed = window.confirm('Supprimer cette demande de facturation ?')
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      const nextFactures = await deleteFacture(factureId)
+      setFactureList(nextFactures)
+      setApiError('')
+    } catch (error) {
+      setApiError(error.message || 'Impossible de supprimer la demande de facturation.')
+    }
   }
 
   return (
@@ -112,18 +128,18 @@ function FacturationPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {invoiceList.map((invoice) => (
-                  <TableRow key={invoice.id} hover onClick={() => openDetails(invoice.id)} sx={{ cursor: 'pointer' }}>
-                    <TableCell>{invoice.id}</TableCell>
-                    <TableCell>{invoice.fournisseur}</TableCell>
-                    <TableCell>{invoice.centreCout}</TableCell>
-                    <TableCell>{formatAmount(invoice.montant, invoice.devise)}</TableCell>
-                    <TableCell>{formatDate(invoice.echeance)}</TableCell>
+                {factureList.map((facture) => (
+                  <TableRow key={facture.id} hover onClick={() => openDetails(facture.id)} sx={{ cursor: 'pointer' }}>
+                    <TableCell>{facture.id}</TableCell>
+                    <TableCell>{facture.fournisseur}</TableCell>
+                    <TableCell>{facture.centreCout}</TableCell>
+                    <TableCell>{formatAmount(facture.montant, facture.devise)}</TableCell>
+                    <TableCell>{formatDate(facture.echeance)}</TableCell>
                     <TableCell>
                       <Chip
                         size="small"
-                        color={statusColor[invoice.statut] || 'default'}
-                        label={invoice.statut}
+                        color={statusColor[facture.statut] || 'default'}
+                        label={facture.statut}
                       />
                     </TableCell>
                     <TableCell align="right">
@@ -133,14 +149,20 @@ function FacturationPage() {
                             key: 'details',
                             label: 'Ouvrir',
                             icon: <OpenInNewOutlinedIcon fontSize="small" />,
-                            onClick: () => openDetails(invoice.id),
+                            onClick: () => openDetails(facture.id),
+                          },
+                          {
+                            key: 'delete',
+                            label: 'Supprimer',
+                            icon: <DeleteOutlineOutlinedIcon fontSize="small" />,
+                            onClick: () => handleDelete(facture.id),
                           },
                         ]}
                       />
                     </TableCell>
                   </TableRow>
                 ))}
-                {!isLoading && invoiceList.length === 0 && (
+                {!isLoading && factureList.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={7} align="center">
                       Aucune demande de facturation disponible.

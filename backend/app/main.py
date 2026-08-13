@@ -13,9 +13,9 @@ from .schemas import (
     DeleteBudgetResponse,
     DirectionDefinition,
     HealthResponse,
-    Invoice,
-    InvoiceCreate,
-    InvoiceStatusUpdate,
+    Facture,
+    FactureCreate,
+    FactureStatusUpdate,
     RoleDefinition,
     RoleUpdateRequest,
     SupplyTicket,
@@ -38,7 +38,7 @@ app = FastAPI(
         {"name": "Auth", "description": "Authentification, tableau de bord et profil utilisateur."},
         {"name": "Administration", "description": "Gestion des rôles, utilisateurs, directions et assignations de workflow."},
         {"name": "Workflow", "description": "Métadonnées et configuration des workflows."},
-        {"name": "Invoices", "description": "Gestion du cycle de vie des factures."},
+        {"name": "Factures", "description": "Gestion du cycle de vie des factures."},
         {"name": "Approvisionnement", "description": "Gestion des budgets, tickets et transferts approvisionnement."},
     ],
 )
@@ -178,24 +178,29 @@ def get_workflow(user: AuthUserSummary = Depends(get_current_user)) -> WorkflowM
     return service.get_workflow_metadata()
 
 
-@app.get("/api/invoices", response_model=list[Invoice], tags=["Invoices"])
-def list_invoices(user: AuthUserSummary = Depends(get_current_user)) -> list[Invoice]:
-    return service.list_invoices()
+@app.get("/api/factures", response_model=list[Facture], tags=["Factures"])
+def list_factures(user: AuthUserSummary = Depends(get_current_user)) -> list[Facture]:
+    return service.list_factures()
 
 
-@app.get("/api/invoices/{invoice_id}", response_model=Invoice, tags=["Invoices"])
-def get_invoice(invoice_id: str, user: AuthUserSummary = Depends(get_current_user)) -> Invoice:
-    return service.get_invoice(invoice_id)
+@app.get("/api/factures/{facture_id}", response_model=Facture, tags=["Factures"])
+def get_facture(facture_id: str, user: AuthUserSummary = Depends(get_current_user)) -> Facture:
+    return service.get_facture(facture_id)
 
 
-@app.post("/api/invoices", response_model=Invoice, status_code=201, tags=["Invoices"])
-def create_invoice(payload: InvoiceCreate, user: AuthUserSummary = Depends(get_current_user)) -> Invoice:
-    return service.create_invoice(payload)
+@app.post("/api/factures", response_model=Facture, status_code=201, tags=["Factures"])
+def create_facture(payload: FactureCreate, user: AuthUserSummary = Depends(get_current_user)) -> Facture:
+    return service.create_facture(payload)
 
 
-@app.patch("/api/invoices/{invoice_id}/status", response_model=Invoice, tags=["Invoices"])
-def update_invoice_status(invoice_id: str, payload: InvoiceStatusUpdate, user: AuthUserSummary = Depends(get_current_user)) -> Invoice:
-    return service.update_invoice_status(invoice_id, payload)
+@app.delete("/api/factures/{facture_id}", response_model=list[Facture], tags=["Factures"])
+def delete_facture(facture_id: str, user: AuthUserSummary = Depends(get_current_user)) -> list[Facture]:
+    return service.delete_facture(facture_id)
+
+
+@app.patch("/api/factures/{facture_id}/status", response_model=Facture, tags=["Factures"])
+def update_facture_status(facture_id: str, payload: FactureStatusUpdate, user: AuthUserSummary = Depends(get_current_user)) -> Facture:
+    return service.update_facture_status(facture_id, payload)
 
 
 @app.get("/api/appro", response_model=ApproState, tags=["Approvisionnement"])
@@ -216,6 +221,11 @@ def delete_direction_budget(direction_name: str, actor: str = Query(default="Dir
 @app.post("/api/appro/tickets", response_model=SupplyTicket, status_code=201, tags=["Approvisionnement"])
 def create_supply_ticket(payload: SupplyTicketCreate, user: AuthUserSummary = Depends(get_current_user)) -> SupplyTicket:
     return service.create_supply_ticket(payload)
+
+
+@app.delete("/api/appro/tickets/{ticket_id}", response_model=ApproState, tags=["Approvisionnement"])
+def delete_supply_ticket(ticket_id: str, user: AuthUserSummary = Depends(get_current_user)) -> ApproState:
+    return service.delete_supply_ticket(ticket_id)
 
 
 @app.post("/api/appro/tickets/{ticket_id}/verify", response_model=ApproState, tags=["Approvisionnement"])

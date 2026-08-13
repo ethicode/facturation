@@ -18,6 +18,8 @@ function HistoryTimeline({
   roleLabels = {},
   showRoleChip = false,
 }) {
+  const safeDotColor = dotColor === 'default' ? 'primary' : dotColor
+
   return (
     <Timeline sx={{ m: 0, p: 0 }}>
       {entries.map((entry, index) => (
@@ -26,7 +28,7 @@ function HistoryTimeline({
             {formatDateTime(entry.at)}
           </TimelineOppositeContent>
           <TimelineSeparator>
-            <TimelineDot color={dotColor} variant="outlined" />
+            <TimelineDot color={safeDotColor} variant="outlined" />
             {index < entries.length - 1 && <TimelineConnector />}
           </TimelineSeparator>
           <TimelineContent>
@@ -46,6 +48,16 @@ function HistoryTimeline({
             {entry.detail && (
               <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
                 {entry.detail}
+              </Typography>
+            )}
+            {entry.commentaire && !entry.detail && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                {entry.commentaire}
+              </Typography>
+            )}
+            {Array.isArray(entry.piecesJointes) && entry.piecesJointes.length > 0 && !entry.detail && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
+                Pièces jointes: {entry.piecesJointes.join(', ')}
               </Typography>
             )}
           </TimelineContent>

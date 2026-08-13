@@ -14,7 +14,7 @@ import MetricCard from '../components/MetricCard.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import { loadDashboard } from '../services/dashboardService.js'
 import { loadApproData } from '../services/approStorage.js'
-import { loadInvoices } from '../services/facturationStorage.js'
+import { loadFactures } from '../services/facturationStorage.js'
 
 function CircularProgressChart({ value, size = 120, strokeWidth = 12, color = '#2563eb' }) {
   const radius = (size - strokeWidth) / 2
@@ -90,21 +90,21 @@ function OverviewPage() {
 
     async function fetchDashboard() {
       try {
-        const [dashboardData, invoices, approData] = await Promise.all([
+        const [dashboardData, factures, approData] = await Promise.all([
           loadDashboard(),
-          loadInvoices(),
+          loadFactures(),
           loadApproData(),
         ])
 
         if (isMounted) {
           setDashboard(dashboardData)
           setFacturationSummary({
-            inProgress: invoices.filter((invoice) => !['Terminé', 'Clôturé'].includes(invoice.statut)).length,
-            readyForPayment: invoices.filter((invoice) => ['Règlement en cours', 'Paiement effectué'].includes(invoice.statut)).length,
+            inProgress: factures.filter((facture) => !['Clôturée', 'Rejetée', 'Terminé', 'Clôturé'].includes(facture.statut)).length,
+            readyForPayment: factures.filter((facture) => ['Règlement en cours', 'Paiement effectué'].includes(facture.statut)).length,
           })
           setApproSummary({
             openTickets: approData.tickets.filter((ticket) => !['Terminé', 'Clôturé'].includes(ticket.statut)).length,
-            transferredToInvoicing: approData.tickets.filter((ticket) => Boolean(ticket.linkedInvoiceId)).length,
+            transferredToInvoicing: approData.tickets.filter((ticket) => Boolean(ticket.linkedFactureId)).length,
           })
           setApiError('')
         }

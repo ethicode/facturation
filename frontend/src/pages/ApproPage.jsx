@@ -1,3 +1,4 @@
+import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined'
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined'
 import {
@@ -19,7 +20,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import TableActionMenu from '../components/TableActionMenu.jsx'
-import { closeTicket, loadApproData } from '../services/approStorage.js'
+import { closeTicket, deleteSupplyTicket, loadApproData } from '../services/approStorage.js'
 import { formatAmount } from '../utils/facturationWorkflow.js'
 
 const statusColor = {
@@ -66,6 +67,21 @@ function ApproPage() {
       setApiError('')
     } catch (error) {
       setApiError(error.message || 'Impossible de clôturer le ticket.')
+    }
+  }
+
+  const handleDelete = async (ticketId) => {
+    const confirmed = window.confirm('Supprimer cette demande d\'approvisionnement ?')
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      const nextState = await deleteSupplyTicket(ticketId)
+      setState(nextState)
+      setApiError('')
+    } catch (error) {
+      setApiError(error.message || 'Impossible de supprimer le ticket.')
     }
   }
 
@@ -129,14 +145,14 @@ function ApproPage() {
                         />
                       </TableCell>
                       <TableCell>
-                        {ticket.linkedInvoiceId ? (
+                        {ticket.linkedFactureId ? (
                           <Button
                             size="small"
                             variant="text"
                             endIcon={<OpenInNewOutlinedIcon fontSize="small" />}
-                            onClick={() => navigate(`/facturation/${ticket.linkedInvoiceId}`)}
+                            onClick={() => navigate(`/facturation/${ticket.linkedFactureId}`)}
                           >
-                            {ticket.linkedInvoiceId}
+                            {ticket.linkedFactureId}
                           </Button>
                         ) : (
                           <Typography variant="caption" color="text.secondary">
@@ -151,8 +167,14 @@ function ApproPage() {
                               key: 'close',
                               label: 'Clôturer',
                               icon: <TaskAltOutlinedIcon fontSize="small" />,
-                              disabled: Boolean(ticket.linkedInvoiceId) || ticket.statut === 'Clôturée',
+                              disabled: Boolean(ticket.linkedFactureId) || ticket.statut === 'Clôturée',
                               onClick: () => handleClose(ticket.id),
+                            },
+                            {
+                              key: 'delete',
+                              label: 'Supprimer',
+                              icon: <DeleteOutlineOutlinedIcon fontSize="small" />,
+                              onClick: () => handleDelete(ticket.id),
                             },
                           ]}
                         />

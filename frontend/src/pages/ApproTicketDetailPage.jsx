@@ -15,7 +15,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import HistoryTimeline from '../components/HistoryTimeline.jsx'
 import { closeTicket, loadApproData } from '../services/approStorage.js'
@@ -46,8 +46,10 @@ function getActiveStep(ticket) {
 function ApproTicketDetailPage() {
   const { ticketId } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const [state, setState] = useState({ budgets: [], tickets: [], dirfinHistory: [] })
   const [apiError, setApiError] = useState('')
+  const [isLoading, setIsLoading] = useState(() => !location.state?.ticket)
 
   useEffect(() => {
     let isMounted = true
@@ -63,6 +65,10 @@ function ApproTicketDetailPage() {
         if (isMounted) {
           setApiError(error.message || 'Impossible de charger le ticket.')
         }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
     }
 
@@ -73,7 +79,7 @@ function ApproTicketDetailPage() {
     }
   }, [ticketId])
 
-  const ticket = state.tickets.find((item) => item.id === ticketId)
+  const ticket = location.state?.ticket || state.tickets.find((item) => item.id === ticketId)
 
   const handleClose = async () => {
     try {
@@ -83,6 +89,24 @@ function ApproTicketDetailPage() {
     } catch (error) {
       setApiError(error.message || 'Impossible de clôturer le ticket.')
     }
+  }
+
+  if (isLoading) {
+    return (
+      <Stack spacing={2.5}>
+        <PageHeader
+          title="Approvisionnement"
+          subtitle="Chargement du ticket en cours..."
+        />
+        <Card>
+          <CardContent>
+            <Typography variant="body2" color="text.secondary">
+              Chargement de la demande...
+            </Typography>
+          </CardContent>
+        </Card>
+      </Stack>
+    )
   }
 
   if (!ticket) {
@@ -171,15 +195,15 @@ function ApproTicketDetailPage() {
                     </Grid>
                     <Grid size={{ xs: 12, sm: 4 }}>
                       <Typography variant="caption" color="text.secondary" display="block">Demande de facturation liée</Typography>
-                      {ticket.linkedInvoiceId ? (
+                      {ticket.linkedFactureId ? (
                         <Button
                           size="small"
                           variant="text"
                           endIcon={<OpenInNewOutlinedIcon fontSize="small" />}
-                          onClick={() => navigate(`/facturation/${ticket.linkedInvoiceId}`)}
+                          onClick={() => navigate(`/facturation/${ticket.linkedFactureId}`)}
                           sx={{ p: 0 }}
                         >
-                          {ticket.linkedInvoiceId}
+                          {ticket.linkedFactureId}
                         </Button>
                       ) : (
                         <Typography variant="body1" color="text.secondary">Aucune</Typography>
@@ -201,7 +225,7 @@ function ApproTicketDetailPage() {
                       variant="outlined"
                       size="large"
                       startIcon={<TaskAltOutlinedIcon />}
-                      disabled={ticket.statut === 'Clôturée' || Boolean(ticket.linkedInvoiceId)}
+                      disabled={ticket.statut === 'Clôturée' || Boolean(ticket.linkedFactureId)}
                       onClick={handleClose}
                     >
                       Fermer le ticket

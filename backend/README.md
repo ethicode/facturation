@@ -22,10 +22,10 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `GET /health`
 - `GET /api/dashboard`
 - `GET /api/meta/workflow`
-- `GET /api/invoices`
-- `GET /api/invoices/{invoice_id}`
-- `POST /api/invoices`
-- `PATCH /api/invoices/{invoice_id}/status`
+- `GET /api/factures`
+- `GET /api/factures/{facture_id}`
+- `POST /api/factures`
+- `PATCH /api/factures/{facture_id}/status`
 - `GET /api/appro`
 - `POST /api/appro/budgets`
 - `DELETE /api/appro/budgets/{direction}`

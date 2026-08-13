@@ -13,6 +13,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import { createSupplyTicket, loadApproData } from '../services/approStorage.js'
 
@@ -37,6 +38,7 @@ const actionOptions = ['Renouvellement', 'Nouvel achat', 'Mise a niveau', 'Repar
 const priorityOptions = ['Basse', 'Normale', 'Haute', 'Critique']
 
 function ApproTicketCreatePage() {
+  const navigate = useNavigate()
   const [state, setState] = useState({ budgets: [], tickets: [], dirfinHistory: [] })
   const [apiError, setApiError] = useState('')
   const [ticketForm, setTicketForm] = useState(emptyTicketForm)
@@ -137,6 +139,7 @@ function ApproTicketCreatePage() {
       setTicketError('')
       setApiError('')
       setTicketSuccess(`Ticket ${createdTicket.id} enregistré au statut Initialisation.`)
+      navigate(`/approvisionnement/${createdTicket.id}`, { state: { ticket: createdTicket } })
     } catch (error) {
       setApiError(error.message || 'Impossible de créer le ticket.')
       setTicketSuccess('')

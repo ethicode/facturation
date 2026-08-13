@@ -60,6 +60,14 @@ export async function createSupplyTicket(payload) {
   return normalizeTicket(ticket)
 }
 
+export async function deleteSupplyTicket(ticketId) {
+  const state = await apiRequest(`/api/appro/tickets/${encodeURIComponent(ticketId)}`, {
+    method: 'DELETE',
+  })
+
+  return normalizeState(state)
+}
+
 export async function verifyTicketBudget(ticketId, actor = 'Agent Approvisionnement') {
   const params = new URLSearchParams({ actor })
   const state = await apiRequest(`/api/appro/tickets/${encodeURIComponent(ticketId)}/verify?${params.toString()}`, {

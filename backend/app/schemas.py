@@ -10,9 +10,11 @@ class HistoryEntry(BaseModel):
     action: str
     role: str | None = None
     detail: str | None = None
+    commentaire: str = ""
+    piecesJointes: list[str] = Field(default_factory=list)
 
 
-class Invoice(BaseModel):
+class Facture(BaseModel):
     id: str
     fournisseur: str
     montant: float
@@ -32,7 +34,7 @@ class Invoice(BaseModel):
     history: list[HistoryEntry] = Field(default_factory=list)
 
 
-class InvoiceCreate(BaseModel):
+class FactureCreate(BaseModel):
     fournisseur: str
     montant: float
     devise: str = "EUR"
@@ -51,11 +53,13 @@ class InvoiceCreate(BaseModel):
     role: str = "utilisateur"
 
 
-class InvoiceStatusUpdate(BaseModel):
+class FactureStatusUpdate(BaseModel):
     next_status: str
     actor: str = "Systeme Workflow"
     role: str = "utilisateur"
     action_label: str | None = None
+    commentaire: str = ""
+    piecesJointes: list[str] = Field(default_factory=list)
 
 
 class BudgetLine(BaseModel):
@@ -208,7 +212,7 @@ class SupplyTicket(BaseModel):
     commentaire: str = ""
     fichier_nom: str = ""
     statut: str
-    linkedInvoiceId: str = ""
+    linkedFactureId: str = ""
     history: list[HistoryEntry] = Field(default_factory=list)
 
 
@@ -282,7 +286,7 @@ class DashboardPayload(BaseModel):
 
 
 class WorkflowMetadata(BaseModel):
-    invoice_statuses: list[str]
+    facture_statuses: list[str]
     user_roles: list[str]
     role_labels: dict[str, str]
     directions: list[str] = Field(default_factory=list)
@@ -308,13 +312,13 @@ class ErrorResponse(BaseModel):
 class AppState(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    invoices: list[Invoice]
+    factures: list[Facture]
     appro: ApproState
     kpi_metrics: list[Metric]
     missions: list[Mission]
     trace_events: list[TraceEvent]
     budget_lines: list[BudgetOverview]
-    invoice_statuses: list[str]
+    facture_statuses: list[str]
     user_roles: list[str]
     role_labels: dict[str, str]
     directions: list[str] = Field(default_factory=list)

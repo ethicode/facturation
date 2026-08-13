@@ -12,7 +12,7 @@ import {
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
-import { createInvoice } from '../services/facturationStorage.js'
+import { createFacture } from '../services/facturationStorage.js'
 import { loadWorkflowDirections } from '../services/workflowService.js'
 
 const emptyForm = {
@@ -29,7 +29,7 @@ const emptyForm = {
   description: '',
 }
 
-function validateInvoice(values) {
+function validateFacture(values) {
   const errors = {}
 
   if (!values.priorite) {
@@ -119,7 +119,7 @@ function FacturationCreatePage() {
   }
 
   const handleSubmit = async () => {
-    const errors = validateInvoice(formValues)
+    const errors = validateFacture(formValues)
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors)
       setApiError('')
@@ -146,8 +146,8 @@ function FacturationCreatePage() {
         role: 'utilisateur',
       }
 
-      await createInvoice(payload)
-      navigate('/facturation')
+      const createdFacture = await createFacture(payload)
+      navigate(`/facturation/${createdFacture.id}`, { state: { facture: createdFacture } })
     } catch (error) {
       setApiError(error.message || 'Impossible de créer la demande de facturation.')
     }

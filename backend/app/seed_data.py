@@ -175,25 +175,31 @@ SEED_DATA = {
     ],
     "facturation_statuses": [
         "Saisie de la demande",
-        "En attente de vérification métier",
         "Vérification métier",
         "Validation N+1",
+        "Demande d'informations complémentaire",
         "Traitement service approvisionnement",
         "Signature LAD 1",
+        "Signature LAD 2",
+        "Signature LAD 3",
         "Règlement en cours",
         "Paiement effectué",
-        "Terminé",
+        "Rejetée",
+        "Clôturée",
     ],
-    "invoice_statuses": [
+    "facture_statuses": [
         "Saisie de la demande",
-        "En attente de vérification métier",
         "Vérification métier",
         "Validation N+1",
+        "Demande d'informations complémentaire",
         "Traitement service approvisionnement",
         "Signature LAD 1",
+        "Signature LAD 2",
+        "Signature LAD 3",
         "Règlement en cours",
         "Paiement effectué",
-        "Terminé",
+        "Rejetée",
+        "Clôturée",
     ],
     "user_roles": ["administrateur", "utilisateur", "manageur"],
     "role_labels": {
@@ -203,7 +209,7 @@ SEED_DATA = {
     },
     "directions": ["Direction Generale", "Informatique", "Finance", "Operations"],
     "users": build_users(),
-    "invoices": [
+    "factures": [
         {
             "id": "FAC-2026-441",
             "fournisseur": "Delta Consulting",
@@ -330,7 +336,7 @@ SEED_DATA = {
                 "montant": 42000,
                 "devise": "EUR",
                 "statut": "Initialisation",
-                "linkedInvoiceId": "",
+                "linkedFactureId": "",
                 "history": [
                     {
                         "at": "2026-08-06T08:10:00.000Z",
@@ -346,7 +352,7 @@ SEED_DATA = {
                 "montant": 12000,
                 "devise": "EUR",
                 "statut": "En cours",
-                "linkedInvoiceId": "",
+                "linkedFactureId": "",
                 "history": [
                     {
                         "at": "2026-08-05T14:22:00.000Z",
@@ -367,7 +373,7 @@ SEED_DATA = {
                 "montant": 96000,
                 "devise": "EUR",
                 "statut": "En attente de prise en charge",
-                "linkedInvoiceId": "",
+                "linkedFactureId": "",
                 "history": [
                     {
                         "at": "2026-08-05T09:40:00.000Z",

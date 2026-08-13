@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './app/layout/AppLayout.jsx'
+import { getStoredAuth } from './services/authService.js'
 import LoginPage from './pages/LoginPage.jsx'
 import OverviewPage from './pages/OverviewPage.jsx'
 import DirfinPage from './pages/DirfinPage.jsx'
@@ -13,7 +14,7 @@ import BudgetPage from './pages/BudgetPage.jsx'
 import AdminSettingsPage from './pages/AdminSettingsPage.jsx'
 
 function ProtectedRoute({ children }) {
-  const auth = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('facturation.auth') || 'null') : null
+  const auth = getStoredAuth()
   return auth?.token ? children : <Navigate to="/login" replace />
 }
 
@@ -29,12 +30,12 @@ function App() {
         <Route path="approvisionnement/:ticketId" element={<ApproTicketDetailPage />} />
         <Route path="facturation" element={<FacturationPage />} />
         <Route path="facturation/creation" element={<FacturationCreatePage />} />
-        <Route path="facturation/:invoiceId" element={<FacturationDetailPage />} />
+        <Route path="facturation/:factureId" element={<FacturationDetailPage />} />
         <Route path="budget" element={<BudgetPage />} />
         <Route path="parametrages" element={<AdminSettingsPage />} />
         <Route path="parametrage" element={<Navigate to="/parametrages#directions" replace />} />
       </Route>
-      <Route path="*" element={<Navigate to={typeof window !== 'undefined' && JSON.parse(localStorage.getItem('facturation.auth') || 'null')?.token ? '/' : '/login'} replace />} />
+      <Route path="*" element={<Navigate to={getStoredAuth()?.token ? '/' : '/login'} replace />} />
     </Routes>
   )
 }

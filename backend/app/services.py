@@ -16,9 +16,10 @@ from .schemas import (
     DeleteBudgetResponse,
     DirectionDefinition,
     DirfinHistoryEntry,
-    Invoice,
-    InvoiceCreate,
-    InvoiceStatusUpdate,
+    Facture,
+    FactureCreate,
+    FactureStatusUpdate,
+    HistoryEntry,
     RoleDefinition,
     RoleUpdateRequest,
     SupplyTicket,
@@ -39,16 +40,28 @@ class BackendService:
         self.store = store or JsonStore()
 
     @staticmethod
-    def _ensure_pending_facturation_step(statuses: list[str]) -> list[str]:
-        pending_status = "En attente de vérification métier"
-        if pending_status in statuses:
-            return statuses
+    def _normalize_facturation_statuses(statuses: list[str]) -> list[str]:
+        canonical_statuses = [
+            "Saisie de la demande",
+            "Vérification métier",
+            "Validation N+1",
+            "Demande d'informations complémentaire",
+            "Traitement service approvisionnement",
+            "Signature LAD 1",
+            "Signature LAD 2",
+            "Signature LAD 3",
+            "Règlement en cours",
+            "Paiement effectué",
+            "Rejetée",
+            "Clôturée",
+        ]
 
-        if "Saisie de la demande" in statuses:
-            insert_at = statuses.index("Saisie de la demande") + 1
-            return [*statuses[:insert_at], pending_status, *statuses[insert_at:]]
+        normalized = [status for status in statuses if status and status != "En attente de vérification métier"]
+        for status in canonical_statuses:
+            if status not in normalized:
+                normalized.append(status)
 
-        return [pending_status, *statuses]
+        return normalized
 
     def _state_with_seed(self) -> AppState:
         state = self.store.read()
@@ -84,12 +97,18 @@ class BackendService:
 
         if not state.facturation_statuses:
             state.facturation_statuses = seed_state.facturation_statuses
-        else:
-            state.facturation_statuses = self._ensure_pending_facturation_step(state.facturation_statuses)
+        state.facturation_statuses = self._normalize_facturation_statuses(state.facturation_statuses)
 
-        # keep invoice_statuses in sync with facturation_statuses
-        if state.facturation_statuses and state.invoice_statuses != state.facturation_statuses:
-            state.invoice_statuses = state.facturation_statuses
+        # keep facture_statuses in sync with facturation_statuses
+        if state.facturation_statuses and state.facture_statuses != state.facturation_statuses:
+            state.facture_statuses = state.facturation_statuses
+
+        # migrate factures created with removed intermediate status.
+        for facture in state.factures:
+            if facture.statut == "En attente de vérification métier":
+                facture.statut = "Vérification métier"
+            if facture.statut == "Terminé":
+                facture.statut = "Clôturée"
 
         self.store.write(state)
         return state
@@ -109,11 +128,11 @@ class BackendService:
     def get_workflow_metadata(self) -> WorkflowMetadata:
         state = self._state_with_seed()
         return WorkflowMetadata(
-            invoice_statuses=state.invoice_statuses,
+            facture_statuses=state.facture_statuses,
             user_roles=state.user_roles,
             role_labels=state.role_labels,
             directions=state.directions,
-            workflow_steps=state.invoice_statuses,
+            workflow_steps=state.facture_statuses,
             workflow_assignments=state.workflow_assignments,
             appro_statuses=state.appro_statuses,
             facturation_statuses=state.facturation_statuses,
@@ -176,22 +195,37 @@ class BackendService:
         self.store.write(state)
         return [DirectionDefinition(name=item) for item in state.directions]
 
-    def list_invoices(self) -> list[Invoice]:
-        return self._state_with_seed().invoices
+    def list_factures(self) -> list[Facture]:
+        return self._state_with_seed().factures
 
-    def get_invoice(self, invoice_id: str) -> Invoice:
+    def delete_facture(self, facture_id: str) -> list[Facture]:
         state = self._state_with_seed()
-        invoice = next((item for item in state.invoices if item.id == invoice_id), None)
-        if invoice is None:
+        facture = next((item for item in state.factures if item.id == facture_id), None)
+        if facture is None:
             raise HTTPException(status_code=404, detail="Facture introuvable.")
-        return invoice
 
-    def create_invoice(self, payload: InvoiceCreate) -> Invoice:
+        state.factures = [item for item in state.factures if item.id != facture_id]
+        for ticket in state.appro.tickets:
+            if ticket.linkedFactureId == facture_id:
+                ticket.linkedFactureId = ""
+                if ticket.statut == "Transférée en facturation":
+                    ticket.statut = "Initialisation"
+        self.store.write(state)
+        return state.factures
+
+    def get_facture(self, facture_id: str) -> Facture:
+        state = self._state_with_seed()
+        facture = next((item for item in state.factures if item.id == facture_id), None)
+        if facture is None:
+            raise HTTPException(status_code=404, detail="Facture introuvable.")
+        return facture
+
+    def create_facture(self, payload: FactureCreate) -> Facture:
         state = self._state_with_seed()
         reception_date = payload.dateReception or payload.echeance
         charge_account = payload.compteCharge or payload.centreCout
-        invoice = Invoice(
-            id=self._create_invoice_reference(state.invoices),
+        facture = Facture(
+            id=self._create_facture_reference(state.factures),
             fournisseur=payload.fournisseur,
             montant=payload.montant,
             devise=payload.devise,
@@ -206,38 +240,49 @@ class BackendService:
             dateReception=reception_date,
             modeReception=payload.modeReception,
             piecesJointes=payload.piecesJointes,
-            statut="En attente de vérification métier",
+            statut="Vérification métier",
             history=[
-                {
-                    "at": self._now_iso(),
-                    "actor": payload.actor,
-                    "role": payload.role,
-                    "action": "Demande soumise",
-                }
+                HistoryEntry(
+                    at=self._now_iso(),
+                    actor=payload.actor,
+                    role=payload.role,
+                    action="Demande soumise et étape de saisie validée automatiquement",
+                )
             ],
         )
-        state.invoices = [invoice, *state.invoices]
+        state.factures = [facture, *state.factures]
         self.store.write(state)
-        return invoice
+        return facture
 
-    def update_invoice_status(self, invoice_id: str, payload: InvoiceStatusUpdate) -> Invoice:
+    def update_facture_status(self, facture_id: str, payload: FactureStatusUpdate) -> Facture:
         state = self._state_with_seed()
-        invoice = next((item for item in state.invoices if item.id == invoice_id), None)
-        if invoice is None:
+        facture = next((item for item in state.factures if item.id == facture_id), None)
+        if facture is None:
             raise HTTPException(status_code=404, detail="Facture introuvable.")
 
-        invoice.statut = payload.next_status
-        invoice.history = [
-            {
-                "at": self._now_iso(),
-                "actor": payload.actor,
-                "role": payload.role,
-                "action": payload.action_label or f"Statut passe a {payload.next_status}",
-            },
-            *invoice.history,
+        comment_value = (payload.commentaire or "").strip()
+        attachments_value = [name for name in payload.piecesJointes if name]
+        detail_parts: list[str] = []
+        if comment_value:
+            detail_parts.append(f"Commentaire: {comment_value}")
+        if attachments_value:
+            detail_parts.append(f"Pièces jointes: {', '.join(attachments_value)}")
+
+        facture.statut = payload.next_status
+        facture.history = [
+            HistoryEntry(
+                at=self._now_iso(),
+                actor=payload.actor,
+                role=payload.role,
+                action=payload.action_label or f"Statut passe a {payload.next_status}",
+                detail=" | ".join(detail_parts) if detail_parts else None,
+                commentaire=comment_value,
+                piecesJointes=attachments_value,
+            ),
+            *facture.history,
         ]
         self.store.write(state)
-        return invoice
+        return facture
 
     def get_appro_state(self) -> ApproState:
         return self._state_with_seed().appro
@@ -323,7 +368,7 @@ class BackendService:
             commentaire=payload.commentaire,
             fichier_nom=payload.fichier_nom,
             statut="Initialisation",
-            linkedInvoiceId="",
+            linkedFactureId="",
             history=[
                 {
                     "id": self._event_id(),
@@ -336,6 +381,17 @@ class BackendService:
         state.appro.tickets = [ticket, *state.appro.tickets]
         self.store.write(state)
         return ticket
+
+    def delete_supply_ticket(self, ticket_id: str) -> ApproState:
+        state = self._state_with_seed()
+        ticket = self._find_ticket(state, ticket_id)
+
+        if ticket.linkedFactureId:
+            state.factures = [item for item in state.factures if item.id != ticket.linkedFactureId]
+
+        state.appro.tickets = [item for item in state.appro.tickets if item.id != ticket_id]
+        self.store.write(state)
+        return state.appro
 
     def verify_ticket_budget(self, ticket_id: str, actor: str = "Agent Approvisionnement") -> ApproState:
         state = self._state_with_seed()
@@ -369,7 +425,7 @@ class BackendService:
     def close_ticket(self, ticket_id: str, actor: str = "Agent Approvisionnement") -> ApproState:
         state = self._state_with_seed()
         ticket = self._find_ticket(state, ticket_id)
-        if ticket.statut == "Clôturée" or ticket.linkedInvoiceId:
+        if ticket.statut == "Clôturée" or ticket.linkedFactureId:
             return state.appro
 
         ticket.statut = "Clôturée"
@@ -510,7 +566,7 @@ class BackendService:
         if not normalized_step:
             raise HTTPException(status_code=400, detail="L'étape du workflow est obligatoire.")
 
-        all_valid_steps = state.appro_statuses + state.facturation_statuses + state.invoice_statuses
+        all_valid_steps = state.appro_statuses + state.facturation_statuses + state.facture_statuses
         if normalized_step not in all_valid_steps:
             raise HTTPException(status_code=400, detail="L'étape du workflow est inconnue.")
 
@@ -642,14 +698,14 @@ class BackendService:
             raise HTTPException(status_code=404, detail="Ticket introuvable.")
         return ticket
 
-    def _create_invoice_reference(self, invoices: list[Invoice]) -> str:
+    def _create_facture_reference(self, factures: list[Facture]) -> str:
         year = datetime.now(timezone.utc).year
         prefix = f"FAC-{year}-"
         max_sequence = 0
-        for invoice in invoices:
-            if not invoice.id.startswith(prefix):
+        for facture in factures:
+            if not facture.id.startswith(prefix):
                 continue
-            suffix = invoice.id.replace(prefix, "", 1)
+            suffix = facture.id.replace(prefix, "", 1)
             if suffix.isdigit():
                 max_sequence = max(max_sequence, int(suffix))
         return f"{prefix}{str(max_sequence + 1).zfill(3)}"

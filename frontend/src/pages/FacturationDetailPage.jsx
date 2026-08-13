@@ -10,24 +10,22 @@ import {
   Step,
   StepLabel,
   Stepper,
+  TextField,
   Typography,
 } from '@mui/material'
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useParams } from 'react-router-dom'
+import { useRoleContext } from '../app/roleContext.js'
+import HistoryTimeline from '../components/HistoryTimeline.jsx'
 import PageHeader from '../components/PageHeader.jsx'
+import { loadFacture, updateFactureStatus } from '../services/facturationStorage.js'
 import {
   formatAmount,
   formatDate,
   getAllowedTransitionsForRole,
-  getNextStatuses,
   getTransitionActionLabel,
-  roleLabels,
   statusColor,
-  userRoles,
 } from '../utils/facturationWorkflow.js'
-import HistoryTimeline from '../components/HistoryTimeline.jsx'
-import { useRoleContext } from '../app/roleContext.js'
-import { loadInvoices, updateInvoiceStatus } from '../services/facturationStorage.js'
 
 const roleActorMap = {
   administrateur: 'Administrateur ORFL',
@@ -37,35 +35,35 @@ const roleActorMap = {
 
 const linearStatuses = [
   'Saisie de la demande',
-  'En attente de vérification métier',
   'Vérification métier',
   'Validation N+1',
   'Traitement service approvisionnement',
   'Signature LAD 1',
   'Règlement en cours',
   'Paiement effectué',
-  'Terminé',
+  'Clôturée',
 ]
-
-const stepDescriptions = {
-  'Saisie de la demande': 'Demande saisie par un utilisateur.',
-  'En attente de vérification métier': 'Étape de saisie validée, en attente de vérification métier.',
-  'Vérification métier': 'Vérification de la conformité métier.',
-  'Validation N+1': 'Validation par le responsable hiérarchique.',
-  'Traitement service approvisionnement': 'Prise en charge par le service approvisionnement.',
-  'Signature LAD 1': 'Signature et validation LAD 1.',
-  'Règlement en cours': 'Règlement en cours de traitement.',
-  'Paiement effectué': 'Paiement effectué.',
-  'Terminé': 'Dossier clôturé.',
-}
 
 function getWorkflowStep(status) {
   if (status === 'Initialisation') {
-    return 1
+    return 0
+  }
+  if (status === "Demande d'informations complémentaire") {
+    return 2
+  }
+  if (status === 'Signature LAD 2' || status === 'Signature LAD 3') {
+    return 4
+  }
+  if (status === 'Rejetée' || status === 'Terminé') {
+    return 7
   }
 
   const idx = linearStatuses.indexOf(status)
   return idx === -1 ? 0 : idx
+}
+
+function getWorkflowStepIndex(status) {
+  return linearStatuses.indexOf(status)
 }
 
 function FacturationWorkflowStepper({ currentStatus }) {
@@ -74,17 +72,11 @@ function FacturationWorkflowStepper({ currentStatus }) {
   return (
     <Stack spacing={1.5}>
       <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
-        <Chip
-          label={currentStatus}
-          color={statusColor[currentStatus] || 'default'}
-        />
+        <Chip label={currentStatus} color={statusColor[currentStatus] || 'default'} />
       </Stack>
       <Stepper activeStep={activeStep} alternativeLabel>
         {linearStatuses.map((status, index) => (
-          <Step
-            key={status}
-            completed={index < activeStep}
-          >
+          <Step key={status} completed={index < activeStep}>
             <StepLabel>{status}</StepLabel>
           </Step>
         ))}
@@ -94,59 +86,96 @@ function FacturationWorkflowStepper({ currentStatus }) {
 }
 
 function FacturationDetailPage() {
-  const { invoiceId } = useParams()
-  const navigate = useNavigate()
-  const { activeRole, setActiveRole } = useRoleContext()
-  const [invoiceList, setInvoiceList] = useState([])
+  const { factureId } = useParams()
+  const location = useLocation()
+  const { activeRole } = useRoleContext()
+  const [facture, setFacture] = useState(() => location.state?.facture || null)
   const [apiError, setApiError] = useState('')
+  const [isLoading, setIsLoading] = useState(() => !location.state?.facture)
+  const [transitionForm, setTransitionForm] = useState({ commentaire: '', piecesJointes: [] })
+  const [isTransitionSubmitting, setIsTransitionSubmitting] = useState(false)
 
   useEffect(() => {
     let isMounted = true
 
-    async function fetchInvoices() {
+    async function fetchFactures() {
       try {
-        const data = await loadInvoices()
+        const data = await loadFacture(factureId)
         if (isMounted) {
-          setInvoiceList(data)
+          setFacture(data)
           setApiError('')
         }
       } catch (error) {
         if (isMounted) {
           setApiError(error.message || 'Impossible de charger la demande de facturation.')
         }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
     }
 
-    fetchInvoices()
+    fetchFactures()
 
     return () => {
       isMounted = false
     }
-  }, [invoiceId])
+  }, [factureId])
 
-  const invoice = useMemo(
-    () => invoiceList.find((entry) => entry.id === invoiceId),
-    [invoiceList, invoiceId],
-  )
+  const resetTransitionForm = () => {
+    setTransitionForm({ commentaire: '', piecesJointes: [] })
+  }
 
-  const handleTransition = async (nextStatus) => {
+  const handleTransition = async (nextStatus, metadata = {}) => {
     try {
-      const updatedInvoice = await updateInvoiceStatus(invoice.id, nextStatus, {
+      setIsTransitionSubmitting(true)
+      const updatedFacture = await updateFactureStatus(facture.id, nextStatus, {
         actor: roleActorMap[activeRole] || 'Systeme Workflow',
         role: activeRole,
         actionLabel: getTransitionActionLabel(nextStatus),
+        commentaire: metadata.commentaire || '',
+        piecesJointes: metadata.piecesJointes || [],
       })
 
-      setInvoiceList((prev) => prev.map((entry) => (entry.id === updatedInvoice.id ? updatedInvoice : entry)))
+      setFacture(updatedFacture)
       setApiError('')
+      resetTransitionForm()
     } catch (error) {
       setApiError(error.message || 'Impossible de mettre à jour le statut de la demande de facturation.')
+    } finally {
+      setIsTransitionSubmitting(false)
     }
   }
 
-  const allowedTransitions = getAllowedTransitionsForRole(invoice?.statut, activeRole)
+  const handleTransitionFileUpload = (event) => {
+    const files = Array.from(event.target.files || [])
+    setTransitionForm((prev) => ({
+      ...prev,
+      piecesJointes: files.map((file) => file.name),
+    }))
+  }
 
-  if (!invoice) {
+  const currentStepIndex = getWorkflowStepIndex(facture?.statut)
+  const canAddTransitionContext = currentStepIndex > 0 && currentStepIndex < linearStatuses.length - 1
+  const allowedTransitions = getAllowedTransitionsForRole(facture?.statut, activeRole)
+
+  if (isLoading) {
+    return (
+      <Stack spacing={2.5}>
+        <PageHeader title="Suivi de la facturation" subtitle="Chargement du dossier en cours..." />
+        <Card>
+          <CardContent>
+            <Typography variant="body2" color="text.secondary">
+              Chargement de la fiche détail...
+            </Typography>
+          </CardContent>
+        </Card>
+      </Stack>
+    )
+  }
+
+  if (!facture) {
     return (
       <Stack spacing={2.5}>
         <PageHeader
@@ -160,87 +189,157 @@ function FacturationDetailPage() {
 
   return (
     <Stack spacing={2.5}>
-      <PageHeader
-        title={`Suivi de la facturation - ${invoice.id}`}
-      />
+      <PageHeader title={facture.id || ''} />
 
       {apiError && <Alert severity="error">{apiError}</Alert>}
 
       <Card>
         <CardContent>
           <Stack spacing={1.5}>
-            <FacturationWorkflowStepper currentStatus={invoice.statut} />
+            <FacturationWorkflowStepper currentStatus={facture.statut} />
           </Stack>
         </CardContent>
       </Card>
 
       <Grid container spacing={2.5}>
         <Grid size={{ xs: 12, lg: 7 }}>
-          <Card>
-            <CardContent>
-              <Stack spacing={2}>
-                <Typography variant="h6">Détails de la demande</Typography>
-                <Divider />
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Référence
-                    </Typography>
-                    <Typography variant="body1">{invoice.id}</Typography>
+          <Stack spacing={2.5}>
+            <Card>
+              <CardContent>
+                <Stack
+                  spacing={2}
+                  sx={{
+                    '& .MuiInputLabel-root': {
+                      color: 'primary.main',
+                      fontWeight: 700,
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: 'primary.dark',
+                    },
+                    '& .MuiOutlinedInput-root fieldset': {
+                      borderColor: 'rgba(15, 23, 42, 0.28)',
+                    },
+                    '& .MuiOutlinedInput-root:hover fieldset': {
+                      borderColor: 'rgba(15, 23, 42, 0.45)',
+                    },
+                    '& .MuiOutlinedInput-root.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                    },
+                    '& .MuiOutlinedInput-root.Mui-error fieldset': {
+                      borderColor: 'primary.main',
+                    },
+                    '& .MuiOutlinedInput-root.Mui-disabled fieldset': {
+                      borderColor: 'primary.main',
+                      borderWidth: 1.5,
+                    },
+                    '& .MuiInputBase-input.Mui-disabled': {
+                      WebkitTextFillColor: '#0f172a',
+                      color: '#0f172a',
+                      fontWeight: 600,
+                    },
+                    '& .MuiInputBase-inputMultiline.Mui-disabled': {
+                      WebkitTextFillColor: '#0f172a',
+                      color: '#0f172a',
+                      fontWeight: 600,
+                    },
+                  }}
+                >
+                  <Typography variant="h6">Détails de la demande</Typography>
+                  <Divider />
+
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12 }}>
+                      <TextField fullWidth label="Référence" value={facture.id || '-'} disabled />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                      <TextField fullWidth label="Priorité" value={facture.priorite || '-'} disabled />
+                    </Grid>
+                    <Grid size={{ xs: 12 }}>
+                      <TextField fullWidth label="Direction" value={facture.direction || '-'} disabled />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField fullWidth label="Résumé" value={facture.resume || '-'} disabled />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField fullWidth multiline minRows={2} label="Description" value={facture.description || '-'} disabled />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField fullWidth label="Fournisseur" value={facture.fournisseur || '-'} disabled />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField fullWidth label="Référence de facturation" value={facture.numeroFacture || '-'} disabled />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <TextField fullWidth label="Montant de la demande" value={formatAmount(facture.montant, facture.devise)} disabled />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <TextField fullWidth label="Compte de charge" value={facture.compteCharge || '-'} disabled />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <TextField fullWidth label="Date de réception" value={formatDate(facture.dateReception)} disabled />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField fullWidth label="Mode de réception" value={facture.modeReception || '-'} disabled />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label="Pièces jointes"
+                        value={
+                          Array.isArray(facture.piecesJointes) && facture.piecesJointes.length > 0
+                            ? facture.piecesJointes.join(', ')
+                            : '-'
+                        }
+                        disabled
+                      />
+                    </Grid>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Fournisseur
-                    </Typography>
-                    <Typography variant="body1">{invoice.fournisseur}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Centre de coût
-                    </Typography>
-                    <Typography variant="body1">{invoice.centreCout}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Montant
-                    </Typography>
-                    <Typography variant="body1">{formatAmount(invoice.montant, invoice.devise)}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Échéance
-                    </Typography>
-                    <Typography variant="body1">{formatDate(invoice.echeance)}</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Statut
-                    </Typography>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Chip size="small" color={statusColor[invoice.statut] || 'default'} label={invoice.statut} />
-                    </Stack>
-                  </Grid>
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Description
-                    </Typography>
-                    <Typography variant="body1">{invoice.description}</Typography>
-                  </Grid>
-                </Grid>
-              </Stack>
-            </CardContent>
-          </Card>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            {canAddTransitionContext && (
+              <Card>
+                <CardContent>
+                  <Stack spacing={2}>
+                    <Typography variant="h6">Commentaire et pièces jointes</Typography>
+                    <Divider />
+                    <TextField
+                      fullWidth
+                      multiline
+                      minRows={4}
+                      label="Commentaire"
+                      value={transitionForm.commentaire}
+                      onChange={(event) => setTransitionForm((prev) => ({ ...prev, commentaire: event.target.value }))}
+                    />
+                    <Button variant="outlined" component="label" sx={{ alignSelf: 'flex-start' }}>
+                      Ajouter des pièces jointes
+                      <input hidden type="file" multiple onChange={handleTransitionFileUpload} />
+                    </Button>
+                    {transitionForm.piecesJointes.length > 0 && (
+                      <Typography variant="caption" color="text.secondary">
+                        Fichiers sélectionnés: {transitionForm.piecesJointes.join(', ')}
+                      </Typography>
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
+            )}
+          </Stack>
         </Grid>
+
         <Grid size={{ xs: 12, lg: 5 }}>
           <Card>
             <CardContent>
               <Stack spacing={1}>
                 <Typography variant="h6">Historique et dates</Typography>
                 <Divider />
-                <HistoryTimeline
-                  entries={invoice.history || []}
-                  dotColor={statusColor[invoice.statut] || 'primary'}
-                />
+                <HistoryTimeline entries={facture.history || []} dotColor={statusColor[facture.statut] || 'primary'} />
               </Stack>
             </CardContent>
           </Card>
@@ -251,14 +350,15 @@ function FacturationDetailPage() {
         <CardContent>
           <Stack spacing={1.5}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="space-between">
-              <Typography variant="h6">Actions disponibles</Typography>
+              <Typography variant="h6">Actions</Typography>
             </Stack>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               {allowedTransitions.map((transition) => (
                 <Button
                   key={transition.to}
                   variant="contained"
-                  onClick={() => handleTransition(transition.to)}
+                  onClick={() => handleTransition(transition.to, transitionForm)}
+                  disabled={isTransitionSubmitting}
                   sx={{
                     bgcolor: 'common.black',
                     color: 'common.white',
