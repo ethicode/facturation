@@ -88,34 +88,92 @@ function normalizeText(value) {
 
 export function getVisibleFacturationStatuses(currentStatus, history = []) {
   const normalizedCurrentStatus = normalizeFacturationStatus(currentStatus)
-  const visibleStatuses = new Set(mainFacturationStatuses)
-  const conditionalKeywords = {
-    [infoRequestStatuses.validation]: ['demander des informations complémentaires (validation métier n+1)'],
-    [infoRequestStatuses.appro]: ['demander des informations complémentaires (traitement service approvisionnement)'],
-    [infoRequestStatuses.signature]: ['demander des informations complémentaires (signature lad 1)'],
-    'Signature LAD 2': ['signature lad 2'],
-    'Signature LAD 3': ['signature lad 3'],
-  }
+  const normalizedEntries = (history || [])
+    .map((entry) => normalizeText([entry?.action, entry?.detail, entry?.commentaire].filter(Boolean).join(' ')))
 
-  const historyText = (history || [])
-    .map((entry) => [entry?.action, entry?.detail, entry?.commentaire].filter(Boolean).join(' '))
-    .join(' ')
+  const includesInfoRequest = (text) =>
+    text.includes('demander des informations complementaires')
+    || text.includes('demande d information complementaire')
+    || text.includes('demande d informations complementaire')
 
-  for (const [step, keywords] of Object.entries(conditionalKeywords)) {
-    const haystack = normalizeText(historyText)
-    const stepText = normalizeText(step)
-    const match = [stepText, ...keywords.map((keyword) => normalizeText(keyword))].some((needle) => haystack.includes(needle))
+  const hasInfoRequestFromContext = (contextMarker) =>
+    normalizedEntries.some((text) => includesInfoRequest(text) && text.includes(contextMarker))
 
-    if (match) {
-      visibleStatuses.add(step)
+  const hasValidationInfoRequest =
+    normalizedCurrentStatus === infoRequestStatuses.validation
+    || normalizedEntries.some((text) => text.includes(normalizeText(infoRequestStatuses.validation)))
+    || hasInfoRequestFromContext('validation metier n+1')
+
+  const hasApproInfoRequest =
+    normalizedCurrentStatus === infoRequestStatuses.appro
+    || normalizedEntries.some((text) => text.includes(normalizeText(infoRequestStatuses.appro)))
+    || hasInfoRequestFromContext('traitement service approvisionnement')
+
+  const hasSignatureInfoRequest =
+    normalizedCurrentStatus === infoRequestStatuses.signature
+    || normalizedEntries.some((text) => text.includes(normalizeText(infoRequestStatuses.signature)))
+    || hasInfoRequestFromContext('signature lad 1')
+
+  const hasSignatureLad2 =
+    normalizedCurrentStatus === 'Signature LAD 2'
+    || normalizedEntries.some((text) => text.includes('signature lad 2'))
+
+  const hasSignatureLad3 =
+    normalizedCurrentStatus === 'Signature LAD 3'
+    || normalizedEntries.some((text) => text.includes('signature lad 3'))
+
+  const hasRejected =
+    normalizedCurrentStatus === 'Rejetée'
+    || normalizedEntries.some((text) => text.includes('rejete') || text.includes('rejetee'))
+
+  const orderedStatuses = [
+    'Saisie de la demande',
+    'Vérification métier',
+    'Validation métier N+1',
+    infoRequestStatuses.validation,
+    'Traitement service approvisionnement',
+    infoRequestStatuses.appro,
+    'Signature LAD 1',
+    infoRequestStatuses.signature,
+    'Signature LAD 2',
+    'Signature LAD 3',
+    'Règlement en cours',
+    'Paiement effectué',
+    'Rejetée',
+    'Clôturée',
+  ]
+
+  return orderedStatuses.filter((status) => {
+    if (mainFacturationStatuses.includes(status)) {
+      return true
     }
-  }
 
-  if (conditionalFacturationStatuses.includes(normalizedCurrentStatus)) {
-    visibleStatuses.add(normalizedCurrentStatus)
-  }
+    if (status === infoRequestStatuses.validation) {
+      return hasValidationInfoRequest
+    }
 
-  return Array.from(visibleStatuses)
+    if (status === infoRequestStatuses.appro) {
+      return hasApproInfoRequest
+    }
+
+    if (status === infoRequestStatuses.signature) {
+      return hasSignatureInfoRequest
+    }
+
+    if (status === 'Signature LAD 2') {
+      return hasSignatureLad2
+    }
+
+    if (status === 'Signature LAD 3') {
+      return hasSignatureLad3
+    }
+
+    if (status === 'Rejetée') {
+      return hasRejected
+    }
+
+    return false
+  })
 }
 
 const facturationTransitions = {
