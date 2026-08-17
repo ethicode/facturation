@@ -8,6 +8,9 @@ import {
   Divider,
   FormControlLabel,
   Grid,
+  MenuItem,
+  MenuList,
+  Paper,
   Radio,
   RadioGroup,
   Stack,
@@ -125,6 +128,32 @@ function getSelectedStepActionLabel(step, fallbackAction) {
   return step || fallbackAction || '-'
 }
 
+function renderCommentWithMentions(comment) {
+  const parts = (comment || '').split(/(@[a-zA-Z0-9._-]+)/g)
+
+  return parts.map((part, index) => {
+    if (/^@[a-zA-Z0-9._-]+$/.test(part)) {
+      return (
+        <Typography
+          key={`${part}-${index}`}
+          component="span"
+          sx={{
+            color: 'primary.main',
+            fontWeight: 700,
+            px: 0.5,
+            borderRadius: 0.75,
+            bgcolor: 'action.hover',
+          }}
+        >
+          {part}
+        </Typography>
+      )
+    }
+
+    return <span key={`${part}-${index}`}>{part}</span>
+  })
+}
+
 function FacturationWorkflowStepper({ currentStatus, selectedStep, onStepClick, history = [] }) {
   const visibleStatuses = getVisibleFacturationStatuses(currentStatus, history)
   const normalizedCurrentStatus = normalizeFacturationStatus(currentStatus)
@@ -167,7 +196,10 @@ function FacturationDetailPage() {
   const [isTransitionSubmitting, setIsTransitionSubmitting] = useState(false)
   const [selectedTransition, setSelectedTransition] = useState(null)
   const [selectedTimelineStep, setSelectedTimelineStep] = useState('')
+  const [commentInput, setCommentInput] = useState('')
+  const [isCommentSubmitting, setIsCommentSubmitting] = useState(false)
   const [adminUsers, setAdminUsers] = useState([])
+  const [mentionUsers, setMentionUsers] = useState([])
   const [workflowAssignments, setWorkflowAssignments] = useState([])
   const [showAssigneePicker, setShowAssigneePicker] = useState(false)
   const [currentAuthUserId, setCurrentAuthUserId] = useState('')
@@ -262,6 +294,8 @@ function FacturationDetailPage() {
   const currentStepIndex = getWorkflowStepIndex(facture?.statut)
   const canAddTransitionContext = currentStepIndex > 0 && currentStepIndex < linearStatuses.length - 1
   const allowedTransitions = getAllowedTransitionsForRole(facture?.statut, activeRole)
+  const commentHistory = (facture?.history || []).filter((entry) => (entry?.commentaire || '').trim().length > 0)
+  const orderedCommentHistory = [...commentHistory].reverse()
   const selectedStepHistory = (facture?.history || []).filter((entry) => matchesSelectedStep(entry, selectedTimelineStep))
   const selectedStepResolution = selectedStepHistory[0] || null
   const isSelectedStepValidated = Boolean(selectedStepResolution?.actor)
@@ -275,6 +309,19 @@ function FacturationDetailPage() {
     Boolean(selectedTimelineStep) &&
     selectedTimelineStep === facture?.statut &&
     !isSelectedStepValidated
+
+  const mentionMatch = commentInput.match(/(^|\s)@([a-zA-Z0-9._-]*)$/)
+  const mentionQuery = mentionMatch ? mentionMatch[2].toLowerCase() : ''
+  const mentionSuggestions = mentionMatch && mentionQuery.length >= 1
+    ? mentionUsers
+      .filter((user) => {
+        const username = (user.username || '').toLowerCase()
+        const fullName = (user.name || user.full_name || '').toLowerCase()
+        const email = (user.email || '').toLowerCase()
+        return username.startsWith(mentionQuery) || fullName.startsWith(mentionQuery) || email.startsWith(mentionQuery)
+      })
+      .slice(0, 6)
+    : []
 
   useEffect(() => {
     if (!allowedTransitions.length) {
@@ -334,6 +381,30 @@ function FacturationDetailPage() {
   }, [activeRole])
 
   useEffect(() => {
+    let isMounted = true
+
+    async function fetchMentionUsers() {
+      try {
+        const users = await loadAdminUsers()
+        if (!isMounted) {
+          return
+        }
+        setMentionUsers(users.filter((user) => user.isActive))
+      } catch {
+        if (isMounted) {
+          setMentionUsers([])
+        }
+      }
+    }
+
+    fetchMentionUsers()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  useEffect(() => {
     setShowAssigneePicker(false)
   }, [selectedTimelineStep, selectedAssigneeId])
 
@@ -382,6 +453,57 @@ function FacturationDetailPage() {
     }
   }
 
+  const getCommentSourceStep = (entry) => {
+    const actionText = entry?.action || ''
+    const marker = 'Commentaire ajouté depuis '
+
+    if (actionText.startsWith(marker)) {
+      return actionText.slice(marker.length).trim() || '-'
+    }
+
+    return '-'
+  }
+
+  const handleAddComment = async () => {
+    const commentValue = commentInput.trim()
+    if (!facture?.id || !commentValue) {
+      return
+    }
+
+    try {
+      setIsCommentSubmitting(true)
+      setApiError('')
+
+      const currentUser = getStoredAuth()?.user || {}
+      const sourceStep = getFacturationStepLabel(facture.statut)
+      const updatedFacture = await updateFactureStatus(facture.id, facture.statut, {
+        actor: roleActorMap[activeRole] || 'Systeme Workflow',
+        email: currentUser.email || '',
+        role: activeRole,
+        actionLabel: `Commentaire ajouté depuis ${sourceStep}`,
+        commentaire: commentValue,
+        piecesJointes: [],
+      })
+
+      setFacture(updatedFacture)
+      setCommentInput('')
+    } catch (error) {
+      setApiError(error.message || 'Impossible d ajouter le commentaire.')
+    } finally {
+      setIsCommentSubmitting(false)
+    }
+  }
+
+  const insertMention = (user) => {
+    if (!user) {
+      return
+    }
+
+    const mentionValue = `@${user.username || user.email || user.id}`
+    const updated = commentInput.replace(/(^|\s)@[a-zA-Z0-9._-]*$/, `$1${mentionValue} `)
+    setCommentInput(updated)
+  }
+
   if (isLoading) {
     return (
       <Stack spacing={2.5}>
@@ -428,71 +550,53 @@ function FacturationDetailPage() {
               <CardContent>
                 <Stack spacing={1}>
                   <Typography variant="subtitle2">Détail étape sélectionnée</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Étape: {getFacturationStepLabel(selectedTimelineStep) || '-'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Affecté à:{' '}
-                    {selectedAssignee
-                      ? selectedAssignee.email || selectedAssignee.name || selectedAssignee.username
-                      : '-'}
-                  </Typography>
-                  {canEditSelectedStepAssignee && (
-                    <>
-                      {!showAssigneePicker ? (
-                        <Stack direction="row" spacing={2} alignItems="center">
-                          <Typography
-                            variant="body2"
-                            onClick={() => setShowAssigneePicker(true)}
-                            sx={{ color: 'primary.main', cursor: 'pointer', width: 'fit-content', textDecoration: 'underline' }}
-                          >
-                            {selectedAssignee ? 'Changer l affectation' : 'Affecter à un utilisateur'}
-                          </Typography>
-                          {selectedAssignee && (
-                            <Typography
-                              variant="body2"
-                              onClick={handleRemoveAssignment}
-                              sx={{ color: 'error.main', cursor: 'pointer', width: 'fit-content', textDecoration: 'underline' }}
-                            >
-                              Supprimer l affectation
-                            </Typography>
-                          )}
-                        </Stack>
-                      ) : (
-                        <Autocomplete
-                          size="small"
-                          options={adminUsers}
-                          value={selectedAssignee}
-                          getOptionLabel={(option) => option.name || option.email || option.username || option.id}
-                          isOptionEqualToValue={(option, value) => option.id === value.id}
-                          onChange={(_, value) => handleAssignUser(value)}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Rechercher un utilisateur"
-                              placeholder="Nom ou email"
-                            />
-                          )}
+                  {!isSelectedStepValidated && (
+                    <Typography variant="body2" color="text.secondary">
+                      Affecté à:{' '}
+                      {selectedAssignee
+                        ? selectedAssignee.email || selectedAssignee.name || selectedAssignee.username
+                        : (
+                          canEditSelectedStepAssignee
+                            ? (
+                              <Typography
+                                component="span"
+                                variant="body2"
+                                onClick={() => setShowAssigneePicker(true)}
+                                sx={{ color: 'primary.main', cursor: 'pointer', textDecoration: 'underline' }}
+                              >
+                                à sélectionner un utilisateur
+                              </Typography>
+                            )
+                            : '-'
+                        )}
+                    </Typography>
+                  )}
+                  {canEditSelectedStepAssignee && showAssigneePicker && (
+                    <Autocomplete
+                      size="small"
+                      options={adminUsers}
+                      value={selectedAssignee}
+                      getOptionLabel={(option) => option.name || option.email || option.username || option.id}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      onChange={(_, value) => handleAssignUser(value)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Rechercher un utilisateur"
+                          placeholder="Nom ou email"
+                          autoFocus
                         />
                       )}
-                    </>
+                    />
                   )}
-                  {selectedStepHistory.length > 0 ? (
-                    <>
-                      <Typography variant="body2" color="text.secondary">
-                        Dernière action: {getSelectedStepActionLabel(selectedTimelineStep, selectedStepHistory[0]?.action)}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Résolu par: {selectedStepHistory[0]?.email || selectedStepHistory[0]?.actor || '-'}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Date de validation: {selectedStepHistory[0]?.at ? formatDateTime(selectedStepHistory[0].at) : '-'}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Pièces jointes: {Array.isArray(selectedStepHistory[0]?.piecesJointes) && selectedStepHistory[0].piecesJointes.length > 0 ? selectedStepHistory[0].piecesJointes.join(', ') : '-'}
-                      </Typography>
-                    </>
-                  ) : null}
+                  {isSelectedStepValidated && (
+                    <Typography variant="body2" color="text.secondary">
+                      Résolu par: {selectedStepHistory[0]?.email || selectedStepHistory[0]?.actor || '-'}
+                    </Typography>
+                  )}
+                  <Typography variant="body2" color="text.secondary">
+                    Date de validation: {selectedStepHistory[0]?.at ? formatDateTime(selectedStepHistory[0].at) : '-'}
+                  </Typography>
                 </Stack>
               </CardContent>
             </Card>
@@ -638,15 +742,80 @@ function FacturationDetailPage() {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 5 }}>
-          <Card>
-            <CardContent>
-              <Stack spacing={1}>
-                <Typography variant="h6">Historique des tâches</Typography>
-                <Divider />
-                <HistoryTimeline entries={facture?.history || []} dotColor={statusColor[facture.statut] || 'primary'} />
-              </Stack>
-            </CardContent>
-          </Card>
+          <Stack spacing={2.5}>
+            <Card>
+              <CardContent>
+                <Stack spacing={1}>
+                  <Typography variant="h6">Historique des tâches</Typography>
+                  <Divider />
+                  <HistoryTimeline entries={facture?.history || []} dotColor={statusColor[facture.statut] || 'primary'} />
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent>
+                <Stack spacing={1.5}>
+                  <Typography variant="h6">Historique commentaires</Typography>
+                  <Divider />
+                  {commentHistory.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary">
+                      Aucun commentaire enregistré.
+                    </Typography>
+                  ) : (
+                    <Stack spacing={1}>
+                      {orderedCommentHistory.map((entry, index) => (
+                        <Stack key={`${entry.at}-${index}`} spacing={0.5}>
+                          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {entry.email || entry.actor || '-'}
+                            </Typography>
+                            <Chip size="small" variant="outlined" label={getFacturationStepLabel(getCommentSourceStep(entry))} />
+                          </Stack>
+                          <Typography variant="body2" color="text.secondary">
+                            {renderCommentWithMentions(entry.commentaire)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatDateTime(entry.at)}
+                          </Typography>
+                          {index < orderedCommentHistory.length - 1 && <Divider sx={{ pt: 0.5 }} />}
+                        </Stack>
+                      ))}
+                    </Stack>
+                  )}
+
+                  <TextField
+                    fullWidth
+                    multiline
+                    minRows={3}
+                    label="Commentaire"
+                    value={commentInput}
+                    onChange={(event) => setCommentInput(event.target.value)}
+                    placeholder="Saisir un commentaire"
+                  />
+                  {mentionMatch && mentionSuggestions.length > 0 && (
+                    <Paper variant="outlined" sx={{ maxHeight: 180, overflowY: 'auto' }}>
+                      <MenuList dense>
+                        {mentionSuggestions.map((user) => (
+                          <MenuItem key={user.id} onClick={() => insertMention(user)}>
+                            {`@${user.username || user.email || user.id}`}
+                          </MenuItem>
+                        ))}
+                      </MenuList>
+                    </Paper>
+                  )}
+                  <Button
+                    variant="contained"
+                    onClick={handleAddComment}
+                    disabled={isCommentSubmitting || !commentInput.trim()}
+                    sx={{ alignSelf: 'flex-start' }}
+                  >
+                    Ajouter commentaire
+                  </Button>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Stack>
         </Grid>
       </Grid>
 
