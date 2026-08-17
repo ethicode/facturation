@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from .auth import hash_password
 
 USER_PASSWORDS = {
@@ -12,6 +14,7 @@ USER_PASSWORDS = {
 
 
 def build_users() -> list[dict]:
+    now_iso = datetime.now(timezone.utc).isoformat()
     return [
         {
             "id": "USR-001",
@@ -21,6 +24,9 @@ def build_users() -> list[dict]:
             "role": "administrateur",
             "password_hash": hash_password(USER_PASSWORDS["admin"]),
             "is_active": True,
+            "status": "active",
+            "created_at": now_iso,
+            "updated_at": now_iso,
         },
         {
             "id": "USR-002",
@@ -30,6 +36,9 @@ def build_users() -> list[dict]:
             "role": "utilisateur",
             "password_hash": hash_password(USER_PASSWORDS["comptable"]),
             "is_active": True,
+            "status": "active",
+            "created_at": now_iso,
+            "updated_at": now_iso,
         },
         {
             "id": "USR-003",
@@ -39,6 +48,9 @@ def build_users() -> list[dict]:
             "role": "utilisateur",
             "password_hash": hash_password(USER_PASSWORDS["lad1"]),
             "is_active": True,
+            "status": "active",
+            "created_at": now_iso,
+            "updated_at": now_iso,
         },
         {
             "id": "USR-004",
@@ -48,6 +60,9 @@ def build_users() -> list[dict]:
             "role": "utilisateur",
             "password_hash": hash_password(USER_PASSWORDS["lad2"]),
             "is_active": True,
+            "status": "active",
+            "created_at": now_iso,
+            "updated_at": now_iso,
         },
         {
             "id": "USR-005",
@@ -57,6 +72,9 @@ def build_users() -> list[dict]:
             "role": "manageur",
             "password_hash": hash_password(USER_PASSWORDS["lad3"]),
             "is_active": True,
+            "status": "active",
+            "created_at": now_iso,
+            "updated_at": now_iso,
         },
         {
             "id": "USR-006",
@@ -66,6 +84,9 @@ def build_users() -> list[dict]:
             "role": "manageur",
             "password_hash": hash_password(USER_PASSWORDS["tresorerie"]),
             "is_active": True,
+            "status": "active",
+            "created_at": now_iso,
+            "updated_at": now_iso,
         },
         {
             "id": "USR-007",
@@ -75,6 +96,9 @@ def build_users() -> list[dict]:
             "role": "manageur",
             "password_hash": hash_password(USER_PASSWORDS["dirfin"]),
             "is_active": True,
+            "status": "active",
+            "created_at": now_iso,
+            "updated_at": now_iso,
         },
     ]
 
@@ -177,7 +201,7 @@ SEED_DATA = {
         "Saisie de la demande",
         "Vérification métier",
         "Validation N+1",
-        "Demande d'informations complémentaire",
+        "Demande d'information complémentaire",
         "Traitement service approvisionnement",
         "Signature LAD 1",
         "Signature LAD 2",
@@ -191,7 +215,7 @@ SEED_DATA = {
         "Saisie de la demande",
         "Vérification métier",
         "Validation N+1",
-        "Demande d'informations complémentaire",
+        "Demande d'information complémentaire",
         "Traitement service approvisionnement",
         "Signature LAD 1",
         "Signature LAD 2",

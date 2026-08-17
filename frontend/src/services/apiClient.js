@@ -16,6 +16,12 @@ async function parseResponse(response) {
   const payload = isJson ? await response.json() : await response.text()
 
   if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem(AUTH_STORAGE_KEY)
+      window.location.replace('/login')
+      return null
+    }
+
     const message =
       (isJson && typeof payload?.detail === 'string' && payload.detail) ||
       (typeof payload === 'string' && payload) ||

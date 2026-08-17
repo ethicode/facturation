@@ -37,6 +37,7 @@ import {
 } from '../services/approStorage.js'
 import { loadWorkflowDirections } from '../services/workflowService.js'
 import { formatAmount } from '../utils/facturationWorkflow.js'
+import { isAdminRole } from '../utils/roles.js'
 
 const emptyBudgetForm = {
   direction: '',
@@ -88,7 +89,7 @@ function DirfinPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [actionError, setActionError] = useState('')
 
-  const canEdit = activeRole === 'manageur' || activeRole === 'administrateur'
+  const canEdit = activeRole === 'manageur' || isAdminRole(activeRole)
 
   useEffect(() => {
     let isMounted = true

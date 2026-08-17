@@ -40,9 +40,9 @@ function HistoryTimeline({
                 <Chip size="small" label={roleLabels[entry.role] || entry.role} variant="outlined" />
               )}
             </Stack>
-            {entry.actor && (
+            {(entry.email || entry.actor) && (
               <Typography variant="caption" color="text.secondary">
-                {entry.actor}
+                {entry.email || entry.actor}
               </Typography>
             )}
             {entry.detail && (

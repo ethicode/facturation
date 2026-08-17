@@ -52,6 +52,7 @@ export async function deleteFacture(factureId) {
 export async function updateFactureStatus(factureId, nextStatus, metadata = {}) {
   const {
     actor = 'Systeme Workflow',
+    email = '',
     role = 'utilisateur',
     actionLabel = `Statut passe a ${nextStatus}`,
     commentaire = '',
@@ -63,6 +64,7 @@ export async function updateFactureStatus(factureId, nextStatus, metadata = {}) 
     body: JSON.stringify({
       next_status: nextStatus,
       actor,
+      email,
       role,
       action_label: actionLabel,
       commentaire,

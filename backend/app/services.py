@@ -29,6 +29,7 @@ from .schemas import (
     UserCreateRequest,
     UserUpdateRequest,
     WorkflowMetadata,
+    WorkflowTask,
     WorkflowStepAssignment,
 )
 from .seed_data import SEED_DATA
@@ -45,7 +46,7 @@ class BackendService:
             "Saisie de la demande",
             "Vérification métier",
             "Validation N+1",
-            "Demande d'informations complémentaire",
+            "Demande d'information complémentaire",
             "Traitement service approvisionnement",
             "Signature LAD 1",
             "Signature LAD 2",
@@ -56,12 +57,24 @@ class BackendService:
             "Clôturée",
         ]
 
-        normalized = [status for status in statuses if status and status != "En attente de vérification métier"]
+        normalized = []
+        for status in statuses or []:
+            if not status or status == "En attente de vérification métier":
+                continue
+            if status == "Demande d'informations complémentaire":
+                normalized.append("Demande d'information complémentaire")
+            elif status in {"Validation LAD 2", "Signature LAD 2"}:
+                normalized.append("Signature LAD 2")
+            elif status in {"Validation LAD 3", "Signature LAD 3"}:
+                normalized.append("Signature LAD 3")
+            else:
+                normalized.append(status)
+
         for status in canonical_statuses:
             if status not in normalized:
                 normalized.append(status)
 
-        return normalized
+        return list(dict.fromkeys(normalized))
 
     def _state_with_seed(self) -> AppState:
         state = self.store.read()
@@ -86,6 +99,21 @@ class BackendService:
                 state.users.append(seed_user)
                 existing_usernames.add(seed_user.username.lower())
 
+        users_touched = False
+        for user in state.users:
+            if not user.email:
+                user.email = f"{user.username}@local.invalid"
+                users_touched = True
+            if not user.created_at:
+                user.created_at = self._now_iso()
+                users_touched = True
+            if not user.updated_at:
+                user.updated_at = user.created_at
+                users_touched = True
+            if not user.status:
+                user.status = "active" if user.is_active else "inactive"
+                users_touched = True
+
         if not state.directions:
             state.directions = seed_state.directions or [line.direction for line in state.appro.budgets]
 
@@ -109,6 +137,12 @@ class BackendService:
                 facture.statut = "Vérification métier"
             if facture.statut == "Terminé":
                 facture.statut = "Clôturée"
+            if facture.statut == "Demande d'informations complémentaire":
+                facture.statut = "Demande d'information complémentaire"
+            if facture.statut == "Validation LAD 2":
+                facture.statut = "Signature LAD 2"
+            if facture.statut == "Validation LAD 3":
+                facture.statut = "Signature LAD 3"
 
         self.store.write(state)
         return state
@@ -137,6 +171,72 @@ class BackendService:
             appro_statuses=state.appro_statuses,
             facturation_statuses=state.facturation_statuses,
         )
+
+    def list_workflow_tasks(self) -> list[WorkflowTask]:
+        state = self._state_with_seed()
+        user_lookup = {
+            user.id: (user.full_name or user.username)
+            for user in state.users
+        }
+        assignment_lookup = {
+            f"{assignment.workflow_type}:{assignment.step}": assignment
+            for assignment in state.workflow_assignments
+        }
+
+        tasks: list[WorkflowTask] = []
+
+        for facture in state.factures:
+            history = list(facture.history or [])
+            latest = history[0] if history else None
+            assignment = assignment_lookup.get(f"facturation:{facture.statut}")
+            assigned_users = [
+                user_lookup[user_id]
+                for user_id in (assignment.user_ids if assignment else [])
+                if user_id in user_lookup
+            ]
+            pieces_jointes = self._collect_attachments(history, facture.piecesJointes)
+
+            tasks.append(
+                WorkflowTask(
+                    id=f"facturation:{facture.id}",
+                    workflow_type="facturation",
+                    reference=facture.id,
+                    step=facture.statut,
+                    resolved_by=latest.actor if latest else "",
+                    resolved_at=latest.at if latest else "",
+                    assigned_users=assigned_users,
+                    pieces_jointes=pieces_jointes,
+                    history=history,
+                )
+            )
+
+        for ticket in state.appro.tickets:
+            history = list(ticket.history or [])
+            latest = history[0] if history else None
+            assignment = assignment_lookup.get(f"appro:{ticket.statut}")
+            assigned_users = [
+                user_lookup[user_id]
+                for user_id in (assignment.user_ids if assignment else [])
+                if user_id in user_lookup
+            ]
+            pieces_jointes = self._collect_attachments(history, [ticket.fichier_nom])
+
+            tasks.append(
+                WorkflowTask(
+                    id=f"approvisionnement:{ticket.id}",
+                    workflow_type="approvisionnement",
+                    reference=ticket.id,
+                    step=ticket.statut,
+                    resolved_by=latest.actor if latest else "",
+                    resolved_at=latest.at if latest else "",
+                    assigned_users=assigned_users,
+                    pieces_jointes=pieces_jointes,
+                    history=history,
+                )
+            )
+
+        tasks.sort(key=lambda task: task.resolved_at or "", reverse=True)
+        return tasks
 
     def list_directions(self) -> list[DirectionDefinition]:
         state = self._state_with_seed()
@@ -245,6 +345,7 @@ class BackendService:
                 HistoryEntry(
                     at=self._now_iso(),
                     actor=payload.actor,
+                    email=getattr(payload, 'email', None),
                     role=payload.role,
                     action="Demande soumise et étape de saisie validée automatiquement",
                 )
@@ -268,13 +369,21 @@ class BackendService:
         if attachments_value:
             detail_parts.append(f"Pièces jointes: {', '.join(attachments_value)}")
 
-        facture.statut = payload.next_status
+        next_status = payload.next_status
+        if next_status == "Paiement effectué":
+            facture.statut = "Clôturée"
+            action_label = payload.action_label or "Paiement effectué - clôture automatique"
+        else:
+            facture.statut = next_status
+            action_label = payload.action_label or f"Statut passe a {next_status}"
+
         facture.history = [
             HistoryEntry(
                 at=self._now_iso(),
                 actor=payload.actor,
+                email=getattr(payload, 'email', None),
                 role=payload.role,
-                action=payload.action_label or f"Statut passe a {payload.next_status}",
+                action=action_label,
                 detail=" | ".join(detail_parts) if detail_parts else None,
                 commentaire=comment_value,
                 piecesJointes=attachments_value,
@@ -447,18 +556,14 @@ class BackendService:
         if user is None or not user.is_active or not verify_password(payload.password, user.password_hash):
             raise HTTPException(status_code=401, detail="Identifiants invalides.")
 
+        user.last_login_at = self._now_iso()
+        user.updated_at = user.last_login_at
+        self.store.write(state)
+
         token = create_token(subject=user.id, username=user.username, role=user.role)
         return TokenResponse(
             access_token=token,
-            user=AuthUserSummary(
-                id=user.id,
-                username=user.username,
-                full_name=user.full_name,
-                email=user.email,
-                role=user.role,
-                roles=user.roles,
-                is_active=user.is_active,
-            ),
+            user=self._to_auth_user_summary(user),
         )
 
     def get_current_user(self, token: str) -> AuthUserSummary:
@@ -472,30 +577,11 @@ class BackendService:
         if user is None or not user.is_active:
             raise HTTPException(status_code=401, detail="Utilisateur introuvable.")
 
-        return AuthUserSummary(
-            id=user.id,
-            username=user.username,
-            full_name=user.full_name,
-            email=user.email,
-            role=user.role,
-            roles=user.roles,
-            is_active=user.is_active,
-        )
+        return self._to_auth_user_summary(user)
 
     def list_users(self) -> list[AuthUserSummary]:
         state = self._state_with_seed()
-        return [
-            AuthUserSummary(
-                id=user.id,
-                username=user.username,
-                full_name=user.full_name,
-                email=user.email,
-                role=user.role,
-                roles=user.roles,
-                is_active=user.is_active,
-            )
-            for user in state.users
-        ]
+        return [self._to_auth_user_summary(user) for user in state.users]
 
     def list_roles(self) -> list[RoleDefinition]:
         state = self._state_with_seed()
@@ -611,6 +697,15 @@ class BackendService:
         role: str,
         email: str | None = None,
         roles: list[str] | None = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
+        employee_id: str | None = None,
+        department: str | None = None,
+        job_title: str | None = None,
+        phone_number: str | None = None,
+        manager_id: str | None = None,
+        locale: str = "fr-FR",
+        timezone: str = "Africa/Dakar",
     ) -> AuthUserSummary:
         state = self._state_with_seed()
         normalized_username = username.strip().lower()
@@ -618,32 +713,53 @@ class BackendService:
         if existing is not None:
             raise HTTPException(status_code=409, detail="Cet identifiant existe déjà.")
 
+        normalized_email = (email or "").strip().lower()
+        if not normalized_email:
+            raise HTTPException(status_code=400, detail="L'email est obligatoire.")
+        if any((existing_user.email or "").lower() == normalized_email for existing_user in state.users):
+            raise HTTPException(status_code=409, detail="Cet email existe déjà.")
+
         normalized_roles = list(dict.fromkeys([*(roles or []), role]))
         invalid_roles = [item for item in normalized_roles if item not in state.user_roles]
         if invalid_roles:
             raise HTTPException(status_code=400, detail="Un ou plusieurs rôles ne sont pas connus du backend.")
 
+        now_iso = self._now_iso()
+        derived_first_name, derived_last_name = self._derive_names(
+            full_name=full_name,
+            first_name=first_name,
+            last_name=last_name,
+        )
+
+        if manager_id and not any(existing_user.id == manager_id for existing_user in state.users):
+            raise HTTPException(status_code=400, detail="Le manager sélectionné est introuvable.")
+
         user = User(
             id=self._create_user_id(state.users),
             username=normalized_username,
             full_name=full_name.strip(),
-            email=email.strip().lower() if email else None,
+            first_name=derived_first_name,
+            last_name=derived_last_name,
+            email=normalized_email,
+            employee_id=(employee_id or "").strip() or None,
+            department=(department or "").strip() or None,
+            job_title=(job_title or "").strip() or None,
+            phone_number=(phone_number or "").strip() or None,
+            manager_id=manager_id,
+            locale=(locale or "fr-FR").strip() or "fr-FR",
+            timezone=(timezone or "Africa/Dakar").strip() or "Africa/Dakar",
             role=normalized_roles[0],
             roles=normalized_roles,
             password_hash=hash_password(password),
             is_active=True,
+            status="active",
+            created_at=now_iso,
+            updated_at=now_iso,
+            last_login_at=None,
         )
         state.users = [user, *state.users]
         self.store.write(state)
-        return AuthUserSummary(
-            id=user.id,
-            username=user.username,
-            full_name=user.full_name,
-            email=user.email,
-            role=user.role,
-            roles=user.roles,
-            is_active=user.is_active,
-        )
+        return self._to_auth_user_summary(user)
 
     def update_user(self, user_id: str, payload: UserUpdateRequest) -> AuthUserSummary:
         state = self._state_with_seed()
@@ -658,22 +774,45 @@ class BackendService:
         if user.username.lower() == "admin" and not payload.is_active:
             raise HTTPException(status_code=400, detail="L'administrateur principal doit rester actif.")
 
+        normalized_email = (payload.email or "").strip().lower()
+        if not normalized_email:
+            raise HTTPException(status_code=400, detail="L'email est obligatoire.")
+        if any(
+            existing_user.id != user.id and (existing_user.email or "").lower() == normalized_email
+            for existing_user in state.users
+        ):
+            raise HTTPException(status_code=409, detail="Cet email existe déjà.")
+
+        if payload.manager_id and payload.manager_id == user.id:
+            raise HTTPException(status_code=400, detail="Un utilisateur ne peut pas être son propre manager.")
+        if payload.manager_id and not any(existing_user.id == payload.manager_id for existing_user in state.users):
+            raise HTTPException(status_code=400, detail="Le manager sélectionné est introuvable.")
+
+        derived_first_name, derived_last_name = self._derive_names(
+            full_name=payload.full_name,
+            first_name=payload.first_name,
+            last_name=payload.last_name,
+        )
+
         user.full_name = payload.full_name.strip()
-        user.email = payload.email.strip().lower() if payload.email else None
+        user.first_name = derived_first_name
+        user.last_name = derived_last_name
+        user.email = normalized_email
+        user.employee_id = (payload.employee_id or "").strip() or None
+        user.department = (payload.department or "").strip() or None
+        user.job_title = (payload.job_title or "").strip() or None
+        user.phone_number = (payload.phone_number or "").strip() or None
+        user.manager_id = payload.manager_id
+        user.locale = (payload.locale or "fr-FR").strip() or "fr-FR"
+        user.timezone = (payload.timezone or "Africa/Dakar").strip() or "Africa/Dakar"
         user.role = payload.role
         user.roles = payload.roles
         user.is_active = payload.is_active
+        user.status = payload.status or ("active" if payload.is_active else "inactive")
+        user.updated_at = self._now_iso()
 
         self.store.write(state)
-        return AuthUserSummary(
-            id=user.id,
-            username=user.username,
-            full_name=user.full_name,
-            email=user.email,
-            role=user.role,
-            roles=user.roles,
-            is_active=user.is_active,
-        )
+        return self._to_auth_user_summary(user)
 
     def create_user(self, username: str, password: str, full_name: str, role: str, email: str | None = None) -> AuthUserSummary:
         return self.create_user_record(username=username, password=password, full_name=full_name, role=role, email=email, roles=[role])
@@ -720,6 +859,46 @@ class BackendService:
                 max_sequence = max(max_sequence, int(suffix))
         return f"USR-{str(max_sequence + 1).zfill(3)}"
 
+    def _to_auth_user_summary(self, user: User) -> AuthUserSummary:
+        return AuthUserSummary(
+            id=user.id,
+            username=user.username,
+            full_name=user.full_name,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
+            employee_id=user.employee_id,
+            department=user.department,
+            job_title=user.job_title,
+            phone_number=user.phone_number,
+            locale=user.locale,
+            timezone=user.timezone,
+            role=user.role,
+            roles=user.roles,
+            is_active=user.is_active,
+            status=user.status,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+            last_login_at=user.last_login_at,
+        )
+
+    def _derive_names(self, full_name: str, first_name: str | None = None, last_name: str | None = None) -> tuple[str | None, str | None]:
+        normalized_full_name = (full_name or "").strip()
+        normalized_first_name = (first_name or "").strip() or None
+        normalized_last_name = (last_name or "").strip() or None
+
+        if normalized_first_name and normalized_last_name:
+            return normalized_first_name, normalized_last_name
+
+        if normalized_full_name:
+            parts = normalized_full_name.split()
+            if not normalized_first_name and parts:
+                normalized_first_name = parts[0]
+            if not normalized_last_name and len(parts) > 1:
+                normalized_last_name = " ".join(parts[1:])
+
+        return normalized_first_name, normalized_last_name
+
     def _create_ticket_reference(self, tickets: list[SupplyTicket]) -> str:
         year = datetime.now(timezone.utc).year
         prefix = f"TCK-{year}-"
@@ -744,6 +923,27 @@ class BackendService:
     def _event_id(self) -> str:
         stamp = int(datetime.now(timezone.utc).timestamp() * 1000)
         return f"{stamp}-{randint(1000, 9999)}"
+
+    def _collect_attachments(self, history: list[HistoryEntry], extra_files: list[str] | None = None) -> list[str]:
+        files: list[str] = []
+        seen: set[str] = set()
+
+        for name in (extra_files or []):
+            normalized = (name or "").strip()
+            if not normalized or normalized in seen:
+                continue
+            seen.add(normalized)
+            files.append(normalized)
+
+        for entry in history:
+            for name in entry.piecesJointes:
+                normalized = (name or "").strip()
+                if not normalized or normalized in seen:
+                    continue
+                seen.add(normalized)
+                files.append(normalized)
+
+        return files
 
     def _now_iso(self) -> str:
         return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")

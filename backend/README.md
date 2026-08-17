@@ -34,4 +34,4 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `POST /api/appro/tickets/{ticket_id}/transfer`
 - `POST /api/appro/tickets/{ticket_id}/close`
 
-Les donnees sont initialisees depuis un seed local puis persistees dans `data/db.json`.
+Les donnees sont initialisees depuis un seed local puis persistees dans `data/app.sqlite3`.

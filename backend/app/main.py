@@ -25,6 +25,7 @@ from .schemas import (
     UserUpdateRequest,
     WorkflowMetadata,
     WorkflowStepAssignment,
+    WorkflowTask,
 )
 from .services import BackendService
 
@@ -120,7 +121,23 @@ def list_admin_users(user: AuthUserSummary = Depends(require_admin)) -> list[Aut
 
 @app.post("/api/admin/users", response_model=AuthUserSummary, tags=["Administration"])
 def create_admin_user(payload: UserCreateRequest, user: AuthUserSummary = Depends(require_admin)) -> AuthUserSummary:
-    return service.create_user_record(payload.username, payload.password, payload.full_name, payload.role, payload.email, payload.roles)
+    return service.create_user_record(
+        username=payload.username,
+        password=payload.password,
+        full_name=payload.full_name,
+        role=payload.role,
+        email=payload.email,
+        roles=payload.roles,
+        first_name=payload.first_name,
+        last_name=payload.last_name,
+        employee_id=payload.employee_id,
+        department=payload.department,
+        job_title=payload.job_title,
+        phone_number=payload.phone_number,
+        manager_id=payload.manager_id,
+        locale=payload.locale,
+        timezone=payload.timezone,
+    )
 
 
 @app.put("/api/admin/users/{user_id}", response_model=AuthUserSummary, tags=["Administration"])
@@ -176,6 +193,11 @@ def delete_workflow_assignment(step: str, workflow_type: str = Query(default="fa
 @app.get("/api/meta/workflow", response_model=WorkflowMetadata, tags=["Workflow"])
 def get_workflow(user: AuthUserSummary = Depends(get_current_user)) -> WorkflowMetadata:
     return service.get_workflow_metadata()
+
+
+@app.get("/api/workflow/tasks", response_model=list[WorkflowTask], tags=["Workflow"])
+def get_workflow_tasks(user: AuthUserSummary = Depends(get_current_user)) -> list[WorkflowTask]:
+    return service.list_workflow_tasks()
 
 
 @app.get("/api/factures", response_model=list[Facture], tags=["Factures"])

@@ -7,6 +7,7 @@ class HistoryEntry(BaseModel):
     id: str | None = None
     at: str
     actor: str
+    email: str | None = None
     action: str
     role: str | None = None
     detail: str | None = None
@@ -56,6 +57,7 @@ class FactureCreate(BaseModel):
 class FactureStatusUpdate(BaseModel):
     next_status: str
     actor: str = "Systeme Workflow"
+    email: str | None = None
     role: str = "utilisateur"
     action_label: str | None = None
     commentaire: str = ""
@@ -73,14 +75,43 @@ class User(BaseModel):
     id: str
     username: str
     full_name: str
-    email: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str
+    employee_id: str | None = None
+    department: str | None = None
+    job_title: str | None = None
+    phone_number: str | None = None
+    manager_id: str | None = None
+    locale: str = "fr-FR"
+    timezone: str = "Africa/Dakar"
     role: str
     roles: list[str] = Field(default_factory=list)
     password_hash: str
     is_active: bool = True
+    status: Literal["active", "inactive", "suspended", "locked"] = "active"
+    created_at: str
+    updated_at: str
+    last_login_at: str | None = None
 
     @model_validator(mode="after")
     def normalize_roles(self):
+        self.username = self.username.strip().lower()
+        self.full_name = self.full_name.strip()
+        if self.email:
+            self.email = self.email.strip().lower()
+
+        if not self.full_name and (self.first_name or self.last_name):
+            full_name_parts = [part for part in [self.first_name, self.last_name] if part]
+            self.full_name = " ".join(full_name_parts).strip()
+
+        if self.full_name and (not self.first_name or not self.last_name):
+            name_parts = self.full_name.split()
+            if not self.first_name and name_parts:
+                self.first_name = name_parts[0]
+            if not self.last_name and len(name_parts) > 1:
+                self.last_name = " ".join(name_parts[1:])
+
         normalized_roles = [role for role in self.roles if role]
         if not normalized_roles and self.role:
             normalized_roles = [self.role]
@@ -89,6 +120,12 @@ class User(BaseModel):
         if normalized_roles:
             self.role = normalized_roles[0]
         self.roles = list(dict.fromkeys(normalized_roles))
+
+        if self.status != "active":
+            self.is_active = False
+        elif not self.is_active:
+            self.status = "inactive"
+
         return self
 
 
@@ -96,13 +133,41 @@ class AuthUserSummary(BaseModel):
     id: str
     username: str
     full_name: str
-    email: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str
+    employee_id: str | None = None
+    department: str | None = None
+    job_title: str | None = None
+    phone_number: str | None = None
+    locale: str = "fr-FR"
+    timezone: str = "Africa/Dakar"
     role: str
     roles: list[str] = Field(default_factory=list)
     is_active: bool = True
+    status: Literal["active", "inactive", "suspended", "locked"] = "active"
+    created_at: str
+    updated_at: str
+    last_login_at: str | None = None
 
     @model_validator(mode="after")
     def normalize_roles(self):
+        self.username = self.username.strip().lower()
+        self.full_name = self.full_name.strip()
+        if self.email:
+            self.email = self.email.strip().lower()
+
+        if not self.full_name and (self.first_name or self.last_name):
+            full_name_parts = [part for part in [self.first_name, self.last_name] if part]
+            self.full_name = " ".join(full_name_parts).strip()
+
+        if self.full_name and (not self.first_name or not self.last_name):
+            name_parts = self.full_name.split()
+            if not self.first_name and name_parts:
+                self.first_name = name_parts[0]
+            if not self.last_name and len(name_parts) > 1:
+                self.last_name = " ".join(name_parts[1:])
+
         normalized_roles = [role for role in self.roles if role]
         if not normalized_roles and self.role:
             normalized_roles = [self.role]
@@ -111,6 +176,12 @@ class AuthUserSummary(BaseModel):
         if normalized_roles:
             self.role = normalized_roles[0]
         self.roles = list(dict.fromkeys(normalized_roles))
+
+        if self.status != "active":
+            self.is_active = False
+        elif not self.is_active:
+            self.status = "inactive"
+
         return self
 
 
@@ -142,9 +213,18 @@ class UserCreateRequest(BaseModel):
     username: str
     password: str
     full_name: str
+    first_name: str | None = None
+    last_name: str | None = None
+    employee_id: str | None = None
+    department: str | None = None
+    job_title: str | None = None
+    phone_number: str | None = None
+    manager_id: str | None = None
+    locale: str = "fr-FR"
+    timezone: str = "Africa/Dakar"
     role: str
     roles: list[str] = Field(default_factory=list)
-    email: str | None = None
+    email: str
 
     @model_validator(mode="after")
     def normalize_roles(self):
@@ -161,10 +241,20 @@ class UserCreateRequest(BaseModel):
 
 class UserUpdateRequest(BaseModel):
     full_name: str
+    first_name: str | None = None
+    last_name: str | None = None
+    employee_id: str | None = None
+    department: str | None = None
+    job_title: str | None = None
+    phone_number: str | None = None
+    manager_id: str | None = None
+    locale: str = "fr-FR"
+    timezone: str = "Africa/Dakar"
     role: str
     roles: list[str] = Field(default_factory=list)
-    email: str | None = None
+    email: str
     is_active: bool = True
+    status: Literal["active", "inactive", "suspended", "locked"] | None = None
 
     @model_validator(mode="after")
     def normalize_roles(self):
@@ -176,6 +266,12 @@ class UserUpdateRequest(BaseModel):
         if normalized_roles:
             self.role = normalized_roles[0]
         self.roles = list(dict.fromkeys(normalized_roles))
+
+        if self.status is None:
+            self.status = "active" if self.is_active else "inactive"
+        if self.status != "active":
+            self.is_active = False
+
         return self
 
 
@@ -269,6 +365,18 @@ class TraceEvent(BaseModel):
     date: str
     action: str
     actor: str
+
+
+class WorkflowTask(BaseModel):
+    id: str
+    workflow_type: str
+    reference: str
+    step: str
+    resolved_by: str = ""
+    resolved_at: str = ""
+    assigned_users: list[str] = Field(default_factory=list)
+    pieces_jointes: list[str] = Field(default_factory=list)
+    history: list[HistoryEntry] = Field(default_factory=list)
 
 
 class BudgetOverview(BaseModel):

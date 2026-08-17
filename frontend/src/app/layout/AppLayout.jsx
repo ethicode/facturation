@@ -4,6 +4,7 @@ import { Box, Drawer } from '@mui/material'
 import HeaderBar from './HeaderBar.jsx'
 import SidebarNav from './SidebarNav.jsx'
 import RoleContext from '../roleContext.js'
+import { normalizeRole } from '../../utils/roles.js'
 
 const drawerWidth = 280
 const mobileHeaderHeight = 56
@@ -17,7 +18,7 @@ function AppLayout() {
     }
 
     const auth = JSON.parse(localStorage.getItem('facturation.auth') || 'null')
-    return auth?.user?.role || 'utilisateur'
+    return normalizeRole(auth?.user?.role)
   })
 
   const handleOpen = () => {

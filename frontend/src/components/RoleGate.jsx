@@ -1,7 +1,10 @@
 import { Alert, Box } from '@mui/material'
+import { normalizeRole } from '../utils/roles.js'
 
 function RoleGate({ role, allowedRoles = ['manageur', 'administrateur'], children, fallback }) {
-  const isAllowed = allowedRoles.includes(role)
+  const normalizedRole = normalizeRole(role)
+  const normalizedAllowedRoles = allowedRoles.map((allowedRole) => normalizeRole(allowedRole))
+  const isAllowed = normalizedAllowedRoles.includes(normalizedRole)
 
   if (!isAllowed) {
     return fallback || (

@@ -5,15 +5,18 @@ import PlaylistAddOutlinedIcon from '@mui/icons-material/PlaylistAddOutlined'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import {
   Alert,
+  Autocomplete,
   Button,
   Card,
   CardContent,
+  Checkbox,
   Chip,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
+  ListItemText,
   MenuItem,
   Paper,
   Stack,
@@ -51,6 +54,7 @@ import {
   updateWorkflowAssignment,
 } from '../services/adminService.js'
 import { approStatuses, facturationStatuses } from '../utils/facturationWorkflow.js'
+import { isAdminRole } from '../utils/roles.js'
 
 const tabKeys = ['directions', 'utilisateurs', 'workflows', 'roles']
 
@@ -91,7 +95,7 @@ function AdminSettingsPage() {
   const [assignmentModal, setAssignmentModal] = useState({ open: false, step: '', workflowType: 'facturation' })
   const [workflowEditorModal, setWorkflowEditorModal] = useState({ open: false, step: '', userIds: [], workflowType: 'facturation' })
 
-  const isAdmin = currentUserRole === 'admin' || currentUserRole === 'administrateur'
+  const isAdmin = isAdminRole(currentUserRole)
 
   const handleAdminError = (prefix, error) => {
     const message = error?.message || 'Erreur inconnue'
@@ -282,14 +286,18 @@ function AdminSettingsPage() {
         roles: newUserRoles,
         email,
       })
-      const updatedAssignments = new Map(workflowAssignments.map((assignment) => [assignment.step, assignment]))
+      const updatedAssignments = new Map(workflowAssignments.map((assignment) => [`${assignment.workflowType}:${assignment.step}`, assignment]))
       for (const step of newUserWorkflowSteps) {
-        const currentAssignment = updatedAssignments.get(step)
+        const hasAppro = approStatuses.includes(step)
+        const hasFacturation = facturationStatuses.includes(step)
+        const workflowType = hasAppro && !hasFacturation ? 'appro' : 'facturation'
+        const key = `${workflowType}:${step}`
+        const currentAssignment = updatedAssignments.get(key)
         const nextUserIds = Array.from(new Set([...(currentAssignment?.userIds || []), createdUser.id]))
         const nextAssignment = currentAssignment
-          ? await updateWorkflowAssignment(step, nextUserIds)
-          : await saveWorkflowAssignment(step, nextUserIds)
-        updatedAssignments.set(step, nextAssignment)
+          ? await updateWorkflowAssignment(step, nextUserIds, workflowType)
+          : await saveWorkflowAssignment(step, nextUserIds, workflowType)
+        updatedAssignments.set(key, nextAssignment)
       }
       setUsers((prev) => [...prev, createdUser])
       setUserDrafts((prev) => ({
@@ -386,7 +394,7 @@ function AdminSettingsPage() {
           if (nextUserIds.length === assignment.userIds.length) {
             return assignment
           }
-          return updateWorkflowAssignment(assignment.step, nextUserIds)
+          return updateWorkflowAssignment(assignment.step, nextUserIds, assignment.workflowType)
         })
       )
       setUsers((prev) => prev.filter((user) => user.id !== id))
@@ -828,7 +836,6 @@ function AdminSettingsPage() {
                     <TableHead>
                       <TableRow>
                         <TableCell>Étape</TableCell>
-                        <TableCell>Utilisateurs assignés</TableCell>
                         <TableCell align="right">Actions</TableCell>
                       </TableRow>
                     </TableHead>
@@ -845,17 +852,6 @@ function AdminSettingsPage() {
                           >
                             <TableCell>
                               <Typography variant="body2" sx={{ fontWeight: 600 }}>{step}</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                                {assignedUserIds.length > 0 ? (
-                                  assignedUserIds.map((userId) => (
-                                    <Chip key={userId} size="small" label={userLookup[userId]?.email || userId} />
-                                  ))
-                                ) : (
-                                  <Typography variant="caption" color="text.secondary">Aucun utilisateur assigné</Typography>
-                                )}
-                              </Stack>
                             </TableCell>
                             <TableCell align="right">
                               <TableActionMenu
@@ -887,7 +883,6 @@ function AdminSettingsPage() {
                     <TableHead>
                       <TableRow>
                         <TableCell>Étape</TableCell>
-                        <TableCell>Utilisateurs assignés</TableCell>
                         <TableCell align="right">Actions</TableCell>
                       </TableRow>
                     </TableHead>
@@ -904,17 +899,6 @@ function AdminSettingsPage() {
                           >
                             <TableCell>
                               <Typography variant="body2" sx={{ fontWeight: 600 }}>{step}</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                                {assignedUserIds.length > 0 ? (
-                                  assignedUserIds.map((userId) => (
-                                    <Chip key={userId} size="small" label={userLookup[userId]?.email || userId} />
-                                  ))
-                                ) : (
-                                  <Typography variant="caption" color="text.secondary">Aucun utilisateur assigné</Typography>
-                                )}
-                              </Stack>
                             </TableCell>
                             <TableCell align="right">
                               <TableActionMenu
@@ -1175,31 +1159,34 @@ function AdminSettingsPage() {
                 <Typography variant="body2" color="text.secondary">
                   Étape sélectionnée: {workflowEditorModal.step}
                 </Typography>
-                <TextField
-                  select
-                  label="Utilisateurs"
-                  value={workflowEditorModal.userIds}
-                  onChange={(event) => {
-                    const value = event.target.value
+                <Autocomplete
+                  multiple
+                  disableCloseOnSelect
+                  options={users}
+                  value={users.filter((user) => workflowEditorModal.userIds.includes(user.id))}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  getOptionLabel={(option) => option.email || option.username || option.id}
+                  onChange={(_, selectedUsers) => {
                     setWorkflowEditorModal((prev) => ({
                       ...prev,
-                      userIds: typeof value === 'string' ? value.split(',') : value,
+                      userIds: selectedUsers.map((user) => user.id),
                     }))
                   }}
-                  SelectProps={{
-                    multiple: true,
-                    renderValue: (selected) =>
-                      selected
-                        .map((userId) => userLookup[userId]?.email || userId)
-                        .join(', '),
-                  }}
-                >
-                  {users.map((user) => (
-                    <MenuItem key={user.id} value={user.id}>
-                      {user.email || user.id}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props} key={option.id}>
+                      <Checkbox size="small" checked={selected} />
+                      <ListItemText primary={option.email || option.id} secondary={option.name || option.username} />
+                    </li>
+                  )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Utilisateurs"
+                      placeholder="Rechercher un utilisateur"
+                      helperText="Tape pour filtrer, puis coche un ou plusieurs utilisateurs"
+                    />
+                  )}
+                />
               </Stack>
             </DialogContent>
             <DialogActions>

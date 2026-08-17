@@ -4,6 +4,10 @@ import {
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Grid,
   Stack,
   Table,
@@ -27,6 +31,7 @@ const missionColor = {
 function MissionsPage() {
   const [missions, setMissions] = useState([])
   const [apiError, setApiError] = useState('')
+  const [selectedMission, setSelectedMission] = useState(null)
 
   useEffect(() => {
     let isMounted = true
@@ -83,7 +88,7 @@ function MissionsPage() {
                   </TableHead>
                   <TableBody>
                     {missions.map((mission) => (
-                      <TableRow key={mission.code} hover>
+                      <TableRow key={mission.code} hover onClick={() => setSelectedMission(mission)} sx={{ cursor: 'pointer' }}>
                         <TableCell>{mission.code}</TableCell>
                         <TableCell>{mission.collaborateur}</TableCell>
                         <TableCell>{mission.destination}</TableCell>
@@ -119,6 +124,24 @@ function MissionsPage() {
           </Card>
         </Grid>
       </Grid>
+
+      <Dialog open={Boolean(selectedMission)} onClose={() => setSelectedMission(null)} fullWidth maxWidth="sm">
+        <DialogTitle>Détail tâche mission</DialogTitle>
+        <DialogContent>
+          {selectedMission && (
+            <Stack spacing={1.5} sx={{ mt: 1 }}>
+              <Typography variant="body2"><strong>Code:</strong> {selectedMission.code}</Typography>
+              <Typography variant="body2"><strong>Collaborateur:</strong> {selectedMission.collaborateur}</Typography>
+              <Typography variant="body2"><strong>Destination:</strong> {selectedMission.destination}</Typography>
+              <Typography variant="body2"><strong>Frais:</strong> {selectedMission.frais}</Typography>
+              <Typography variant="body2"><strong>Statut:</strong> {selectedMission.statut}</Typography>
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSelectedMission(null)}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   )
 }

@@ -1,4 +1,5 @@
 from copy import deepcopy
+import sqlite3
 
 from app.schemas import AppState
 from app.seed_data import SEED_DATA
@@ -18,4 +19,7 @@ def test_read_recovers_when_main_json_is_temporarily_empty(tmp_path):
     recovered = store.read()
 
     assert recovered.users
-    assert path.read_text(encoding='utf-8').strip()
+    with sqlite3.connect(path) as connection:
+        payload = connection.execute("SELECT payload FROM app_state WHERE id = ?", ('state',)).fetchone()
+
+    assert payload and payload[0]

@@ -1,6 +1,105 @@
 {
   "factures": [
     {
+      "id": "FAC-2026-449",
+      "fournisseur": "iiiiiiiiiiiiiiiiiiiii",
+      "montant": 11222.0,
+      "devise": "XAF",
+      "centreCout": "00999999999",
+      "description": "kkkkkkkkkkkkkkkkkkkkkkkkkkk",
+      "echeance": "2026-08-21",
+      "priorite": "Moyenne",
+      "direction": "Direction Generale",
+      "resume": "test",
+      "numeroFacture": "jjjjjjjjjjjjjjjjjj",
+      "compteCharge": "00999999999",
+      "dateReception": "2026-08-21",
+      "modeReception": "Depot physique",
+      "piecesJointes": [
+        "1.png"
+      ],
+      "statut": "Clôturée",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-14T16:23:02.666840Z",
+          "actor": "Administrateur ORFL",
+          "email": "admin@sgsn.fr",
+          "action": "Clôturer la demande",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-14T16:22:59.870702Z",
+          "actor": "Administrateur ORFL",
+          "email": "admin@sgsn.fr",
+          "action": "Confirmer le paiement (OK)",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-14T16:22:43.796073Z",
+          "actor": "Administrateur ORFL",
+          "email": "admin@sgsn.fr",
+          "action": "Passer directement au règlement",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-14T16:22:08.955564Z",
+          "actor": "Administrateur ORFL",
+          "email": "admin@sgsn.fr",
+          "action": "Traitement validé (OK)",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-14T16:20:59.394369Z",
+          "actor": "Administrateur ORFL",
+          "email": "admin@sgsn.fr",
+          "action": "Valider N+1 (OK)",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-14T16:03:29.271858Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Valider la vérification métier",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-14T15:48:31.152545Z",
+          "actor": "Utilisateur ORFL",
+          "email": null,
+          "action": "Demande soumise et étape de saisie validée automatiquement",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        }
+      ]
+    },
+    {
       "id": "FAC-2026-448",
       "fournisseur": "huu",
       "montant": 977878.0,
@@ -16,23 +115,40 @@
       "dateReception": "2026-09-04",
       "modeReception": "Courrier",
       "piecesJointes": [],
-      "statut": "Validation N+1",
+      "statut": "Traitement service approvisionnement",
       "history": [
+        {
+          "id": null,
+          "at": "2026-08-14T16:23:24.122291Z",
+          "actor": "Administrateur ORFL",
+          "email": "admin@sgsn.fr",
+          "action": "Valider N+1 (OK)",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
         {
           "id": null,
           "at": "2026-08-12T14:38:04.842131Z",
           "actor": "Administrateur ORFL",
+          "email": null,
           "action": "Valider la vérification métier",
           "role": "administrateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-12T12:40:29.175597Z",
           "actor": "Utilisateur ORFL",
+          "email": null,
           "action": "Demande soumise et étape de saisie validée automatiquement",
           "role": "utilisateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         }
       ]
     },
@@ -58,9 +174,12 @@
           "id": null,
           "at": "2026-08-12T12:26:32.553670Z",
           "actor": "Utilisateur test",
+          "email": null,
           "action": "Demande soumise et étape de saisie validée automatiquement",
           "role": "utilisateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         }
       ]
     },
@@ -80,15 +199,51 @@
       "dateReception": "2026-08-12",
       "modeReception": "Email",
       "piecesJointes": [],
-      "statut": "Saisie de la demande",
+      "statut": "Traitement service approvisionnement",
       "history": [
+        {
+          "id": null,
+          "at": "2026-08-13T18:30:55.766206Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Valider N+1 (OK)",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-13T18:30:50.409846Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Valider la vérification métier",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-13T18:28:25.961591Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Soumettre pour vérification métier",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
         {
           "id": null,
           "at": "2026-08-12T12:19:07.293708Z",
           "actor": "Utilisateur test",
+          "email": null,
           "action": "Demande soumise",
           "role": "utilisateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         }
       ]
     },
@@ -114,33 +269,45 @@
           "id": null,
           "at": "2026-08-12T12:50:52.247277Z",
           "actor": "Administrateur ORFL",
+          "email": null,
           "action": "Valider N+1 (OK)",
           "role": "administrateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-12T12:50:18.336019Z",
           "actor": "Administrateur ORFL",
+          "email": null,
           "action": "Valider la vérification métier",
           "role": "administrateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-12T12:47:44.741955Z",
           "actor": "Administrateur ORFL",
+          "email": null,
           "action": "Soumettre pour vérification métier",
           "role": "administrateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-12T12:17:12.959627Z",
           "actor": "Utilisateur ORFL",
+          "email": null,
           "action": "Demande soumise",
           "role": "utilisateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         }
       ]
     },
@@ -166,17 +333,23 @@
           "id": null,
           "at": "2026-08-12T11:26:44.884016Z",
           "actor": "Utilisateur ORFL",
+          "email": null,
           "action": "Soumettre pour vérification métier",
           "role": "utilisateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-12T11:00:33.243312Z",
           "actor": "Utilisateur ORFL",
+          "email": null,
           "action": "Demande soumise",
           "role": "utilisateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         }
       ]
     },
@@ -204,73 +377,100 @@
           "id": null,
           "at": "2026-08-11T16:49:35.439525Z",
           "actor": "Administrateur ORFL",
+          "email": null,
           "action": "Terminer",
           "role": "administrateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-11T16:49:19.497181Z",
           "actor": "Administrateur ORFL",
+          "email": null,
           "action": "Confirmer paiement",
           "role": "administrateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-11T16:49:13.103873Z",
           "actor": "Administrateur ORFL",
+          "email": null,
           "action": "Signer LAD 1",
           "role": "administrateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-11T16:49:06.837046Z",
           "actor": "Administrateur ORFL",
+          "email": null,
           "action": "Transmettre pour signature",
           "role": "administrateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-11T16:48:54.871549Z",
           "actor": "Administrateur ORFL",
+          "email": null,
           "action": "Valider N+1",
           "role": "administrateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-11T16:48:49.877343Z",
           "actor": "Administrateur ORFL",
+          "email": null,
           "action": "Valider vérification métier",
           "role": "administrateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-11T16:07:20.995404Z",
           "actor": "Administrateur ORFL",
+          "email": null,
           "action": "Démarrer la vérification métier",
           "role": "administrateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-11T16:07:09.481871Z",
           "actor": "Administrateur ORFL",
+          "email": null,
           "action": "Soumettre pour vérification",
           "role": "administrateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-11T15:25:14.671234Z",
           "actor": "Utilisateur ORFL",
+          "email": null,
           "action": "Facture creee",
           "role": "utilisateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         }
       ]
     },
@@ -296,33 +496,45 @@
           "id": null,
           "at": "2026-08-05T09:02:00.000Z",
           "actor": "M. Fall",
+          "email": null,
           "action": "Facture creee",
           "role": "utilisateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-05T10:21:00.000Z",
           "actor": "M. Fall",
+          "email": null,
           "action": "Soumise pour prise en charge",
           "role": "utilisateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-05T11:00:00.000Z",
           "actor": "A. Ndiaye",
+          "email": null,
           "action": "Prise en charge LAD 1",
           "role": "manageur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-05T14:30:00.000Z",
           "actor": "A. Ndiaye",
+          "email": null,
           "action": "Validation LAD 1 accordee",
           "role": "manageur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         }
       ]
     },
@@ -348,33 +560,45 @@
           "id": null,
           "at": "2026-08-04T08:41:00.000Z",
           "actor": "A. Ndiaye",
+          "email": null,
           "action": "Facture creee",
           "role": "utilisateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-04T09:26:00.000Z",
           "actor": "A. Ndiaye",
+          "email": null,
           "action": "Soumise pour prise en charge",
           "role": "utilisateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-04T11:03:00.000Z",
           "actor": "S. Mbaye",
+          "email": null,
           "action": "Validation LAD 1 accordee",
           "role": "manageur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-04T13:20:00.000Z",
           "actor": "K. Diop",
+          "email": null,
           "action": "Validation LAD 2 accordee",
           "role": "manageur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         }
       ]
     },
@@ -400,17 +624,23 @@
           "id": null,
           "at": "2026-08-03T13:10:00.000Z",
           "actor": "K. Diop",
+          "email": null,
           "action": "Facture creee",
           "role": "utilisateur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         },
         {
           "id": null,
           "at": "2026-08-03T16:15:00.000Z",
           "actor": "S. Mbaye",
+          "email": null,
           "action": "Facture bloquee - piece justificative manquante",
           "role": "manageur",
-          "detail": null
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
         }
       ]
     }
@@ -462,17 +692,23 @@
             "id": null,
             "at": "2026-08-05T14:22:00.000Z",
             "actor": "Demandeur Commercial",
+            "email": null,
             "action": "Ticket cree en approvisionnement",
             "role": null,
-            "detail": null
+            "detail": null,
+            "commentaire": "",
+            "piecesJointes": []
           },
           {
             "id": null,
             "at": "2026-08-05T15:01:00.000Z",
             "actor": "Agent Approvisionnement",
+            "email": null,
             "action": "Ticket pris en charge - traitement en cours",
             "role": null,
-            "detail": null
+            "detail": null,
+            "commentaire": "",
+            "piecesJointes": []
           }
         ]
       },
@@ -501,17 +737,23 @@
             "id": null,
             "at": "2026-08-05T09:40:00.000Z",
             "actor": "Demandeur Support",
+            "email": null,
             "action": "Ticket cree en approvisionnement",
             "role": null,
-            "detail": null
+            "detail": null,
+            "commentaire": "",
+            "piecesJointes": []
           },
           {
             "id": null,
             "at": "2026-08-05T10:18:00.000Z",
             "actor": "Agent Approvisionnement",
+            "email": null,
             "action": "Budget insuffisant - en attente de prise en charge",
             "role": null,
-            "detail": null
+            "detail": null,
+            "commentaire": "",
+            "piecesJointes": []
           }
         ]
       }
@@ -641,6 +883,127 @@
     {
       "step": "Validation LAD 1",
       "user_ids": [],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "Saisie de la demande",
+      "user_ids": [
+        "USR-007",
+        "USR-000",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "workflow_type": "appro"
+    },
+    {
+      "step": "Signature LAD 3",
+      "user_ids": [
+        "USR-007",
+        "USR-000",
+        "USR-001"
+      ],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "En attente de prise en charge",
+      "user_ids": [
+        "USR-007",
+        "USR-000",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "workflow_type": "appro"
+    },
+    {
+      "step": "En cours",
+      "user_ids": [
+        "USR-007",
+        "USR-000",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "workflow_type": "appro"
+    },
+    {
+      "step": "Clôturé",
+      "user_ids": [
+        "USR-007",
+        "USR-000",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "workflow_type": "appro"
+    },
+    {
+      "step": "Terminé",
+      "user_ids": [
+        "USR-007",
+        "USR-000",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "workflow_type": "appro"
+    },
+    {
+      "step": "Validation N+1",
+      "user_ids": [
+        "USR-002"
+      ],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "Vérification métier",
+      "user_ids": [
+        "USR-007"
+      ],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "Traitement service approvisionnement",
+      "user_ids": [
+        "USR-000"
+      ],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "Signature LAD 1",
+      "user_ids": [
+        "USR-000"
+      ],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "Règlement en cours",
+      "user_ids": [
+        "USR-000"
+      ],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "Paiement effectué",
+      "user_ids": [
+        "USR-000"
+      ],
       "workflow_type": "facturation"
     }
   ],
