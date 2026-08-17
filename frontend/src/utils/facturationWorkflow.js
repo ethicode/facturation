@@ -29,7 +29,7 @@ const approTransitions = {
 export const mainFacturationStatuses = [
   'Saisie de la demande',
   'Vérification métier',
-  'Validation N+1',
+  'Validation métier N+1',
   'Traitement service approvisionnement',
   'Signature LAD 1',
   'Règlement en cours',
@@ -37,8 +37,16 @@ export const mainFacturationStatuses = [
   'Clôturée',
 ]
 
+export const infoRequestStatuses = {
+  validation: "Demande d'information complémentaire (Validation métier N+1)",
+  appro: "Demande d'information complémentaire (Traitement service approvisionnement)",
+  signature: "Demande d'information complémentaire (Signature LAD 1)",
+}
+
 export const conditionalFacturationStatuses = [
-  "Demande d'information complémentaire",
+  infoRequestStatuses.validation,
+  infoRequestStatuses.appro,
+  infoRequestStatuses.signature,
   'Signature LAD 2',
   'Signature LAD 3',
 ]
@@ -46,7 +54,9 @@ export const conditionalFacturationStatuses = [
 export const facturationStatuses = [...mainFacturationStatuses, ...conditionalFacturationStatuses]
 
 const facturationStatusAliases = {
-  "Demande d'informations complémentaire": "Demande d'information complémentaire",
+  'Validation N+1': 'Validation métier N+1',
+  "Demande d'informations complémentaire": infoRequestStatuses.validation,
+  "Demande d'information complémentaire": infoRequestStatuses.validation,
   "Validation LAD 2": 'Signature LAD 2',
   "Validation LAD 3": 'Signature LAD 3',
 }
@@ -57,6 +67,16 @@ export function normalizeFacturationStatus(status) {
   }
 
   return facturationStatusAliases[status] || status
+}
+
+export function getFacturationStepLabel(status) {
+  const normalizedStatus = normalizeFacturationStatus(status)
+
+  if ((normalizedStatus || '').startsWith("Demande d'information complémentaire (")) {
+    return "Demande d'information complémentaire"
+  }
+
+  return normalizedStatus
 }
 
 function normalizeText(value) {
@@ -70,11 +90,9 @@ export function getVisibleFacturationStatuses(currentStatus, history = []) {
   const normalizedCurrentStatus = normalizeFacturationStatus(currentStatus)
   const visibleStatuses = new Set(mainFacturationStatuses)
   const conditionalKeywords = {
-    "Demande d'information complémentaire": [
-      "demande d information complementaire",
-      "demande d informations complementaire",
-      "informations complementaires",
-    ],
+    [infoRequestStatuses.validation]: ['demander des informations complémentaires (validation métier n+1)'],
+    [infoRequestStatuses.appro]: ['demander des informations complémentaires (traitement service approvisionnement)'],
+    [infoRequestStatuses.signature]: ['demander des informations complémentaires (signature lad 1)'],
     'Signature LAD 2': ['signature lad 2'],
     'Signature LAD 3': ['signature lad 3'],
   }
@@ -116,37 +134,48 @@ const facturationTransitions = {
     },
   ],
   'Vérification métier': [
-    { to: 'Validation N+1', label: 'Valider la vérification métier', roles: ['manageur'] },
+    { to: 'Validation métier N+1', label: 'Valider la vérification métier', roles: ['manageur'] },
   ],
-  'Validation N+1': [
+  'Validation métier N+1': [
     { to: 'Traitement service approvisionnement', label: 'Valider N+1 (OK)', roles: ['manageur'] },
     {
-      to: "Demande d'information complémentaire",
-      label: "Demander des informations complémentaires",
+      to: infoRequestStatuses.validation,
+      label: "Demander des informations complémentaires (Validation métier N+1)",
       roles: ['manageur'],
     },
   ],
-  "Demande d'information complémentaire": [
-    { to: 'Vérification métier', label: 'Retour à vérification métier', roles: ['manageur'] },
+  [infoRequestStatuses.validation]: [
+    { to: 'Validation métier N+1', label: 'Retour à Validation métier N+1', roles: ['manageur'] },
   ],
   'Traitement service approvisionnement': [
     { to: 'Signature LAD 1', label: 'Traitement validé (OK)', roles: ['manageur'] },
     {
-      to: "Demande d'information complémentaire",
-      label: "Demander des informations complémentaires",
+      to: infoRequestStatuses.appro,
+      label: "Demander des informations complémentaires (Traitement service approvisionnement)",
       roles: ['manageur'],
     },
+  ],
+  [infoRequestStatuses.appro]: [
+    { to: 'Traitement service approvisionnement', label: 'Retour à Traitement service approvisionnement', roles: ['manageur'] },
   ],
   'Signature LAD 1': [
     { to: 'Règlement en cours', label: 'Passer au règlement', roles: ['manageur'] },
     { to: 'Signature LAD 2', label: 'Passer à signature LAD 2', roles: ['manageur'] },
     { to: 'Signature LAD 3', label: 'Passer à signature LAD 3', roles: ['manageur'] },
+    {
+      to: infoRequestStatuses.signature,
+      label: "Demander des informations complémentaires (Signature LAD 1)",
+      roles: ['manageur'],
+    },
+  ],
+  [infoRequestStatuses.signature]: [
+    { to: 'Signature LAD 1', label: 'Retour à Signature LAD 1', roles: ['manageur'] },
   ],
   'Signature LAD 2': [
-    { to: 'Signature LAD 1', label: 'Valider la signature LAD 2', roles: ['manageur'] },
+    { to: 'Règlement en cours', label: 'Valider la signature LAD 2', roles: ['manageur'] },
   ],
   'Signature LAD 3': [
-    { to: 'Signature LAD 1', label: 'Valider la signature LAD 3', roles: ['manageur'] },
+    { to: 'Règlement en cours', label: 'Valider la signature LAD 3', roles: ['manageur'] },
   ],
   'Règlement en cours': [
     { to: 'Paiement effectué', label: 'Confirmer le paiement (OK)', roles: ['manageur'] },
@@ -181,8 +210,10 @@ export const statusColor = {
   Initialisation: 'default',
   'Saisie de la demande': 'default',
   'Vérification métier': 'warning',
-  'Validation N+1': 'warning',
-  "Demande d'information complémentaire": 'warning',
+  'Validation métier N+1': 'warning',
+  [infoRequestStatuses.validation]: 'warning',
+  [infoRequestStatuses.appro]: 'warning',
+  [infoRequestStatuses.signature]: 'warning',
   'Traitement service approvisionnement': 'warning',
   'Signature LAD 1': 'warning',
   'Signature LAD 2': 'warning',
@@ -259,8 +290,10 @@ export function getStatusCounts(factureList) {
   const counts = {
     'Saisie de la demande': 0,
     'Vérification métier': 0,
-    'Validation N+1': 0,
-    "Demande d'information complémentaire": 0,
+    'Validation métier N+1': 0,
+    [infoRequestStatuses.validation]: 0,
+    [infoRequestStatuses.appro]: 0,
+    [infoRequestStatuses.signature]: 0,
     'Traitement service approvisionnement': 0,
     'Signature LAD 1': 0,
     'Signature LAD 2': 0,

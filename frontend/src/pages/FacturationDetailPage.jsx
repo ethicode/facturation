@@ -38,7 +38,7 @@ import {
   formatDate,
   formatDateTime,
   getAllowedTransitionsForRole,
-  getTransitionActionLabel,
+  getFacturationStepLabel,
   getVisibleFacturationStatuses,
   normalizeFacturationStatus,
   statusColor,
@@ -90,8 +90,10 @@ function normalizeText(value) {
 const stepKeywordMap = {
   'Saisie de la demande': ['saisie de la demande', 'demande soumise'],
   'Vérification métier': ['verification metier', 'vérification métier'],
-  'Validation N+1': ['validation n+1', 'valider n+1'],
-  "Demande d'information complémentaire": ['demande d information complementaire', 'informations complementaires'],
+  'Validation métier N+1': ['validation metier n+1', 'validation n+1', 'valider n+1'],
+  "Demande d'information complémentaire (Validation métier N+1)": ['demande d information complementaire', 'informations complementaires', 'validation metier n+1'],
+  "Demande d'information complémentaire (Traitement service approvisionnement)": ['demande d information complementaire', 'informations complementaires', 'traitement service approvisionnement'],
+  "Demande d'information complémentaire (Signature LAD 1)": ['demande d information complementaire', 'informations complementaires', 'signature lad 1'],
   'Traitement service approvisionnement': ['traitement service approvisionnement', 'traitement valide'],
   'Signature LAD 1': ['signature lad 1'],
   'Signature LAD 2': ['signature lad 2'],
@@ -125,12 +127,13 @@ function getSelectedStepActionLabel(step, fallbackAction) {
 
 function FacturationWorkflowStepper({ currentStatus, selectedStep, onStepClick, history = [] }) {
   const visibleStatuses = getVisibleFacturationStatuses(currentStatus, history)
-  const activeStep = getWorkflowStep(currentStatus)
+  const normalizedCurrentStatus = normalizeFacturationStatus(currentStatus)
+  const activeStep = visibleStatuses.indexOf(normalizedCurrentStatus)
 
   return (
     <Stack spacing={1.5}>
       <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
-        <Chip label={currentStatus} color={statusColor[currentStatus] || 'default'} />
+        <Chip label={getFacturationStepLabel(currentStatus)} color={statusColor[normalizedCurrentStatus] || 'default'} />
       </Stack>
       <Stepper activeStep={activeStep} alternativeLabel>
         {visibleStatuses.map((status, index) => (
@@ -144,7 +147,7 @@ function FacturationWorkflowStepper({ currentStatus, selectedStep, onStepClick, 
                 },
               }}
             >
-              <StepLabel>{status}</StepLabel>
+              <StepLabel>{getFacturationStepLabel(status)}</StepLabel>
             </StepButton>
           </Step>
         ))}
@@ -233,7 +236,7 @@ function FacturationDetailPage() {
         actor: roleActorMap[activeRole] || 'Systeme Workflow',
         email: currentUser.email || '',
         role: activeRole,
-        actionLabel: getTransitionActionLabel(nextStatus),
+        actionLabel: metadata.actionLabel || `Passer à ${getFacturationStepLabel(nextStatus)}`,
         commentaire: metadata.commentaire || '',
         piecesJointes: metadata.piecesJointes || [],
       })
@@ -293,8 +296,9 @@ function FacturationDetailPage() {
       return
     }
 
-    const normalizedStep = linearStatuses.includes(facture.statut)
-      ? facture.statut
+    const normalizedCurrentStatus = normalizeFacturationStatus(facture.statut)
+    const normalizedStep = linearStatuses.includes(normalizedCurrentStatus)
+      ? normalizedCurrentStatus
       : linearStatuses[getWorkflowStep(facture.statut)]
     setSelectedTimelineStep(normalizedStep || '')
   }, [facture?.statut])
@@ -425,7 +429,7 @@ function FacturationDetailPage() {
                 <Stack spacing={1}>
                   <Typography variant="subtitle2">Détail étape sélectionnée</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Étape: {selectedTimelineStep || '-'}
+                    Étape: {getFacturationStepLabel(selectedTimelineStep) || '-'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Affecté à:{' '}
@@ -666,13 +670,18 @@ function FacturationDetailPage() {
                       key={transition.to}
                       value={transition.to}
                       control={<Radio />}
-                      label={transition.to}
+                      label={getFacturationStepLabel(transition.to).startsWith("Demande d'information complémentaire")
+                        ? "Demande d'information complémentaire"
+                        : (transition.label || getFacturationStepLabel(transition.to))}
                     />
                   ))}
                 </RadioGroup>
                 <Button
                   variant="contained"
-                  onClick={() => selectedTransition && handleTransition(selectedTransition.to, transitionForm)}
+                  onClick={() => selectedTransition && handleTransition(selectedTransition.to, {
+                    ...transitionForm,
+                    actionLabel: selectedTransition.label,
+                  })}
                   disabled={isTransitionSubmitting || !selectedTransition}
                   sx={{
                     alignSelf: 'flex-start',

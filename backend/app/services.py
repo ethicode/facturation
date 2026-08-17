@@ -45,10 +45,12 @@ class BackendService:
         canonical_statuses = [
             "Saisie de la demande",
             "Vérification métier",
-            "Validation N+1",
-            "Demande d'information complémentaire",
+            "Validation métier N+1",
+            "Demande d'information complémentaire (Validation métier N+1)",
             "Traitement service approvisionnement",
+            "Demande d'information complémentaire (Traitement service approvisionnement)",
             "Signature LAD 1",
+            "Demande d'information complémentaire (Signature LAD 1)",
             "Signature LAD 2",
             "Signature LAD 3",
             "Règlement en cours",
@@ -61,8 +63,14 @@ class BackendService:
         for status in statuses or []:
             if not status or status == "En attente de vérification métier":
                 continue
-            if status == "Demande d'informations complémentaire":
-                normalized.append("Demande d'information complémentaire")
+            if status in {"Validation N+1", "Validation métier N+1"}:
+                normalized.append("Validation métier N+1")
+            elif status in {
+                "Demande d'informations complémentaire",
+                "Demande d'information complémentaire",
+                "Demande d'information complémentaire (Validation métier N+1)",
+            }:
+                normalized.append("Demande d'information complémentaire (Validation métier N+1)")
             elif status in {"Validation LAD 2", "Signature LAD 2"}:
                 normalized.append("Signature LAD 2")
             elif status in {"Validation LAD 3", "Signature LAD 3"}:
@@ -137,8 +145,13 @@ class BackendService:
                 facture.statut = "Vérification métier"
             if facture.statut == "Terminé":
                 facture.statut = "Clôturée"
-            if facture.statut == "Demande d'informations complémentaire":
-                facture.statut = "Demande d'information complémentaire"
+            if facture.statut == "Validation N+1":
+                facture.statut = "Validation métier N+1"
+            if facture.statut in {
+                "Demande d'informations complémentaire",
+                "Demande d'information complémentaire",
+            }:
+                facture.statut = "Demande d'information complémentaire (Validation métier N+1)"
             if facture.statut == "Validation LAD 2":
                 facture.statut = "Signature LAD 2"
             if facture.statut == "Validation LAD 3":
