@@ -499,7 +499,7 @@ function FacturationDetailPage() {
       return
     }
 
-    const mentionValue = `@${user.username || user.email || user.id}`
+    const mentionValue = `@${user.email || user.username || user.id}`
     const updated = commentInput.replace(/(^|\s)@[a-zA-Z0-9._-]*$/, `$1${mentionValue} `)
     setCommentInput(updated)
   }
@@ -758,13 +758,20 @@ function FacturationDetailPage() {
                 <Stack spacing={1.5}>
                   <Typography variant="h6">Historique commentaires</Typography>
                   <Divider />
-                  {commentHistory.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                      Aucun commentaire enregistré.
-                    </Typography>
-                  ) : (
-                    <Stack spacing={1}>
-                      {orderedCommentHistory.map((entry, index) => (
+                  <Stack
+                    spacing={1}
+                    sx={{
+                      maxHeight: 260,
+                      overflowY: 'auto',
+                      pr: 0.5,
+                    }}
+                  >
+                    {commentHistory.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        Aucun commentaire enregistré.
+                      </Typography>
+                    ) : (
+                      orderedCommentHistory.map((entry, index) => (
                         <Stack key={`${entry.at}-${index}`} spacing={0.5}>
                           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
                             <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -780,9 +787,9 @@ function FacturationDetailPage() {
                           </Typography>
                           {index < orderedCommentHistory.length - 1 && <Divider sx={{ pt: 0.5 }} />}
                         </Stack>
-                      ))}
-                    </Stack>
-                  )}
+                      ))
+                    )}
+                  </Stack>
 
                   <TextField
                     fullWidth
@@ -798,7 +805,7 @@ function FacturationDetailPage() {
                       <MenuList dense>
                         {mentionSuggestions.map((user) => (
                           <MenuItem key={user.id} onClick={() => insertMention(user)}>
-                            {`@${user.username || user.email || user.id}`}
+                            {user.email || user.username || user.id}
                           </MenuItem>
                         ))}
                       </MenuList>
