@@ -128,6 +128,36 @@ function getSelectedStepActionLabel(step, fallbackAction) {
   return step || fallbackAction || '-'
 }
 
+function isCommentOnlyHistoryEntry(entry) {
+  return (entry?.action || '').startsWith('Commentaire ajouté depuis ')
+}
+
+function getTaskLabelFromHistoryAction(action) {
+  const actionText = (action || '').trim()
+
+  if (!actionText) {
+    return '-'
+  }
+
+  if (actionText.startsWith('Passer à ')) {
+    return actionText.slice('Passer à '.length).trim() || '-'
+  }
+
+  if (actionText.startsWith('Statut passe a ')) {
+    return actionText.slice('Statut passe a '.length).trim() || '-'
+  }
+
+  if (actionText === 'Paiement effectué - clôture automatique') {
+    return 'Clôturée'
+  }
+
+  if (actionText === 'Demande soumise et étape de saisie validée automatiquement') {
+    return 'Saisie de la demande'
+  }
+
+  return actionText
+}
+
 function renderCommentWithMentions(comment) {
   const parts = (comment || '').split(/(@[a-zA-Z0-9._-]+)/g)
 
@@ -294,8 +324,12 @@ function FacturationDetailPage() {
   const currentStepIndex = getWorkflowStepIndex(facture?.statut)
   const canAddTransitionContext = currentStepIndex > 0 && currentStepIndex < linearStatuses.length - 1
   const allowedTransitions = getAllowedTransitionsForRole(facture?.statut, activeRole)
-  const commentHistory = (facture?.history || []).filter((entry) => (entry?.commentaire || '').trim().length > 0)
-  const orderedCommentHistory = [...commentHistory].reverse()
+  const taskHistory = (facture?.history || [])
+    .filter((entry) => !isCommentOnlyHistoryEntry(entry))
+    .map((entry) => ({
+      ...entry,
+      action: getFacturationStepLabel(getTaskLabelFromHistoryAction(entry?.action)),
+    }))
   const selectedStepHistory = (facture?.history || []).filter((entry) => matchesSelectedStep(entry, selectedTimelineStep))
   const selectedStepResolution = selectedStepHistory[0] || null
   const isSelectedStepValidated = Boolean(selectedStepResolution?.actor)
@@ -748,7 +782,7 @@ function FacturationDetailPage() {
                 <Stack spacing={1}>
                   <Typography variant="h6">Historique des tâches</Typography>
                   <Divider />
-                  <HistoryTimeline entries={facture?.history || []} dotColor={statusColor[facture.statut] || 'primary'} />
+                  <HistoryTimeline entries={taskHistory} dotColor={statusColor[facture.statut] || 'primary'} />
                 </Stack>
               </CardContent>
             </Card>
@@ -756,41 +790,8 @@ function FacturationDetailPage() {
             <Card>
               <CardContent>
                 <Stack spacing={1.5}>
-                  <Typography variant="h6">Historique commentaires</Typography>
+                  <Typography variant="h6">Commentaires</Typography>
                   <Divider />
-                  <Stack
-                    spacing={1}
-                    sx={{
-                      maxHeight: 260,
-                      overflowY: 'auto',
-                      pr: 0.5,
-                    }}
-                  >
-                    {commentHistory.length === 0 ? (
-                      <Typography variant="body2" color="text.secondary">
-                        Aucun commentaire enregistré.
-                      </Typography>
-                    ) : (
-                      orderedCommentHistory.map((entry, index) => (
-                        <Stack key={`${entry.at}-${index}`} spacing={0.5}>
-                          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {entry.email || entry.actor || '-'}
-                            </Typography>
-                            <Chip size="small" variant="outlined" label={getFacturationStepLabel(getCommentSourceStep(entry))} />
-                          </Stack>
-                          <Typography variant="body2" color="text.secondary">
-                            {renderCommentWithMentions(entry.commentaire)}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatDateTime(entry.at)}
-                          </Typography>
-                          {index < orderedCommentHistory.length - 1 && <Divider sx={{ pt: 0.5 }} />}
-                        </Stack>
-                      ))
-                    )}
-                  </Stack>
-
                   <TextField
                     fullWidth
                     multiline

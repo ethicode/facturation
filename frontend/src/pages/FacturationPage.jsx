@@ -95,14 +95,8 @@ function FacturationPage() {
         <CardContent>
           {apiError && <Alert severity="error" sx={{ mb: 2 }}>{apiError}</Alert>}
           <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={1.5} sx={{ mb: 2 }}>
-            <Stack spacing={0.25}>
-              <Typography variant="h6">Dossiers actifs</Typography>
-              <Typography variant="caption" color="text.secondary">
-                Création, édition, suppression et pilotage du statut.
-              </Typography>
-            </Stack>
             <Button
-              variant="contained"
+              variant="outlined"
               onClick={openCreatePage}
               sx={{
                 bgcolor: 'common.black',
