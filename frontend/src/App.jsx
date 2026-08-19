@@ -30,6 +30,7 @@ function App() {
         <Route path="approvisionnement/:ticketId" element={<ApproTicketDetailPage />} />
         <Route path="facturation" element={<FacturationPage />} />
         <Route path="facturation/creation" element={<FacturationCreatePage />} />
+        <Route path="facturation/:factureId/:taskSlug" element={<FacturationDetailPage />} />
         <Route path="facturation/:factureId" element={<FacturationDetailPage />} />
         <Route path="budget" element={<BudgetPage />} />
         <Route path="tracabilite" element={<Navigate to="/" replace />} />

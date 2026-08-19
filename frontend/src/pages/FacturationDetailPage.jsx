@@ -22,7 +22,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
-import { useLocation, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useRoleContext } from '../app/roleContext.js'
 import HistoryTimeline from '../components/HistoryTimeline.jsx'
 import PageHeader from '../components/PageHeader.jsx'
@@ -89,6 +89,30 @@ function normalizeText(value) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+}
+
+function slugifyFacturationStep(value) {
+  return (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+function getFacturationStepSlug(status) {
+  const normalizedStatus = normalizeFacturationStatus(status)
+  const stepLabel = getFacturationStepLabel(normalizedStatus)
+  return slugifyFacturationStep(stepLabel)
+}
+
+function getStatusFromSlug(slug) {
+  if (!slug) {
+    return ''
+  }
+
+  const normalized = slugifyFacturationStep(slug)
+  return facturationStatuses.find((status) => getFacturationStepSlug(status) === normalized) || ''
 }
 
 const stepKeywordMap = {
@@ -217,8 +241,9 @@ function FacturationWorkflowStepper({ currentStatus, selectedStep, onStepClick, 
 }
 
 function FacturationDetailPage() {
-  const { factureId } = useParams()
+  const { factureId, taskSlug } = useParams()
   const location = useLocation()
+  const navigate = useNavigate()
   const { activeRole } = useRoleContext()
   const [facture, setFacture] = useState(() => location.state?.facture || null)
   const [apiError, setApiError] = useState('')
@@ -379,12 +404,32 @@ function FacturationDetailPage() {
       return
     }
 
+    const routeStatus = taskSlug ? getStatusFromSlug(taskSlug) : ''
     const normalizedCurrentStatus = normalizeFacturationStatus(facture.statut)
-    const normalizedStep = linearStatuses.includes(normalizedCurrentStatus)
+    const normalizedStep = routeStatus || (linearStatuses.includes(normalizedCurrentStatus)
       ? normalizedCurrentStatus
-      : linearStatuses[getWorkflowStep(facture.statut)]
+      : linearStatuses[getWorkflowStep(facture.statut)])
+
     setSelectedTimelineStep(normalizedStep || '')
-  }, [facture?.statut])
+  }, [facture?.statut, taskSlug])
+
+  const handleSelectedTimelineStepChange = (nextStep) => {
+    setSelectedTimelineStep(nextStep)
+
+    if (!facture?.id || !nextStep) {
+      return
+    }
+
+    const nextSlug = getFacturationStepSlug(nextStep)
+    const currentPath = location.pathname
+    const basePath = `/facturation/${facture.id}`
+
+    if (currentPath === `${basePath}/${nextSlug}`) {
+      return
+    }
+
+    navigate(`${basePath}/${nextSlug}`, { replace: false })
+  }
 
   useEffect(() => {
     if (!isAdminRole(activeRole)) {
@@ -579,7 +624,7 @@ function FacturationDetailPage() {
             <FacturationWorkflowStepper
               currentStatus={facture.statut}
               selectedStep={selectedTimelineStep}
-              onStepClick={setSelectedTimelineStep}
+              onStepClick={handleSelectedTimelineStepChange}
               history={facture.history || []}
             />
             <Card variant="outlined">
@@ -856,9 +901,7 @@ function FacturationDetailPage() {
                       key={transition.to}
                       value={transition.to}
                       control={<Radio />}
-                      label={getFacturationStepLabel(transition.to).startsWith("Demande d'information complémentaire")
-                        ? "Demande d'information complémentaire"
-                        : (transition.label || getFacturationStepLabel(transition.to))}
+                      label={getFacturationStepLabel(transition.to)}
                     />
                   ))}
                 </RadioGroup>
@@ -866,7 +909,7 @@ function FacturationDetailPage() {
                   variant="contained"
                   onClick={() => selectedTransition && handleTransition(selectedTransition.to, {
                     ...transitionForm,
-                    actionLabel: selectedTransition.label,
+                    actionLabel: getFacturationStepLabel(selectedTransition.to),
                   })}
                   disabled={isTransitionSubmitting || !selectedTransition}
                   sx={{
