@@ -22,14 +22,7 @@ import PageHeader from '../components/PageHeader.jsx'
 import TableActionMenu from '../components/TableActionMenu.jsx'
 import { closeTicket, deleteSupplyTicket, loadApproData } from '../services/approStorage.js'
 import { formatAmount } from '../utils/facturationWorkflow.js'
-
-const statusColor = {
-  Initialisation: 'default',
-  'En attente de prise en charge': 'warning',
-  'En cours': 'info',
-  'Transférée en facturation': 'success',
-  'Clôturée': 'success',
-}
+import { approStatusColor } from '../utils/approWorkflow.js'
 
 function ApproPage() {
   const navigate = useNavigate()
@@ -140,7 +133,7 @@ function ApproPage() {
                       <TableCell>
                         <Chip
                           size="small"
-                          color={statusColor[ticket.statut] || 'default'}
+                          color={approStatusColor[ticket.statut] || 'default'}
                           label={ticket.statut}
                         />
                       </TableCell>

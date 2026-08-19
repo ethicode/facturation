@@ -4,7 +4,6 @@ import AccountBalanceOutlinedIcon from '@mui/icons-material/AccountBalanceOutlin
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined'
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
-import TimelineOutlinedIcon from '@mui/icons-material/TimelineOutlined'
 
 export const navigationItems = [
   {
@@ -31,11 +30,6 @@ export const navigationItems = [
     label: 'Budget',
     to: '/budget',
     icon: AccountBalanceWalletOutlinedIcon,
-  },
-  {
-    label: 'Tracabilite',
-    to: '/tracabilite',
-    icon: TimelineOutlinedIcon,
   },
   {
     label: 'Parametrage',

@@ -28,6 +28,7 @@ import HistoryTimeline from '../components/HistoryTimeline.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import { getStoredAuth } from '../services/authService.js'
 import { loadFacture, updateFactureStatus } from '../services/facturationStorage.js'
+import { parseAttachmentReference, uploadAttachments } from '../services/uploadService.js'
 import {
   deleteWorkflowAssignment,
   loadAdminUsers,
@@ -274,6 +275,7 @@ function FacturationDetailPage() {
   const handleTransition = async (nextStatus, metadata = {}) => {
     try {
       setIsTransitionSubmitting(true)
+      const uploadedAttachments = await uploadAttachments(metadata.piecesJointes || [])
 
       const currentStepAssignment = workflowAssignments.find(
         (assignment) => assignment.workflowType === 'facturation' && assignment.step === facture.statut
@@ -300,7 +302,7 @@ function FacturationDetailPage() {
         role: activeRole,
         actionLabel: metadata.actionLabel || `Passer à ${getFacturationStepLabel(nextStatus)}`,
         commentaire: metadata.commentaire || '',
-        piecesJointes: metadata.piecesJointes || [],
+        piecesJointes: uploadedAttachments,
       })
 
       setFacture(updatedFacture)
@@ -317,7 +319,7 @@ function FacturationDetailPage() {
     const files = Array.from(event.target.files || [])
     setTransitionForm((prev) => ({
       ...prev,
-      piecesJointes: files.map((file) => file.name),
+      piecesJointes: files,
     }))
   }
 
@@ -729,16 +731,23 @@ function FacturationDetailPage() {
                       <TextField fullWidth label="Mode de réception" value={facture.modeReception || '-'} disabled />
                     </Grid>
                     <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        fullWidth
-                        label="Pièces jointes"
-                        value={
-                          Array.isArray(facture.piecesJointes) && facture.piecesJointes.length > 0
-                            ? facture.piecesJointes.join(', ')
-                            : '-'
-                        }
-                        disabled
-                      />
+                      <Stack spacing={0.5}>
+                        <Typography variant="caption" color="text.secondary">Pièces jointes</Typography>
+                        {Array.isArray(facture.piecesJointes) && facture.piecesJointes.length > 0 ? (
+                          facture.piecesJointes.map((attachmentRef) => {
+                            const attachment = parseAttachmentReference(attachmentRef)
+                            return attachment.href ? (
+                              <Typography key={`${attachmentRef}-${attachment.href}`} variant="body2">
+                                <a href={attachment.href} target="_blank" rel="noreferrer">{attachment.label || attachment.href}</a>
+                              </Typography>
+                            ) : (
+                              <Typography key={attachmentRef} variant="body2">{attachment.label || attachmentRef}</Typography>
+                            )
+                          })
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">-</Typography>
+                        )}
+                      </Stack>
                     </Grid>
                   </Grid>
                 </Stack>
@@ -765,7 +774,7 @@ function FacturationDetailPage() {
                     </Button>
                     {transitionForm.piecesJointes.length > 0 && (
                       <Typography variant="caption" color="text.secondary">
-                        Fichiers sélectionnés: {transitionForm.piecesJointes.join(', ')}
+                        Fichiers sélectionnés: {transitionForm.piecesJointes.map((file) => file.name).join(', ')}
                       </Typography>
                     )}
                   </Stack>

@@ -361,6 +361,7 @@ class BackendService:
                     email=getattr(payload, 'email', None),
                     role=payload.role,
                     action="Demande soumise et étape de saisie validée automatiquement",
+                    piecesJointes=payload.piecesJointes,
                 )
             ],
         )

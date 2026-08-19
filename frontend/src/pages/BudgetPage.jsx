@@ -51,7 +51,6 @@ function BudgetPage() {
     <Stack spacing={2.5}>
       <PageHeader
         title="Planification budgétaire"
-        subtitle="Visualiser les enveloppes allouées par DirFin et anticiper les risques de dépassement."
       />
 
       <Alert icon={<WarningAmberOutlinedIcon fontSize="inherit" />} severity={criticalCount > 0 ? 'warning' : 'success'}>
@@ -75,7 +74,7 @@ function BudgetPage() {
                     <Typography variant="h6">{line.direction}</Typography>
                     <Chip size="small" label={`Allocation ${line.allocatedBy || 'DirFin'}`} variant="outlined" sx={{ width: 'fit-content' }} />
                     <Typography variant="body2" color="text.secondary">
-                      Budget alloué: {formatAmount(line.allocated, 'EUR')}
+                      Budget alloué: {formatAmount(line.allocated, 'XAF')}
                     </Typography>
                     <LinearProgress
                       variant="determinate"
@@ -85,7 +84,7 @@ function BudgetPage() {
                     />
                     <Typography variant="body2">Consommé: {consumedPercent}%</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Reste: {formatAmount(remaining, 'EUR')}
+                      Reste: {formatAmount(remaining, 'XAF')}
                     </Typography>
                   </Stack>
                 </CardContent>

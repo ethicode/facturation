@@ -53,7 +53,8 @@ import {
   updateAdminUser,
   updateWorkflowAssignment,
 } from '../services/adminService.js'
-import { approStatuses, facturationStatuses } from '../utils/facturationWorkflow.js'
+import { approStatuses } from '../utils/approWorkflow.js'
+import { facturationStatuses } from '../utils/facturationWorkflow.js'
 import { isAdminRole } from '../utils/roles.js'
 
 const tabKeys = ['directions', 'utilisateurs', 'workflows', 'roles']

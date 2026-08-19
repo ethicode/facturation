@@ -1,9 +1,14 @@
-from fastapi import Depends, FastAPI, HTTPException, Query, status
+from pathlib import Path
+import re
+from uuid import uuid4
+
+from fastapi import Depends, FastAPI, File, HTTPException, Query, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.staticfiles import StaticFiles
 
 from .auth import decode_token
-from .config import CORS_ORIGINS
+from .config import CORS_ORIGINS, UPLOADS_DIR
 from .schemas import (
     ApproState,
     AuthLoginRequest,
@@ -25,7 +30,6 @@ from .schemas import (
     UserUpdateRequest,
     WorkflowMetadata,
     WorkflowStepAssignment,
-    WorkflowTask,
 )
 from .services import BackendService
 
@@ -52,6 +56,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
+
 service = BackendService()
 security = HTTPBearer(auto_error=False)
 
@@ -72,6 +79,12 @@ def require_admin(user: AuthUserSummary = Depends(get_current_user)) -> AuthUser
     if user.role not in {"admin", "administrateur"}:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Accès administrateur requis.")
     return user
+
+
+def _sanitize_upload_name(filename: str) -> str:
+    clean_name = Path(filename or "file").name
+    normalized = re.sub(r"[^A-Za-z0-9._-]", "_", clean_name).strip("._")
+    return normalized or "file"
 
 
 @app.get("/health", response_model=HealthResponse, tags=["Health"])
@@ -195,11 +208,6 @@ def get_workflow(user: AuthUserSummary = Depends(get_current_user)) -> WorkflowM
     return service.get_workflow_metadata()
 
 
-@app.get("/api/workflow/tasks", response_model=list[WorkflowTask], tags=["Workflow"])
-def get_workflow_tasks(user: AuthUserSummary = Depends(get_current_user)) -> list[WorkflowTask]:
-    return service.list_workflow_tasks()
-
-
 @app.get("/api/factures", response_model=list[Facture], tags=["Factures"])
 def list_factures(user: AuthUserSummary = Depends(get_current_user)) -> list[Facture]:
     return service.list_factures()
@@ -223,6 +231,26 @@ def delete_facture(facture_id: str, user: AuthUserSummary = Depends(get_current_
 @app.patch("/api/factures/{facture_id}/status", response_model=Facture, tags=["Factures"])
 def update_facture_status(facture_id: str, payload: FactureStatusUpdate, user: AuthUserSummary = Depends(get_current_user)) -> Facture:
     return service.update_facture_status(facture_id, payload)
+
+
+@app.post("/api/uploads", response_model=list[str], tags=["Factures"])
+async def upload_files(files: list[UploadFile] = File(...), user: AuthUserSummary = Depends(get_current_user)) -> list[str]:
+    stored_attachments: list[str] = []
+
+    for upload in files:
+        if upload is None:
+            continue
+
+        safe_original_name = _sanitize_upload_name(upload.filename or "file")
+        stored_filename = f"{uuid4().hex}_{safe_original_name}"
+        stored_path = UPLOADS_DIR / stored_filename
+
+        file_content = await upload.read()
+        stored_path.write_bytes(file_content)
+
+        stored_attachments.append(f"{safe_original_name}::/uploads/{stored_filename}")
+
+    return stored_attachments
 
 
 @app.get("/api/appro", response_model=ApproState, tags=["Approvisionnement"])

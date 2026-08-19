@@ -1,30 +1,5 @@
 import { isAdminRole } from './roles.js'
 
-// ── Workflow Approvisionnement ────────────────────────────────────────────────
-export const approStatuses = [
-  'Saisie de la demande',
-  'En attente de prise en charge',
-  'En cours',
-  'Terminé',
-  'Clôturé',
-]
-
-const approTransitions = {
-  'Saisie de la demande': [
-    { to: 'En attente de prise en charge', label: 'Soumettre', roles: ['utilisateur', 'manageur'] },
-  ],
-  'En attente de prise en charge': [
-    { to: 'En cours', label: 'Prendre en charge', roles: ['utilisateur', 'manageur'] },
-  ],
-  'En cours': [
-    { to: 'Terminé', label: 'Terminer', roles: ['manageur'] },
-  ],
-  'Terminé': [
-    { to: 'Clôturé', label: 'Clôturer', roles: ['manageur'] },
-  ],
-  'Clôturé': [],
-}
-
 // ── Workflow Facturation ──────────────────────────────────────────────────────
 export const mainFacturationStatuses = [
   'Saisie de la demande',
@@ -286,19 +261,19 @@ export const statusColor = {
 }
 
 export function getNextStatuses(currentStatus, workflowType = 'facturation') {
-  const transitions = workflowType === 'appro' ? approTransitions : facturationTransitions
+  const transitions = workflowType === 'appro' ? {} : facturationTransitions
   const normalizedStatus = normalizeFacturationStatus(currentStatus)
   return (transitions[normalizedStatus] || []).map((t) => t.to)
 }
 
 export function getTransitionActionLabel(nextStatus) {
-  const allTransitions = [...Object.values(approTransitions).flat(), ...Object.values(facturationTransitions).flat()]
+  const allTransitions = Object.values(facturationTransitions).flat()
   const found = allTransitions.find((t) => t.to === nextStatus)
   return found?.label || `Passer à ${nextStatus}`
 }
 
 export function getAllowedTransitionsForRole(currentStatus, role, workflowType = 'facturation') {
-  const transitions = workflowType === 'appro' ? approTransitions : facturationTransitions
+  const transitions = workflowType === 'appro' ? {} : facturationTransitions
   const normalizedStatus = normalizeFacturationStatus(currentStatus)
   if (isAdminRole(role)) {
     return transitions[normalizedStatus] || []

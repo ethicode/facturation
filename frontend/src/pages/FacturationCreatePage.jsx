@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import { createFacture } from '../services/facturationStorage.js'
+import { uploadAttachments } from '../services/uploadService.js'
 import { loadWorkflowDirections } from '../services/workflowService.js'
 
 const emptyForm = {
@@ -27,6 +28,19 @@ const emptyForm = {
   modeReception: '',
   piecesJointes: [],
   description: '',
+}
+
+function getTodayDate() {
+  const now = new Date()
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+  return now.toISOString().slice(0, 10)
+}
+
+function createInitialForm() {
+  return {
+    ...emptyForm,
+    dateReception: getTodayDate(),
+  }
 }
 
 function validateFacture(values) {
@@ -78,10 +92,11 @@ function validateFacture(values) {
 
 function FacturationCreatePage() {
   const navigate = useNavigate()
-  const [formValues, setFormValues] = useState(emptyForm)
+  const [formValues, setFormValues] = useState(createInitialForm)
   const [formErrors, setFormErrors] = useState({})
   const [apiError, setApiError] = useState('')
   const [directions, setDirections] = useState([])
+  const [isUploading, setIsUploading] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -115,7 +130,7 @@ function FacturationCreatePage() {
 
   const handleUploadChange = (event) => {
     const files = Array.from(event.target.files || [])
-    handleFormChange('piecesJointes', files.map((file) => file.name))
+    handleFormChange('piecesJointes', files)
   }
 
   const handleSubmit = async () => {
@@ -127,6 +142,9 @@ function FacturationCreatePage() {
     }
 
     try {
+      setIsUploading(true)
+      const uploadedAttachments = await uploadAttachments(formValues.piecesJointes)
+
       const payload = {
         priorite: formValues.priorite,
         direction: formValues.direction.trim(),
@@ -136,7 +154,7 @@ function FacturationCreatePage() {
         compteCharge: formValues.compteCharge.trim(),
         dateReception: formValues.dateReception,
         modeReception: formValues.modeReception,
-        piecesJointes: formValues.piecesJointes,
+        piecesJointes: uploadedAttachments,
         centreCout: formValues.compteCharge.trim(),
         description: formValues.description.trim(),
         montant: Number(formValues.montantDemande),
@@ -150,6 +168,8 @@ function FacturationCreatePage() {
       navigate(`/facturation/${createdFacture.id}`, { state: { facture: createdFacture } })
     } catch (error) {
       setApiError(error.message || 'Impossible de créer la demande de facturation.')
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -199,7 +219,7 @@ function FacturationCreatePage() {
             </Grid>
 
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12}}>
                 <TextField
                   fullWidth
                   label="Resume"
@@ -209,7 +229,7 @@ function FacturationCreatePage() {
                   helperText={formErrors.resume}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12}}>
                 <TextField
                   fullWidth
                   multiline
@@ -224,7 +244,7 @@ function FacturationCreatePage() {
             </Grid>
 
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12}}>
                 <TextField
                   fullWidth
                   label="Fournisseur"
@@ -234,7 +254,7 @@ function FacturationCreatePage() {
                   helperText={formErrors.fournisseur}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12}}>
                 <TextField
                   fullWidth
                   label="Référence de facturation"
@@ -293,9 +313,7 @@ function FacturationCreatePage() {
                   error={Boolean(formErrors.modeReception)}
                   helperText={formErrors.modeReception}
                 >
-                  <MenuItem value="Email">Email</MenuItem>
                   <MenuItem value="Courrier">Courrier</MenuItem>
-                  <MenuItem value="Portail">Portail</MenuItem>
                   <MenuItem value="Depot physique">Depot physique</MenuItem>
                 </TextField>
               </Grid>
@@ -309,7 +327,7 @@ function FacturationCreatePage() {
 
             {formValues.piecesJointes?.length > 0 && (
               <Typography variant="caption" color="text.secondary">
-                Fichiers selectionnes: {formValues.piecesJointes.join(', ')}
+                Fichiers selectionnes: {formValues.piecesJointes.map((file) => file.name).join(', ')}
               </Typography>
             )}
 
@@ -317,6 +335,7 @@ function FacturationCreatePage() {
               <Button
                 variant="contained"
                 onClick={handleSubmit}
+                disabled={isUploading}
                 sx={{
                   bgcolor: 'common.black',
                   color: 'common.white',

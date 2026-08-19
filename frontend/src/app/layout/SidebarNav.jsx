@@ -31,9 +31,6 @@ function SidebarNav({ onNavigate }) {
         <Typography variant="h6" sx={{ color: '#f3f5f7' }}>
           FACTURATION Process
         </Typography>
-        <Typography variant="caption" sx={{ color: 'rgba(243, 245, 247, 0.72)' }}>
-          Pilotage finance et missions
-        </Typography>
       </Stack>
 
       <List sx={{ p: 0, display: 'grid', gap: 0.9 }}>
@@ -44,7 +41,7 @@ function SidebarNav({ onNavigate }) {
             to={item.to}
             onClick={onNavigate}
             sx={{
-              borderRadius: 1.5,
+              borderRadius: 0.5,
               px: 1.25,
               py: 1,
               color: 'rgba(243, 245, 247, 0.88)',
@@ -55,7 +52,7 @@ function SidebarNav({ onNavigate }) {
                 '& .MuiListItemIcon-root': { color: '#ffffff' },
               },
               '&.active': {
-                borderRadius: 1.5,
+                borderRadius: 0.5,
                 bgcolor: 'primary.main',
                 color: 'white',
                 '& .MuiListItemIcon-root': { color: 'white' },

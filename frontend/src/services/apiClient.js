@@ -46,12 +46,18 @@ function getStoredAuth() {
 
 export async function apiRequest(path, options = {}) {
   const auth = getStoredAuth()
+  const isFormDataBody = typeof FormData !== 'undefined' && options.body instanceof FormData
+  const mergedHeaders = {
+    ...(auth?.token && !path.startsWith('/api/auth/') ? { Authorization: `Bearer ${auth.token}` } : {}),
+    ...(options.headers || {}),
+  }
+
+  if (!isFormDataBody && !Object.prototype.hasOwnProperty.call(mergedHeaders, 'Content-Type')) {
+    mergedHeaders['Content-Type'] = 'application/json'
+  }
+
   const response = await fetch(buildUrl(path), {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(auth?.token && !path.startsWith('/api/auth/') ? { Authorization: `Bearer ${auth.token}` } : {}),
-      ...(options.headers || {}),
-    },
+    headers: mergedHeaders,
     ...options,
   })
 

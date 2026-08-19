@@ -266,7 +266,7 @@ function DirfinPage() {
               <Typography variant="caption" color="text.secondary">
                 Total alloue
               </Typography>
-              <Typography variant="h6">{formatAmount(totals.allocated, 'EUR')}</Typography>
+              <Typography variant="h6">{formatAmount(totals.allocated, 'XAF')}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -276,7 +276,7 @@ function DirfinPage() {
               <Typography variant="caption" color="text.secondary">
                 Total engage
               </Typography>
-              <Typography variant="h6">{formatAmount(totals.engaged, 'EUR')}</Typography>
+              <Typography variant="h6">{formatAmount(totals.engaged, 'XAF')}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -286,7 +286,7 @@ function DirfinPage() {
               <Typography variant="caption" color="text.secondary">
                 Reste global
               </Typography>
-              <Typography variant="h6">{formatAmount(totals.remaining, 'EUR')}</Typography>
+              <Typography variant="h6">{formatAmount(totals.remaining, 'XAF')}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -386,9 +386,9 @@ function DirfinPage() {
                     <TableRow key={line.direction} hover>
                       <TableCell>{line.direction}</TableCell>
                       <TableCell>{line.allocatedBy || 'DirFin'}</TableCell>
-                      <TableCell>{formatAmount(line.allocated, 'EUR')}</TableCell>
-                      <TableCell>{formatAmount(line.engaged, 'EUR')}</TableCell>
-                      <TableCell>{formatAmount(line.allocated - line.engaged, 'EUR')}</TableCell>
+                      <TableCell>{formatAmount(line.allocated, 'XAF')}</TableCell>
+                      <TableCell>{formatAmount(line.engaged, 'XAF')}</TableCell>
+                      <TableCell>{formatAmount(line.allocated - line.engaged, 'XAF')}</TableCell>
                       <TableCell align="right">
                         {canEdit ? (
                           <TableActionMenu

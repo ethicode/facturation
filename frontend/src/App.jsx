@@ -12,7 +12,6 @@ import FacturationCreatePage from './pages/FacturationCreatePage.jsx'
 import FacturationDetailPage from './pages/FacturationDetailPage.jsx'
 import BudgetPage from './pages/BudgetPage.jsx'
 import AdminSettingsPage from './pages/AdminSettingsPage.jsx'
-import TraceabilityPage from './pages/TraceabilityPage.jsx'
 
 function ProtectedRoute({ children }) {
   const auth = getStoredAuth()
@@ -33,7 +32,7 @@ function App() {
         <Route path="facturation/creation" element={<FacturationCreatePage />} />
         <Route path="facturation/:factureId" element={<FacturationDetailPage />} />
         <Route path="budget" element={<BudgetPage />} />
-        <Route path="tracabilite" element={<TraceabilityPage />} />
+        <Route path="tracabilite" element={<Navigate to="/" replace />} />
         <Route path="parametrages" element={<AdminSettingsPage />} />
         <Route path="parametrage" element={<Navigate to="/parametrages#directions" replace />} />
       </Route>

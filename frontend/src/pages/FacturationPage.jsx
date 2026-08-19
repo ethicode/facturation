@@ -13,7 +13,7 @@ import {
   TableHead,
   TableRow,
   TableContainer,
-  Typography,
+  TablePagination,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
@@ -37,6 +37,8 @@ function FacturationPage() {
   const [workflowAssignments, setWorkflowAssignments] = useState([])
   const [userEmailById, setUserEmailById] = useState({})
   const [showMyFacturesOnly, setShowMyFacturesOnly] = useState(false)
+  const [page, setPage] = useState(0)
+  const [rowsPerPage, setRowsPerPage] = useState(10)
   const [isLoading, setIsLoading] = useState(true)
   const [apiError, setApiError] = useState('')
 
@@ -130,6 +132,27 @@ function FacturationPage() {
     ? factureList.filter((facture) => myWorkflowSteps.includes(facture.statut))
     : factureList
 
+  const paginatedFactures = displayedFactures.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage,
+  )
+
+  const handleChangePage = (_event, nextPage) => {
+    setPage(nextPage)
+  }
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10))
+    setPage(0)
+  }
+
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(displayedFactures.length / rowsPerPage) - 1)
+    if (page > maxPage) {
+      setPage(maxPage)
+    }
+  }, [displayedFactures.length, rowsPerPage, page])
+
   const getAssignedUsersForCurrentStep = (status) => {
     const assignment = workflowAssignments.find(
       (item) => item?.workflow_type === 'facturation' && item?.step === status,
@@ -148,10 +171,25 @@ function FacturationPage() {
 
   return (
     <Stack spacing={2.5}>
-      <PageHeader
-        title="Facturation"
-        subtitle="Pilotage complet des demandes de facturation et de leur validation."
-      />
+      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'flex-start' }} spacing={1.5}>
+        <PageHeader
+          title="Facturation"
+          subtitle="Pilotage complet des demandes de facturation et de leur validation."
+        />
+        <Button
+          variant="outlined"
+          onClick={openCreatePage}
+          sx={{
+            ml: { xs: 0, sm: 'auto' },
+            alignSelf: 'flex-start',
+            bgcolor: 'common.black',
+            color: 'common.white',
+            '&:hover': { bgcolor: 'grey.900' },
+          }}
+        >
+          Nouvelle demande
+        </Button>
+      </Stack>
 
       <Card>
         <CardContent>
@@ -162,17 +200,6 @@ function FacturationPage() {
               onClick={() => setShowMyFacturesOnly((prev) => !prev)}
             >
               {showMyFacturesOnly ? 'Toutes les factures' : 'Mes factures'}
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={openCreatePage}
-              sx={{
-                bgcolor: 'common.black',
-                color: 'common.white',
-                '&:hover': { bgcolor: 'grey.900' },
-              }}
-            >
-              Nouvelle demande
             </Button>
           </Stack>
 
@@ -191,7 +218,7 @@ function FacturationPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {displayedFactures.map((facture) => (
+                {paginatedFactures.map((facture) => (
                   <TableRow key={facture.id} hover onClick={() => openDetails(facture.id)} sx={{ cursor: 'pointer' }}>
                     <TableCell>{facture.id}</TableCell>
                     <TableCell>{facture.fournisseur}</TableCell>
@@ -242,6 +269,16 @@ function FacturationPage() {
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            component="div"
+            count={displayedFactures.length}
+            page={page}
+            onPageChange={handleChangePage}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            rowsPerPageOptions={[5, 10, 25, 50]}
+            labelRowsPerPage="Lignes par page"
+          />
         </CardContent>
       </Card>
 
