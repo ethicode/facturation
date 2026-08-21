@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import * as XLSX from 'xlsx'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import OpenInNewOutlinedIcon from '@mui/icons-material/OpenInNewOutlined'
 import {
@@ -171,39 +172,28 @@ function FacturationPage() {
   }
 
   const handleExportToExcel = () => {
-    const headers = [
-      'Référence',
-      'Fournisseur',
-      'Centre de coût',
-      'Montant',
-      'Échéance',
-      'Dernière tâche',
-      'Dernière tâche assignée',
+    const rows = displayedFactures.map((facture) => ({
+      'Référence': facture.id,
+      'Fournisseur': facture.fournisseur,
+      'Centre de coût': facture.centreCout,
+      'Montant': formatAmount(facture.montant, facture.devise),
+      'Échéance': formatDate(facture.echeance),
+      'Dernière tâche': facture.statut,
+      'Dernière tâche assignée': getAssignedUsersForCurrentStep(facture.statut),
+    }))
+    const worksheet = XLSX.utils.json_to_sheet(rows)
+    worksheet['!cols'] = [
+      { wch: 18 },
+      { wch: 28 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 14 },
+      { wch: 32 },
+      { wch: 34 },
     ]
-    const escapeCsvValue = (value) => {
-      const text = String(value ?? '')
-      const safeText = /^[=+\-@]/.test(text) ? `'${text}` : text
-      return `"${safeText.replaceAll('"', '""')}"`
-    }
-    const rows = displayedFactures.map((facture) => [
-      facture.id,
-      facture.fournisseur,
-      facture.centreCout,
-      formatAmount(facture.montant, facture.devise),
-      formatDate(facture.echeance),
-      facture.statut,
-      getAssignedUsersForCurrentStep(facture.statut),
-    ])
-    const csv = [headers, ...rows]
-      .map((row) => row.map(escapeCsvValue).join(';'))
-      .join('\r\n')
-    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'facturation.csv'
-    link.click()
-    URL.revokeObjectURL(url)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Facturation')
+    XLSX.writeFile(workbook, 'facturation.xlsx')
   }
 
   return (
