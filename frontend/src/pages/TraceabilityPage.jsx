@@ -94,7 +94,7 @@ function TraceabilityPage() {
                   </ListItemIcon>
                   <ListItemText
                     primary={`${task.reference} • ${task.step}`}
-                    secondary={`${task.workflow_type} • Résolu par ${task.resolved_by || '-'} • ${task.pieces_jointes.length} pièce(s)`}
+                    secondary={`${task.workflow_type} • Résolu par ${task.resolved_by || 'aucun'} • ${task.pieces_jointes.length} pièce(s)`}
                   />
                 </ListItem>
                 {index < workflowTasks.length - 1 && <Divider />}
@@ -118,7 +118,7 @@ function TraceabilityPage() {
                 <Typography variant="body2"><strong>Référence:</strong> {selectedTask.reference}</Typography>
                 <Typography variant="body2"><strong>Workflow:</strong> {selectedTask.workflow_type}</Typography>
                 <Typography variant="body2"><strong>Étape:</strong> {selectedTask.step}</Typography>
-                <Typography variant="body2"><strong>Résolu par:</strong> {selectedTask.resolved_by || '-'}</Typography>
+                <Typography variant="body2"><strong>Résolu par:</strong> {selectedTask.resolved_by || 'aucun'}</Typography>
                 <Typography variant="body2"><strong>Date:</strong> {selectedTask.resolved_at ? formatDateTime(selectedTask.resolved_at) : '-'}</Typography>
                 <Typography variant="body2"><strong>Assigné à:</strong> {selectedTask.assigned_users.length > 0 ? selectedTask.assigned_users.join(', ') : '-'}</Typography>
                 <Typography variant="body2"><strong>Pièces jointes:</strong> {selectedTask.pieces_jointes.length > 0 ? selectedTask.pieces_jointes.join(', ') : '-'}</Typography>

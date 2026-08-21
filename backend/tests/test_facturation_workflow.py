@@ -71,3 +71,43 @@ def test_update_facture_status_stores_comment_and_attachments(tmp_path):
     assert updated.statut == 'Validation N+1'
     assert updated.history[0].commentaire == 'Dossier complet'
     assert updated.history[0].piecesJointes == ['note-interne.pdf']
+
+
+def test_update_facture_status_records_previous_step_in_history(tmp_path):
+    store = JsonStore(path=tmp_path / 'db.json')
+    service = BackendService(store=store)
+
+    created = service.create_facture(
+        FactureCreate(
+            fournisseur='Fournisseur test',
+            montant=1250,
+            devise='XAF',
+            centreCout='CC-001',
+            description='Demande de test',
+            echeance='2026-08-15',
+            priorite='Haute',
+            direction='Finance',
+            resume='Résumé de test',
+            numeroFacture='FAC-003',
+            compteCharge='CC-001',
+            dateReception='2026-08-10',
+            modeReception='Email',
+            piecesJointes=[],
+            actor='Utilisateur test',
+            role='utilisateur',
+        )
+    )
+
+    updated = service.update_facture_status(
+        created.id,
+        FactureStatusUpdate(
+            next_status='Validation N+1',
+            actor='Manager test',
+            role='manageur',
+            action_label='Valider la vérification métier',
+            commentaire='Validation OK',
+        ),
+    )
+
+    assert any(entry.action == 'Vérification métier' for entry in updated.history)
+    assert any(entry.action == 'Valider la vérification métier' for entry in updated.history)

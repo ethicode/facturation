@@ -377,12 +377,9 @@ class BackendService:
 
         comment_value = (payload.commentaire or "").strip()
         attachments_value = [name for name in payload.piecesJointes if name]
-        detail_parts: list[str] = []
-        if comment_value:
-            detail_parts.append(f"Commentaire: {comment_value}")
-        if attachments_value:
-            detail_parts.append(f"Pièces jointes: {', '.join(attachments_value)}")
 
+
+        previous_status = facture.statut
         next_status = payload.next_status
         if next_status == "Paiement effectué":
             facture.statut = "Clôturée"
@@ -391,17 +388,35 @@ class BackendService:
             facture.statut = next_status
             action_label = payload.action_label or f"Statut passe a {next_status}"
 
-        facture.history = [
+        history_entries: list[HistoryEntry] = []
+        if previous_status and previous_status != next_status:
+            history_entries.append(
+                HistoryEntry(
+                    at=self._now_iso(),
+                    actor=payload.actor,
+                    email=getattr(payload, 'email', None),
+                    role=payload.role,
+                    action=previous_status,
+                    detail=None,
+                    commentaire=comment_value,
+                    piecesJointes=attachments_value,
+                )
+            )
+
+        history_entries.append(
             HistoryEntry(
                 at=self._now_iso(),
                 actor=payload.actor,
                 email=getattr(payload, 'email', None),
                 role=payload.role,
                 action=action_label,
-                detail=" | ".join(detail_parts) if detail_parts else None,
+                detail=None,
                 commentaire=comment_value,
-                piecesJointes=attachments_value,
-            ),
+            )
+        )
+
+        facture.history = [
+            *history_entries,
             *facture.history,
         ]
         self.store.write(state)

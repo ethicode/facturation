@@ -8,6 +8,7 @@ import {
   Divider,
   FormControlLabel,
   Grid,
+  IconButton,
   MenuItem,
   MenuList,
   Paper,
@@ -19,9 +20,11 @@ import {
   StepLabel,
   Stepper,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
-import { useEffect, useState } from 'react'
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useRoleContext } from '../app/roleContext.js'
 import HistoryTimeline from '../components/HistoryTimeline.jsx'
@@ -248,7 +251,7 @@ function FacturationDetailPage() {
   const [facture, setFacture] = useState(() => location.state?.facture || null)
   const [apiError, setApiError] = useState('')
   const [isLoading, setIsLoading] = useState(() => !location.state?.facture)
-  const [transitionForm, setTransitionForm] = useState({ commentaire: '', piecesJointes: [] })
+  const [transitionForm, setTransitionForm] = useState({ piecesJointes: [] })
   const [isTransitionSubmitting, setIsTransitionSubmitting] = useState(false)
   const [selectedTransition, setSelectedTransition] = useState(null)
   const [selectedTimelineStep, setSelectedTimelineStep] = useState('')
@@ -259,6 +262,7 @@ function FacturationDetailPage() {
   const [workflowAssignments, setWorkflowAssignments] = useState([])
   const [showAssigneePicker, setShowAssigneePicker] = useState(false)
   const [currentAuthUserId, setCurrentAuthUserId] = useState('')
+  const requestDetailsRef = useRef(null)
 
   useEffect(() => {
     const auth = getStoredAuth()
@@ -294,7 +298,7 @@ function FacturationDetailPage() {
   }, [factureId])
 
   const resetTransitionForm = () => {
-    setTransitionForm({ commentaire: '', piecesJointes: [] })
+    setTransitionForm({ piecesJointes: [] })
   }
 
   const handleTransition = async (nextStatus, metadata = {}) => {
@@ -344,20 +348,82 @@ function FacturationDetailPage() {
     const files = Array.from(event.target.files || [])
     setTransitionForm((prev) => ({
       ...prev,
-      piecesJointes: files,
+      piecesJointes: [...prev.piecesJointes, ...files],
     }))
+    event.target.value = ''
+  }
+
+  const handleDownloadFacturePdf = () => {
+    if (!facture || !requestDetailsRef.current) {
+      return
+    }
+
+    const printWindow = window.open('', '_blank')
+    if (!printWindow) {
+      setApiError('Autorisez les fenêtres contextuelles pour télécharger le PDF.')
+      return
+    }
+
+    printWindow.document.title = `facturation-${facture.id || 'demande'}`
+    const styles = Array.from(document.head.querySelectorAll('link[rel="stylesheet"], style'))
+      .map((element) => element.outerHTML)
+      .join('')
+    const detailsBlock = requestDetailsRef.current.cloneNode(true)
+    detailsBlock.querySelector('[data-pdf-print-button]')?.remove()
+
+    printWindow.addEventListener('load', () => {
+      printWindow.focus()
+      printWindow.print()
+    }, { once: true })
+    printWindow.document.write(`<!doctype html><html><head><base href="${window.location.origin}/">${styles}<style>body{margin:32px}@media print{body{margin:20px}}</style></head><body></body></html>`)
+    printWindow.document.body.append(detailsBlock)
+    printWindow.document.close()
   }
 
   const currentStepIndex = getWorkflowStepIndex(facture?.statut)
   const canAddTransitionContext = currentStepIndex > 0 && currentStepIndex < linearStatuses.length - 1
   const allowedTransitions = getAllowedTransitionsForRole(facture?.statut, activeRole)
-  const taskHistory = (facture?.history || [])
+  const rawHistory = (facture?.history || [])
     .filter((entry) => !isCommentOnlyHistoryEntry(entry))
     .map((entry) => ({
       ...entry,
       action: getFacturationStepLabel(getTaskLabelFromHistoryAction(entry?.action)),
     }))
-  const selectedStepHistory = (facture?.history || []).filter((entry) => matchesSelectedStep(entry, selectedTimelineStep))
+
+  const currentStepLabel = facture?.statut ? getFacturationStepLabel(facture.statut) : ''
+  const visibleTimelineStatuses = getVisibleFacturationStatuses(facture?.statut, facture?.history || [])
+  const taskHistory = visibleTimelineStatuses
+    .filter((status) => {
+      const resolvedStatus = getFacturationStepLabel(status)
+      if (!resolvedStatus) {
+        return false
+      }
+
+      if (resolvedStatus === currentStepLabel) {
+        return true
+      }
+
+      return rawHistory.some((entry) => entry.action === resolvedStatus)
+    })
+    .map((status) => {
+      const resolvedStatus = getFacturationStepLabel(status)
+      const matchingEntry = rawHistory.find((entry) => entry.action === resolvedStatus)
+
+      if (matchingEntry) {
+        return matchingEntry
+      }
+
+      return {
+        id: `timeline-step-${resolvedStatus}-${facture?.id || 'unknown'}`,
+        action: resolvedStatus,
+        at: facture?.updatedAt || facture?.dateReception || facture?.createdAt || new Date().toISOString(),
+        detail: resolvedStatus === currentStepLabel ? 'Étape active' : 'Étape du workflow',
+      }
+    })
+
+  const selectedStepHistory = taskHistory.filter((entry) => matchesSelectedStep(entry, selectedTimelineStep))
+  const selectedStepAttachments = selectedStepHistory.flatMap((entry) => entry.piecesJointes || [])
+  const commentHistory = (facture?.history || []).filter(isCommentOnlyHistoryEntry)
   const selectedStepResolution = selectedStepHistory[0] || null
   const isSelectedStepValidated = Boolean(selectedStepResolution?.actor)
   const selectedStepAssignment = workflowAssignments.find(
@@ -672,11 +738,11 @@ function FacturationDetailPage() {
                   )}
                   {isSelectedStepValidated && (
                     <Typography variant="body2" color="text.secondary">
-                      Résolu par: {selectedStepHistory[0]?.email || selectedStepHistory[0]?.actor || '-'}
+                      Résolu par: {selectedStepHistory[0]?.email || selectedStepHistory[0]?.actor || 'aucun'}
                     </Typography>
                   )}
                   <Typography variant="body2" color="text.secondary">
-                    Date de validation: {selectedStepHistory[0]?.at ? formatDateTime(selectedStepHistory[0].at) : '-'}
+                    Date de validation: {selectedStepHistory[0]?.at ? formatDateTime(selectedStepHistory[0].at) : 'aucun'}
                   </Typography>
                 </Stack>
               </CardContent>
@@ -691,6 +757,7 @@ function FacturationDetailPage() {
             <Card>
               <CardContent>
                 <Stack
+                  ref={requestDetailsRef}
                   spacing={2}
                   sx={{
                     '& .MuiInputLabel-root': {
@@ -733,10 +800,21 @@ function FacturationDetailPage() {
                     },
                   }}
                 >
-                  <Typography variant="h6">Détails de la demande</Typography>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between">
+                    <Typography variant="h6">Détails de la demande</Typography>
+                    <Tooltip title="Télécharger au format PDF" sx={{ ml: 'auto' }}>
+                      <IconButton
+                        aria-label="Télécharger les détails au format PDF"
+                        data-pdf-print-button
+                        onClick={handleDownloadFacturePdf}
+                      >
+                        <PictureAsPdfOutlinedIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
                   <Divider />
 
-                  <Grid container spacing={2}>
+                  <Grid container columnSpacing={2} rowSpacing={3}>
                     <Grid size={{ xs: 12 }}>
                       <TextField fullWidth label="Référence" value={facture.id || '-'} disabled />
                     </Grid>
@@ -775,57 +853,54 @@ function FacturationDetailPage() {
                     <Grid size={{ xs: 12, sm: 6 }}>
                       <TextField fullWidth label="Mode de réception" value={facture.modeReception || '-'} disabled />
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <Stack spacing={0.5}>
-                        <Typography variant="caption" color="text.secondary">Pièces jointes</Typography>
-                        {Array.isArray(facture.piecesJointes) && facture.piecesJointes.length > 0 ? (
-                          facture.piecesJointes.map((attachmentRef) => {
-                            const attachment = parseAttachmentReference(attachmentRef)
-                            return attachment.href ? (
-                              <Typography key={`${attachmentRef}-${attachment.href}`} variant="body2">
-                                <a href={attachment.href} target="_blank" rel="noreferrer">{attachment.label || attachment.href}</a>
-                              </Typography>
-                            ) : (
-                              <Typography key={attachmentRef} variant="body2">{attachment.label || attachmentRef}</Typography>
-                            )
-                          })
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">-</Typography>
-                        )}
-                      </Stack>
-                    </Grid>
                   </Grid>
                 </Stack>
               </CardContent>
             </Card>
 
-            {canAddTransitionContext && (
-              <Card>
-                <CardContent>
-                  <Stack spacing={2}>
-                    <Typography variant="h6">Commentaire et pièces jointes</Typography>
-                    <Divider />
-                    <TextField
-                      fullWidth
-                      multiline
-                      minRows={4}
-                      label="Commentaire"
-                      value={transitionForm.commentaire}
-                      onChange={(event) => setTransitionForm((prev) => ({ ...prev, commentaire: event.target.value }))}
-                    />
+            <Card>
+              <CardContent>
+                <Stack spacing={2}>
+                  <Typography variant="h6">Pièces jointes</Typography>
+                  <Divider />
+                  {selectedStepAttachments.length > 0 ? (
+                    <Stack spacing={0.5}>
+                      {selectedStepAttachments.map((attachmentRef) => {
+                        const attachment = parseAttachmentReference(attachmentRef)
+                        return attachment.href ? (
+                          <Typography key={`${attachmentRef}-${attachment.href}`} variant="body2">
+                            <a href={attachment.href} target="_blank" rel="noreferrer">{attachment.label || attachment.href}</a>
+                          </Typography>
+                        ) : (
+                          <Typography key={attachmentRef} variant="body2">{attachment.label || attachmentRef}</Typography>
+                        )
+                      })}
+                    </Stack>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      Aucune pièce jointe pour cette étape.
+                    </Typography>
+                  )}
+                  {canAddTransitionContext && (
+                    <>
                     <Button variant="outlined" component="label" sx={{ alignSelf: 'flex-start' }}>
                       Ajouter des pièces jointes
                       <input hidden type="file" multiple onChange={handleTransitionFileUpload} />
                     </Button>
                     {transitionForm.piecesJointes.length > 0 && (
-                      <Typography variant="caption" color="text.secondary">
-                        Fichiers sélectionnés: {transitionForm.piecesJointes.map((file) => file.name).join(', ')}
-                      </Typography>
+                      <Stack spacing={0.5}>
+                        {transitionForm.piecesJointes.map((file, index) => (
+                          <Typography key={`${file.name}-${file.lastModified}-${index}`} variant="body2" color="text.secondary">
+                            {file.name}
+                          </Typography>
+                        ))}
+                      </Stack>
                     )}
-                  </Stack>
-                </CardContent>
-              </Card>
-            )}
+                    </>
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
           </Stack>
         </Grid>
 
@@ -836,7 +911,7 @@ function FacturationDetailPage() {
                 <Stack spacing={1}>
                   <Typography variant="h6">Historique des tâches</Typography>
                   <Divider />
-                  <HistoryTimeline entries={taskHistory} dotColor={statusColor[facture.statut] || 'primary'} />
+                  <HistoryTimeline entries={[...taskHistory].reverse()} dotColor={statusColor[facture.statut] || 'primary'} />
                 </Stack>
               </CardContent>
             </Card>
@@ -846,6 +921,24 @@ function FacturationDetailPage() {
                 <Stack spacing={1.5}>
                   <Typography variant="h6">Commentaires</Typography>
                   <Divider />
+                  {commentHistory.length > 0 && (
+                    <Stack spacing={1}>
+                      {commentHistory.map((entry, index) => (
+                        <Stack
+                          key={entry.id || `${entry.at}-${index}`}
+                          spacing={0.25}
+                          sx={{ borderTop: 1, borderColor: 'divider', pt: 1 }}
+                        >
+                          <Typography variant="caption" color="text.secondary">
+                            {entry.email || entry.actor || 'Utilisateur'} - {formatDateTime(entry.at)}
+                          </Typography>
+                          <Typography variant="body2">
+                            {renderCommentWithMentions(entry.commentaire)}
+                          </Typography>
+                        </Stack>
+                      ))}
+                    </Stack>
+                  )}
                   <TextField
                     fullWidth
                     multiline
