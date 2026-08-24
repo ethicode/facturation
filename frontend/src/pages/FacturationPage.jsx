@@ -233,7 +233,7 @@ function FacturationPage() {
               startIcon={<FileDownloadOutlinedIcon />}
               onClick={handleExportToExcel}
               disabled={displayedFactures.length === 0}
-              sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}
+              sx={{ ml: { xs: 0, sm: 'auto' }, alignSelf: { xs: 'flex-start', sm: 'center' } }}
             >
               Télécharger Excel
             </Button>
@@ -250,7 +250,20 @@ function FacturationPage() {
                   <TableCell>Échéance</TableCell>
                   <TableCell>Dernière tâche</TableCell>
                   <TableCell>Dernière tâche assignée</TableCell>
-                  <TableCell align="right" sx={{ width: 96, whiteSpace: 'nowrap' }}>Actions</TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{
+                      position: 'sticky',
+                      right: 0,
+                      zIndex: 2,
+                      width: 96,
+                      whiteSpace: 'nowrap',
+                      bgcolor: 'background.paper',
+                      boxShadow: '-6px 0 8px rgba(15, 23, 42, 0.06)',
+                    }}
+                  >
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -271,7 +284,16 @@ function FacturationPage() {
                     <TableCell>{getAssignedUsersForCurrentStep(facture.statut)}</TableCell>
                     <TableCell
                       align="right"
-                      sx={{ width: 96, whiteSpace: 'nowrap' }}
+                      sx={{
+                        position: 'sticky',
+                        right: 0,
+                        zIndex: 1,
+                        width: 96,
+                        whiteSpace: 'nowrap',
+                        bgcolor: 'background.paper',
+                        boxShadow: '-6px 0 8px rgba(15, 23, 42, 0.06)',
+                        '.MuiTableRow-hover:hover &': { bgcolor: 'action.hover' },
+                      }}
                       onClick={(event) => event.stopPropagation()}
                     >
                       <TableActionMenu
