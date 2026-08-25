@@ -22,8 +22,13 @@ backend/__pycache__/
 backend/app/__pycache__/
 *.py[cod]
 
-# Local backend data
-backend/data/db.json
+# Local backend data (contains password hashes / uploaded files)
+backend/data/
+backend-spring/data/
+backend-spring/**/target/
+*.sqlite3
+*.sqlite3-*
+*.bak
 
 # Frontend (Vite/Node)
 frontend/node_modules/
