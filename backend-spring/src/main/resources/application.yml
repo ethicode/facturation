@@ -1,18 +1,19 @@
 server:
   port: 8080
 
+app:
+  data-dir: ${APP_DATA_DIR:./data}
+  auth:
+    secret: ${FACTURATION_AUTH_SECRET:dev-secret-change-me}
+  uploads-dir: ${app.data-dir}/uploads
+
 spring:
   datasource:
-    url: jdbc:sqlite:../data/app-spring.sqlite3
+    url: jdbc:sqlite:${app.data-dir}/app-spring.sqlite3
     driver-class-name: org.sqlite.JDBC
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     enabled: true
-
-app:
-  auth:
-    secret: ${FACTURATION_AUTH_SECRET:dev-secret-change-me}
-  uploads-dir: ../data/uploads
 
 springdoc:
   swagger-ui:

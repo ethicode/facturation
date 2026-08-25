@@ -10,7 +10,8 @@ import java.nio.file.Path;
 public class FacturationBackendApplication {
     public static void main(String[] args) throws Exception {
         // SQLite does not create missing parent directories, so ensure they exist before the datasource connects.
-        Files.createDirectories(Path.of("../data/uploads"));
+        String dataDir = System.getenv().getOrDefault("APP_DATA_DIR", "./data");
+        Files.createDirectories(Path.of(dataDir, "uploads"));
         SpringApplication.run(FacturationBackendApplication.class, args);
     }
 }
