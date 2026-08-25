@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-init-schema
+      author: copilot
+      changes:
+        - sqlFile:
+            path: db/changelog/changes/001-init-schema.sql
+            relativeToChangelogFile: false
+            splitStatements: true
+            stripComments: true

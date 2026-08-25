@@ -1,8 +1,2 @@
-**/target/
-*.iml
-.idea/
-.vscode/
+target/
 *.log
-
-# Runtime data
-/data/
