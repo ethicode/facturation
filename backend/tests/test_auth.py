@@ -2,7 +2,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from app.schemas import AppState, AuthLoginRequest
-from app.seed_data import SEED_DATA
+from app.seed_data import SEED_DATA, USER_PASSWORDS
 from app.services import BackendService
 from app.storage import JsonStore
 
@@ -11,7 +11,7 @@ def test_login_and_me_with_seed_user(tmp_path):
     store = JsonStore(path=tmp_path / "db.json")
     service = BackendService(store=store)
 
-    token_response = service.login(AuthLoginRequest(username="comptable", password="comptable123"))
+    token_response = service.login(AuthLoginRequest(username="comptable", password=USER_PASSWORDS["comptable"]))
 
     assert token_response.user.role == "utilisateur"
     assert token_response.access_token
@@ -28,7 +28,7 @@ def test_login_rehydrates_admin_when_missing_from_persisted_state(tmp_path):
     store.write(seed_state)
 
     service = BackendService(store=store)
-    token_response = service.login(AuthLoginRequest(username="admin", password="admin123"))
+    token_response = service.login(AuthLoginRequest(username="admin", password=USER_PASSWORDS["admin"]))
 
     assert token_response.user.username == "admin"
     assert token_response.user.role == "administrateur"

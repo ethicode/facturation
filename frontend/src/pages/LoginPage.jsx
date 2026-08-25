@@ -4,14 +4,14 @@ import { Alert, Box, Button, Card, CardContent, FormControl, InputLabel, MenuIte
 import { login } from '../services/authService.js'
 
 const demoUsers = [
-  { username: 'admin', password: 'admin123', roleLabel: 'Administrateur' },
-  { username: 'comptable', password: 'comptable123', roleLabel: 'Utilisateur' },
-  { username: 'dirfin', password: 'dirfin123', roleLabel: 'Manageur' },
+  { username: 'admin', roleLabel: 'Administrateur' },
+  { username: 'comptable', roleLabel: 'Utilisateur' },
+  { username: 'dirfin', roleLabel: 'Manageur' },
 ]
 
 function LoginPage() {
   const navigate = useNavigate()
-  const [formValues, setFormValues] = useState({ username: 'admin', password: 'admin123' })
+  const [formValues, setFormValues] = useState({ username: 'admin', password: '' })
   const [selectedDemoUser, setSelectedDemoUser] = useState('admin')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -67,7 +67,7 @@ function LoginPage() {
                   }
 
                   setSelectedDemoUser(selectedUser.username)
-                  setFormValues({ username: selectedUser.username, password: selectedUser.password })
+                  setFormValues((prev) => ({ ...prev, username: selectedUser.username }))
                 }}
               >
                 {demoUsers.map((user) => (
@@ -99,7 +99,7 @@ function LoginPage() {
             </Button>
 
             <Typography variant="caption" color="text.secondary">
-              Comptes de demo : admin (administrateur), comptable (utilisateur), dirfin (manageur), avec leur mot de passe associé.
+              Comptes de demo : admin (administrateur), comptable (utilisateur), dirfin (manageur). Demandez le mot de passe à votre administrateur.
             </Typography>
           </Stack>
         </CardContent>

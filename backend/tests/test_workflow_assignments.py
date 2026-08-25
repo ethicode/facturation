@@ -1,6 +1,9 @@
 from app.services import BackendService
 from app.storage import JsonStore
 
+# Local-only fixture credential for tests, never used outside tmp_path stores.
+TEST_USER_PASSWORD = "test-fixture-pw-4"
+
 
 def test_workflow_assignment_can_be_created_and_removed(tmp_path):
     store = JsonStore(path=tmp_path / "db.json")
@@ -8,7 +11,7 @@ def test_workflow_assignment_can_be_created_and_removed(tmp_path):
 
     created_user = service.create_user_record(
         username="ladstep",
-        password="ladstep123",
+        password=TEST_USER_PASSWORD,
         full_name="LAD Step",
         role="utilisateur",
         email="ladstep@example.com",

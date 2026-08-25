@@ -2,6 +2,9 @@ from app.services import BackendService
 from app.schemas import RoleUpdateRequest, UserUpdateRequest
 from app.storage import JsonStore
 
+# Local-only fixture credential for tests, never used outside tmp_path stores.
+TEST_USER_PASSWORD = "test-fixture-pw-1"
+
 
 def test_create_and_delete_role_and_user(tmp_path):
     store = JsonStore(path=tmp_path / "db.json")
@@ -15,7 +18,7 @@ def test_create_and_delete_role_and_user(tmp_path):
 
     created_user = service.create_user_record(
         username="demoappro",
-        password="demoappro123",
+        password=TEST_USER_PASSWORD,
         full_name="Demo Appro",
         role="appro",
         email="demoappro@example.com",
