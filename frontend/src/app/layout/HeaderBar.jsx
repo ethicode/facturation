@@ -5,25 +5,18 @@ import {
   AppBar,
   Box,
   Button,
-  Chip,
-  FormControl,
   IconButton,
   InputAdornment,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   TextField,
   Toolbar,
   Typography,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
-import { useRoleContext } from '../roleContext.js'
 import { getStoredAuth, logout } from '../../services/authService.js'
 
 function HeaderBar({ onOpenSidebar }) {
   const navigate = useNavigate()
-  const { activeRole, setActiveRole } = useRoleContext()
   const auth = getStoredAuth()
 
 
@@ -87,7 +80,7 @@ function HeaderBar({ onOpenSidebar }) {
           </IconButton>
           <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', gap: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              {auth?.user?.full_name || auth?.user?.username || 'Utilisateur'}
+              {auth?.user?.email || auth?.user?.username || 'Utilisateur'}
             </Typography>
             <Button size="small" variant="outlined" onClick={() => {
               logout()
@@ -96,20 +89,6 @@ function HeaderBar({ onOpenSidebar }) {
               Déconnexion
             </Button>
           </Box>
-          <FormControl size="small" sx={{ minWidth: { xs: 140, sm: 170 } }}>
-            <InputLabel id="header-role-select-label">Rôle actif</InputLabel>
-            <Select
-              labelId="header-role-select-label"
-              value={activeRole}
-              label="Rôle actif"
-              onChange={(event) => setActiveRole(event.target.value)}
-              sx={{ borderRadius: 10 }}
-            >
-              <MenuItem value="administrateur">Administrateur</MenuItem>
-              <MenuItem value="utilisateur">Utilisateur</MenuItem>
-              <MenuItem value="manageur">Manageur</MenuItem>
-            </Select>
-          </FormControl>
         </Stack>
       </Toolbar>
     </AppBar>

@@ -23,7 +23,10 @@ export const appTheme = createTheme({
       main: '#00875a',
     },
     warning: {
-      main: '#ff8b00',
+      main: '#6b7280',
+      light: '#9ca3af',
+      dark: '#4b5563',
+      contrastText: '#ffffff',
     },
     error: {
       main: '#d12b2b',

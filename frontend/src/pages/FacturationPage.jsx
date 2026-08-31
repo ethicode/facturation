@@ -175,7 +175,6 @@ function FacturationPage() {
     const rows = displayedFactures.map((facture) => ({
       'Référence': facture.id,
       'Fournisseur': facture.fournisseur,
-      'Centre de coût': facture.centreCout,
       'Montant': formatAmount(facture.montant, facture.devise),
       'Échéance': formatDate(facture.echeance),
       'Dernière tâche': facture.statut,
@@ -185,7 +184,6 @@ function FacturationPage() {
     worksheet['!cols'] = [
       { wch: 18 },
       { wch: 28 },
-      { wch: 18 },
       { wch: 18 },
       { wch: 14 },
       { wch: 32 },
@@ -245,7 +243,6 @@ function FacturationPage() {
                 <TableRow>
                   <TableCell>Référence</TableCell>
                   <TableCell>Fournisseur</TableCell>
-                  <TableCell>Centre de coût</TableCell>
                   <TableCell>Montant</TableCell>
                   <TableCell>Échéance</TableCell>
                   <TableCell>Dernière tâche</TableCell>
@@ -271,7 +268,6 @@ function FacturationPage() {
                   <TableRow key={facture.id} hover onClick={() => openDetails(facture.id)} sx={{ cursor: 'pointer' }}>
                     <TableCell>{facture.id}</TableCell>
                     <TableCell>{facture.fournisseur}</TableCell>
-                    <TableCell>{facture.centreCout}</TableCell>
                     <TableCell>{formatAmount(facture.montant, facture.devise)}</TableCell>
                     <TableCell>{formatDate(facture.echeance)}</TableCell>
                     <TableCell>
@@ -317,7 +313,7 @@ function FacturationPage() {
                 ))}
                 {!isLoading && displayedFactures.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">
+                    <TableCell colSpan={7} align="center">
                       {showMyFacturesOnly
                         ? 'Aucune facture disponible à votre niveau.'
                         : 'Aucune demande de facturation disponible.'}
