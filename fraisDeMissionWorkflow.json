@@ -1,0 +1,151 @@
+{
+	"workflowId": "frais_de_mission",
+	"name": "Workflow Frais de mission",
+	"version": "1.0.0",
+	"initialStep": "Creation",
+	"finalSteps": ["Cloturee", "Rejetee"],
+	"steps": [
+		{
+			"id": "creation",
+			"name": "Creation",
+			"type": "start",
+			"main": true,
+			"roles": ["utilisateur"],
+			"autoValidated": true
+		},
+		{
+			"id": "validation_responsable_metier",
+			"name": "Validation responsable metier",
+			"type": "task",
+			"main": true,
+			"roles": ["manageur", "administrateur"]
+		},
+		{
+			"id": "retour_validation_responsable_metier",
+			"name": "Retour demande (Validation responsable metier)",
+			"type": "conditional",
+			"main": false,
+			"roles": ["manageur", "administrateur"],
+			"returnsTo": "Creation"
+		},
+		{
+			"id": "validation_drh",
+			"name": "Validation DRH",
+			"type": "task",
+			"main": true,
+			"roles": ["manageur", "administrateur"]
+		},
+		{
+			"id": "retour_validation_drh",
+			"name": "Retour demande (Validation DRH)",
+			"type": "conditional",
+			"main": false,
+			"roles": ["manageur", "administrateur"],
+			"returnsTo": "Creation"
+		},
+		{
+			"id": "validation_dirfin",
+			"name": "Validation DIRFIN",
+			"type": "task",
+			"main": true,
+			"roles": ["manageur", "administrateur"]
+		},
+		{
+			"id": "rejetee",
+			"name": "Rejetee",
+			"type": "optional",
+			"main": false,
+			"roles": ["manageur", "administrateur"]
+		},
+		{
+			"id": "cloturee",
+			"name": "Cloturee",
+			"type": "end",
+			"main": true,
+			"roles": ["systeme", "manageur", "administrateur"]
+		}
+	],
+	"transitions": [
+		{
+			"from": "Creation",
+			"to": "Validation responsable metier",
+			"condition": "demande_creee",
+			"label": "Demarrer la validation",
+			"automatic": true
+		},
+		{
+			"from": "Validation responsable metier",
+			"to": "Validation DRH",
+			"condition": "validation_responsable_metier_ok",
+			"label": "Valider et passer a la DRH"
+		},
+		{
+			"from": "Validation responsable metier",
+			"to": "Retour demande (Validation responsable metier)",
+			"condition": "retour_demande_responsable_metier",
+			"label": "Retour demande"
+		},
+		{
+			"from": "Retour demande (Validation responsable metier)",
+			"to": "Creation",
+			"condition": "demande_retour_recue_responsable_metier",
+			"label": "Retour a Creation"
+		},
+		{
+			"from": "Validation DRH",
+			"to": "Validation DIRFIN",
+			"condition": "validation_drh_ok",
+			"label": "Valider et passer a DIRFIN"
+		},
+		{
+			"from": "Validation DRH",
+			"to": "Retour demande (Validation DRH)",
+			"condition": "retour_demande_drh",
+			"label": "Retour demande"
+		},
+		{
+			"from": "Retour demande (Validation DRH)",
+			"to": "Creation",
+			"condition": "demande_retour_recue_drh",
+			"label": "Retour a Creation"
+		},
+		{
+			"from": "Validation DIRFIN",
+			"to": "Cloturee",
+			"condition": "validation_dirfin_ok",
+			"label": "Valider et cloturer"
+		},
+		{
+			"from": "Validation DIRFIN",
+			"to": "Rejetee",
+			"condition": "rejet_dirfin",
+			"label": "Rejeter la demande"
+		},
+		{
+			"from": "Validation DIRFIN",
+			"to": "Creation",
+			"condition": "retour_demande_dirfin",
+			"label": "Retour demande"
+		}
+	],
+	"timeline": {
+		"mainSteps": [
+			"Creation",
+			"Validation responsable metier",
+			"Validation DRH",
+			"Validation DIRFIN",
+			"Cloturee"
+		],
+		"conditionalSteps": [
+			"Retour demande (Validation responsable metier)",
+			"Retour demande (Validation DRH)",
+			"Rejetee"
+		],
+		"displayRule": "Les etapes conditionnelles s affichent uniquement si elles sont reellement empruntees."
+	},
+	"notes": [
+		"La demande demarre automatiquement a l etape Creation avant d aller vers la validation responsable metier.",
+		"Les retours demande renvoient volontairement au debut du workflow, a l etape Creation.",
+		"L etape Validation DIRFIN peut cloturer la demande, la rejeter ou renvoyer vers Creation."
+	]
+}

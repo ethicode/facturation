@@ -78,7 +78,7 @@ function validateBudgetForm(values, currentBudgets, editingDirection) {
   return errors
 }
 
-function DirfinPage() {
+function GestionBudgetairePage() {
   const { activeRole } = useRoleContext()
   const [state, setState] = useState({ budgets: [], tickets: [], dirfinHistory: [] })
   const [directions, setDirections] = useState([])
@@ -234,7 +234,7 @@ function DirfinPage() {
     <Stack spacing={2.5}>
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }}>
         <PageHeader
-          title="DirFin"
+          title="Gestion budgétaire"
           subtitle="Gestion complete des allocations budgetaires par direction."
         />
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignSelf: { xs: 'stretch', md: 'auto' } }}>
@@ -421,4 +421,4 @@ function DirfinPage() {
   )
 }
 
-export default DirfinPage
+export default GestionBudgetairePage

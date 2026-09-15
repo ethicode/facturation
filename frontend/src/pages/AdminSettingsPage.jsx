@@ -36,12 +36,17 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import TableActionMenu from '../components/TableActionMenu.jsx'
 import {
+  createAdminApproDomain,
+  createAdminApproSubdomain,
   createAdminDirection,
   createAdminRole,
   createAdminUser,
+  deleteAdminApproDomain,
+  deleteAdminApproSubdomain,
   deleteAdminDirection,
   deleteAdminRole,
   deleteAdminUser,
+  loadAdminApproDomains,
   deleteWorkflowAssignment,
   loadAdminDirections,
   loadAdminRoles,
@@ -67,8 +72,10 @@ function AdminSettingsPage() {
   const [roles, setRoles] = useState([])
   const [users, setUsers] = useState([])
   const [workflowAssignments, setWorkflowAssignments] = useState([])
+  const [approDomains, setApproDomains] = useState([])
 
   const [directionInput, setDirectionInput] = useState('')
+  const [approDomainInput, setApproDomainInput] = useState('')
   const [roleCode, setRoleCode] = useState('')
   const [roleLabel, setRoleLabel] = useState('')
   const [userName, setUserName] = useState('')
@@ -95,6 +102,7 @@ function AdminSettingsPage() {
   })
   const [assignmentModal, setAssignmentModal] = useState({ open: false, step: '', workflowType: 'facturation' })
   const [workflowEditorModal, setWorkflowEditorModal] = useState({ open: false, step: '', userIds: [], workflowType: 'facturation' })
+  const [domainSubdomainModal, setDomainSubdomainModal] = useState({ open: false, domain: '', subdomainInput: '' })
 
   const isAdmin = isAdminRole(currentUserRole)
 
@@ -128,16 +136,18 @@ function AdminSettingsPage() {
     async function loadAdminData() {
       try {
         setApiError('')
-        const [nextDirections, nextRoles, nextUsers, nextWorkflowAssignments] = await Promise.all([
+        const [nextDirections, nextRoles, nextUsers, nextWorkflowAssignments, nextApproDomains] = await Promise.all([
           loadAdminDirections(),
           loadAdminRoles(),
           loadAdminUsers(),
           loadWorkflowAssignments(),
+          loadAdminApproDomains(),
         ])
         setDirections(nextDirections)
         setRoles(nextRoles)
         setUsers(nextUsers)
         setWorkflowAssignments(nextWorkflowAssignments)
+        setApproDomains(nextApproDomains)
         setDirectionDrafts(Object.fromEntries(nextDirections.map((direction) => [direction, direction])))
         setRoleDrafts(Object.fromEntries(nextRoles.map((role) => [role.code, role.label])))
         setUserDrafts(
@@ -173,11 +183,18 @@ function AdminSettingsPage() {
 
   const roleOptions = useMemo(() => roles.map((role) => role.code), [roles])
   const userLookup = useMemo(() => Object.fromEntries(users.map((user) => [user.id, user])), [users])
+  const allWorkflowStatuses = useMemo(
+    () => Array.from(new Set([...approStatuses, ...facturationStatuses])),
+    []
+  )
   const workflowAssignmentLookup = useMemo(
     () => Object.fromEntries(workflowAssignments.map((assignment) => [`${assignment.workflowType}:${assignment.step}`, assignment])),
     [workflowAssignments]
   )
-
+  const selectedDomainEntry = useMemo(
+    () => approDomains.find((entry) => entry.domain === domainSubdomainModal.domain) || null,
+    [approDomains, domainSubdomainModal.domain]
+  )
   const getAssignment = (step, workflowType) => workflowAssignmentLookup[`${workflowType}:${step}`]
 
   const getUserWorkflowSteps = (userId, assignments = workflowAssignments) =>
@@ -253,6 +270,63 @@ function AdminSettingsPage() {
     }
   }
 
+  const addApproDomain = async () => {
+    const name = approDomainInput.trim()
+    if (!name) return
+
+    try {
+      setApiError('')
+      const nextDomains = await createAdminApproDomain(name)
+      setApproDomains(nextDomains)
+      setApproDomainInput('')
+    } catch (error) {
+      handleAdminError('Impossible de créer le domaine', error)
+    }
+  }
+
+  const removeApproDomain = async (domain) => {
+    try {
+      setApiError('')
+      const nextDomains = await deleteAdminApproDomain(domain)
+      setApproDomains(nextDomains)
+    } catch (error) {
+      handleAdminError('Impossible de supprimer le domaine', error)
+    }
+  }
+
+  const openDomainSubdomainModal = (domain) => {
+    setDomainSubdomainModal({ open: true, domain, subdomainInput: '' })
+  }
+
+  const closeDomainSubdomainModal = () => {
+    setDomainSubdomainModal({ open: false, domain: '', subdomainInput: '' })
+  }
+
+  const addApproSubdomain = async () => {
+    const domain = domainSubdomainModal.domain.trim()
+    const name = domainSubdomainModal.subdomainInput.trim()
+    if (!domain || !name) return
+
+    try {
+      setApiError('')
+      const nextDomains = await createAdminApproSubdomain(domain, name)
+      setApproDomains(nextDomains)
+      setDomainSubdomainModal((prev) => ({ ...prev, subdomainInput: '' }))
+    } catch (error) {
+      handleAdminError('Impossible de créer le sous-domaine', error)
+    }
+  }
+
+  const removeApproSubdomain = async (domain, name) => {
+    try {
+      setApiError('')
+      const nextDomains = await deleteAdminApproSubdomain(domain, name)
+      setApproDomains(nextDomains)
+    } catch (error) {
+      handleAdminError('Impossible de supprimer le sous-domaine', error)
+    }
+  }
+
   const addRole = async () => {
     const code = roleCode.trim().toLowerCase()
     const label = roleLabel.trim()
@@ -289,16 +363,20 @@ function AdminSettingsPage() {
       })
       const updatedAssignments = new Map(workflowAssignments.map((assignment) => [`${assignment.workflowType}:${assignment.step}`, assignment]))
       for (const step of newUserWorkflowSteps) {
-        const hasAppro = approStatuses.includes(step)
-        const hasFacturation = facturationStatuses.includes(step)
-        const workflowType = hasAppro && !hasFacturation ? 'appro' : 'facturation'
-        const key = `${workflowType}:${step}`
-        const currentAssignment = updatedAssignments.get(key)
-        const nextUserIds = Array.from(new Set([...(currentAssignment?.userIds || []), createdUser.id]))
-        const nextAssignment = currentAssignment
-          ? await updateWorkflowAssignment(step, nextUserIds, workflowType)
-          : await saveWorkflowAssignment(step, nextUserIds, workflowType)
-        updatedAssignments.set(key, nextAssignment)
+        const workflowTypes = [
+          ...(approStatuses.includes(step) ? ['appro'] : []),
+          ...(facturationStatuses.includes(step) ? ['facturation'] : []),
+        ]
+
+        for (const workflowType of workflowTypes) {
+          const key = `${workflowType}:${step}`
+          const currentAssignment = updatedAssignments.get(key)
+          const nextUserIds = Array.from(new Set([...(currentAssignment?.userIds || []), createdUser.id]))
+          const nextAssignment = currentAssignment
+            ? await updateWorkflowAssignment(step, nextUserIds, workflowType)
+            : await saveWorkflowAssignment(step, nextUserIds, workflowType)
+          updatedAssignments.set(key, nextAssignment)
+        }
       }
       setUsers((prev) => [...prev, createdUser])
       setUserDrafts((prev) => ({
@@ -426,36 +504,42 @@ function AdminSettingsPage() {
       })
 
       const selectedSteps = new Set(draft.workflowSteps || [])
-      const allStatuses = [...approStatuses, ...facturationStatuses]
+      const allStatuses = allWorkflowStatuses
       const updatedAssignments = new Map(workflowAssignments.map((assignment) => [`${assignment.workflowType}:${assignment.step}`, assignment]))
       for (const step of allStatuses) {
-        const wfType = approStatuses.includes(step) ? 'appro' : 'facturation'
-        const key = `${wfType}:${step}`
-        const currentAssignment = updatedAssignments.get(key)
-        const currentUserIds = currentAssignment?.userIds || []
-        const hasUser = currentUserIds.includes(userId)
-        const shouldHaveUser = selectedSteps.has(step)
+        const workflowTypes = [
+          ...(approStatuses.includes(step) ? ['appro'] : []),
+          ...(facturationStatuses.includes(step) ? ['facturation'] : []),
+        ]
 
-        if (hasUser === shouldHaveUser) {
-          continue
-        }
+        for (const wfType of workflowTypes) {
+          const key = `${wfType}:${step}`
+          const currentAssignment = updatedAssignments.get(key)
+          const currentUserIds = currentAssignment?.userIds || []
+          const hasUser = currentUserIds.includes(userId)
+          const shouldHaveUser = selectedSteps.has(step)
 
-        const nextUserIds = shouldHaveUser
-          ? Array.from(new Set([...currentUserIds, userId]))
-          : currentUserIds.filter((item) => item !== userId)
-
-        if (nextUserIds.length === 0) {
-          if (currentAssignment) {
-            await deleteWorkflowAssignment(step, wfType)
+          if (hasUser === shouldHaveUser) {
+            continue
           }
-          updatedAssignments.delete(key)
-          continue
-        }
 
-        const nextAssignment = currentAssignment
-          ? await updateWorkflowAssignment(step, nextUserIds, wfType)
-          : await saveWorkflowAssignment(step, nextUserIds, wfType)
-        updatedAssignments.set(key, nextAssignment)
+          const nextUserIds = shouldHaveUser
+            ? Array.from(new Set([...currentUserIds, userId]))
+            : currentUserIds.filter((item) => item !== userId)
+
+          if (nextUserIds.length === 0) {
+            if (currentAssignment) {
+              await deleteWorkflowAssignment(step, wfType)
+            }
+            updatedAssignments.delete(key)
+            continue
+          }
+
+          const nextAssignment = currentAssignment
+            ? await updateWorkflowAssignment(step, nextUserIds, wfType)
+            : await saveWorkflowAssignment(step, nextUserIds, wfType)
+          updatedAssignments.set(key, nextAssignment)
+        }
       }
 
       setUsers((prev) => prev.map((item) => (item.id === userId ? updatedUser : item)))
@@ -681,6 +765,74 @@ function AdminSettingsPage() {
                   </TableBody>
                 </Table>
               </TableContainer>
+
+              <Divider />
+
+              <Typography variant="subtitle2">Domaines et sous-domaines approvisionnement</Typography>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                <TextField
+                  fullWidth
+                  label="Nouveau domaine"
+                  value={approDomainInput}
+                  disabled={!isAdmin}
+                  onChange={(event) => setApproDomainInput(event.target.value)}
+                />
+                <Button
+                  variant="contained"
+                  onClick={addApproDomain}
+                  disabled={!isAdmin}
+                >
+                  Ajouter domaine
+                </Button>
+              </Stack>
+
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small" sx={{ '& .MuiTableCell-root': { py: 1.25 } }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Domaine</TableCell>
+                      <TableCell>Nombre de sous-domaines</TableCell>
+                      <TableCell align="right">Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {approDomains.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={3}>
+                          <Typography variant="body2" color="text.secondary">Aucun domaine trouvé.</Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+
+                    {approDomains.map((entry) => (
+                      <TableRow key={entry.domain} hover sx={{ cursor: 'pointer' }} onClick={() => openDomainSubdomainModal(entry.domain)}>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{entry.domain}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {(entry.subdomains || []).length}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right">
+                          <Button
+                            size="small"
+                            color="error"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              removeApproDomain(entry.domain)
+                            }}
+                            disabled={!isAdmin}
+                          >
+                            Supprimer domaine
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Stack>
           )}
 
@@ -737,7 +889,7 @@ function AdminSettingsPage() {
                     renderValue: (selected) => selected.join(', '),
                   }}
                 >
-                  {[...approStatuses, ...facturationStatuses].map((status) => (
+                  {allWorkflowStatuses.map((status) => (
                     <MenuItem key={status} value={status}>
                       {status}
                     </MenuItem>
@@ -1105,7 +1257,7 @@ function AdminSettingsPage() {
                       renderValue: (selected) => selected.join(', '),
                     }}
                   >
-                  {[...approStatuses, ...facturationStatuses].map((status) => (
+                  {allWorkflowStatuses.map((status) => (
                       <MenuItem key={status} value={status}>
                         {status}
                       </MenuItem>
@@ -1195,6 +1347,73 @@ function AdminSettingsPage() {
               <Button variant="contained" onClick={submitWorkflowEditor}>
                 Enregistrer
               </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog open={domainSubdomainModal.open} onClose={closeDomainSubdomainModal} fullWidth maxWidth="sm">
+            <DialogTitle>Sous-domaines du domaine: {domainSubdomainModal.domain}</DialogTitle>
+            <DialogContent>
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small" sx={{ '& .MuiTableCell-root': { py: 1.25 } }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Sous-domaine</TableCell>
+                        <TableCell align="right">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {(selectedDomainEntry?.subdomains || []).length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={2}>
+                            <Typography variant="body2" color="text.secondary">Aucun sous-domaine pour ce domaine.</Typography>
+                          </TableCell>
+                        </TableRow>
+                      )}
+
+                      {(selectedDomainEntry?.subdomains || []).map((subdomain) => (
+                        <TableRow key={`${domainSubdomainModal.domain}-${subdomain}`} hover>
+                          <TableCell>
+                            <Chip size="small" label={subdomain} />
+                          </TableCell>
+                          <TableCell align="right">
+                            <Button
+                              size="small"
+                              color="error"
+                              onClick={() => removeApproSubdomain(domainSubdomainModal.domain, subdomain)}
+                              disabled={!isAdmin}
+                            >
+                              Supprimer
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                  <TextField
+                    fullWidth
+                    label="Nouveau sous-domaine"
+                    value={domainSubdomainModal.subdomainInput}
+                    disabled={!isAdmin || !domainSubdomainModal.domain}
+                    onChange={(event) =>
+                      setDomainSubdomainModal((prev) => ({ ...prev, subdomainInput: event.target.value }))
+                    }
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={addApproSubdomain}
+                    disabled={!isAdmin || !domainSubdomainModal.domain}
+                  >
+                    Ajouter
+                  </Button>
+                </Stack>
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={closeDomainSubdomainModal}>Fermer</Button>
             </DialogActions>
           </Dialog>
         </CardContent>

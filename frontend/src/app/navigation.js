@@ -12,9 +12,9 @@ export const navigationItems = [
     icon: DashboardOutlinedIcon,
   },
   {
-    label: 'Facturation',
-    to: '/facturation',
-    icon: ReceiptLongOutlinedIcon,
+    label: 'Frais de mission',
+    to: '/frais-missions',
+    icon: AccountBalanceWalletOutlinedIcon,
   },
   {
     label: 'Approvisionnement',
@@ -22,8 +22,13 @@ export const navigationItems = [
     icon: Inventory2OutlinedIcon,
   },
   {
-    label: 'DirFin',
-    to: '/dirfin',
+    label: 'Facturation',
+    to: '/facturation',
+    icon: ReceiptLongOutlinedIcon,
+  },
+  {
+    label: 'Gestion budgétaire',
+    to: '/gestion-budgetaire',
     icon: AccountBalanceOutlinedIcon,
   },
   {

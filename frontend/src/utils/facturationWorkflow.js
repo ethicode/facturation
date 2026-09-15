@@ -1,16 +1,15 @@
 import { isAdminRole } from './roles.js'
+import workflowDefinition from '../workflows/facturationWorkflow.json'
 
 // ── Workflow Facturation ──────────────────────────────────────────────────────
-export const mainFacturationStatuses = [
-  'Saisie de la demande',
-  'Vérification métier',
-  'Validation métier N+1',
-  'Traitement service approvisionnement',
-  'Signature LAD 1',
-  'Règlement en cours',
-  'Paiement effectué',
-  'Clôturée',
+const orderedStatuses = [
+  ...(workflowDefinition.timeline?.mainSteps || []),
+  ...(workflowDefinition.timeline?.conditionalSteps || []),
 ]
+const fallbackStatuses = (workflowDefinition.steps || []).map((step) => step.name)
+const stepLookup = Object.fromEntries((workflowDefinition.steps || []).map((step) => [step.name, step]))
+
+export const mainFacturationStatuses = workflowDefinition.timeline?.mainSteps || []
 
 export const infoRequestStatuses = {
   validation: "Demande d'information complémentaire (Validation métier N+1)",
@@ -18,15 +17,9 @@ export const infoRequestStatuses = {
   signature: "Demande d'information complémentaire (Signature LAD 1)",
 }
 
-export const conditionalFacturationStatuses = [
-  infoRequestStatuses.validation,
-  infoRequestStatuses.appro,
-  infoRequestStatuses.signature,
-  'Signature LAD 2',
-  'Signature LAD 3',
-]
+export const conditionalFacturationStatuses = workflowDefinition.timeline?.conditionalSteps || []
 
-export const facturationStatuses = [...mainFacturationStatuses, ...conditionalFacturationStatuses]
+export const facturationStatuses = Array.from(new Set(orderedStatuses.length > 0 ? orderedStatuses : fallbackStatuses))
 
 const facturationStatusAliases = {
   'Validation N+1': 'Validation métier N+1',
@@ -101,24 +94,7 @@ export function getVisibleFacturationStatuses(currentStatus, history = []) {
     normalizedCurrentStatus === 'Rejetée'
     || normalizedEntries.some((text) => text.includes('rejete') || text.includes('rejetee'))
 
-  const orderedStatuses = [
-    'Saisie de la demande',
-    'Vérification métier',
-    'Validation métier N+1',
-    infoRequestStatuses.validation,
-    'Traitement service approvisionnement',
-    infoRequestStatuses.appro,
-    'Signature LAD 1',
-    infoRequestStatuses.signature,
-    'Signature LAD 2',
-    'Signature LAD 3',
-    'Règlement en cours',
-    'Paiement effectué',
-    'Rejetée',
-    'Clôturée',
-  ]
-
-  return orderedStatuses.filter((status) => {
+  return facturationStatuses.filter((status) => {
     if (mainFacturationStatuses.includes(status)) {
       return true
     }
@@ -151,74 +127,27 @@ export function getVisibleFacturationStatuses(currentStatus, history = []) {
   })
 }
 
-const facturationTransitions = {
-  Initialisation: [
-    {
-      to: 'Vérification métier',
-      label: 'Soumettre pour vérification métier',
-      roles: ['utilisateur', 'manageur'],
-    },
-  ],
-  'Saisie de la demande': [
-    {
-      to: 'Vérification métier',
-      label: 'Soumettre pour vérification métier',
-      roles: ['utilisateur', 'manageur'],
-    },
-  ],
-  'Vérification métier': [
-    { to: 'Validation métier N+1', label: 'Valider la vérification métier', roles: ['manageur'] },
-  ],
-  'Validation métier N+1': [
-    { to: 'Traitement service approvisionnement', label: 'Valider N+1 (OK)', roles: ['manageur'] },
-    {
-      to: infoRequestStatuses.validation,
-      label: "Demander des informations complémentaires (Validation métier N+1)",
-      roles: ['manageur'],
-    },
-  ],
-  [infoRequestStatuses.validation]: [
-    { to: 'Validation métier N+1', label: 'Retour à Validation métier N+1', roles: ['manageur'] },
-  ],
-  'Traitement service approvisionnement': [
-    { to: 'Signature LAD 1', label: 'Traitement validé (OK)', roles: ['manageur'] },
-    {
-      to: infoRequestStatuses.appro,
-      label: "Demander des informations complémentaires (Traitement service approvisionnement)",
-      roles: ['manageur'],
-    },
-  ],
-  [infoRequestStatuses.appro]: [
-    { to: 'Traitement service approvisionnement', label: 'Retour à Traitement service approvisionnement', roles: ['manageur'] },
-  ],
-  'Signature LAD 1': [
-    { to: 'Règlement en cours', label: 'Passer au règlement', roles: ['manageur'] },
-    { to: 'Signature LAD 2', label: 'Passer à signature LAD 2', roles: ['manageur'] },
-    { to: 'Signature LAD 3', label: 'Passer à signature LAD 3', roles: ['manageur'] },
-    {
-      to: infoRequestStatuses.signature,
-      label: "Demander des informations complémentaires (Signature LAD 1)",
-      roles: ['manageur'],
-    },
-  ],
-  [infoRequestStatuses.signature]: [
-    { to: 'Signature LAD 1', label: 'Retour à Signature LAD 1', roles: ['manageur'] },
-  ],
-  'Signature LAD 2': [
-    { to: 'Règlement en cours', label: 'Valider la signature LAD 2', roles: ['manageur'] },
-  ],
-  'Signature LAD 3': [
-    { to: 'Règlement en cours', label: 'Valider la signature LAD 3', roles: ['manageur'] },
-  ],
-  'Règlement en cours': [
-    { to: 'Paiement effectué', label: 'Confirmer le paiement (OK)', roles: ['manageur'] },
-    { to: 'Rejetée', label: 'Rejeter la demande', roles: ['manageur'] },
-  ],
-  'Paiement effectué': [],
-  Rejetée: [
-    { to: 'Clôturée', label: 'Clôturer après rejet', roles: ['manageur'] },
-  ],
-  Clôturée: [],
+const facturationTransitions = (workflowDefinition.transitions || []).reduce((acc, transition) => {
+  const from = transition.from
+  if (!from) {
+    return acc
+  }
+
+  if (!acc[from]) {
+    acc[from] = []
+  }
+
+  acc[from].push({
+    to: transition.to,
+    label: transition.label || `Passer à ${transition.to}`,
+    roles: stepLookup[from]?.roles || [],
+  })
+
+  return acc
+}, {})
+
+if (!facturationTransitions.Initialisation) {
+  facturationTransitions.Initialisation = facturationTransitions[workflowDefinition.initialStep] || []
 }
 // ── Alias backward-compat (facture = facturation) ─────────────────────────────
 /** @deprecated utiliser facturationStatuses */
@@ -241,20 +170,22 @@ export const statusColor = {
   'Clôturé': 'info',
   // facturation
   Initialisation: 'default',
-  'Saisie de la demande': 'default',
-  'Vérification métier': 'warning',
-  'Validation métier N+1': 'warning',
-  [infoRequestStatuses.validation]: 'warning',
-  [infoRequestStatuses.appro]: 'warning',
-  [infoRequestStatuses.signature]: 'warning',
-  'Traitement service approvisionnement': 'warning',
-  'Signature LAD 1': 'warning',
-  'Signature LAD 2': 'warning',
-  'Signature LAD 3': 'warning',
-  'Règlement en cours': 'warning',
-  'Paiement effectué': 'success',
-  Rejetée: 'error',
-  Clôturée: 'success',
+  ...facturationStatuses.reduce((acc, status) => {
+    const step = stepLookup[status]
+    if (step?.type === 'end' || step?.type === 'event') {
+      acc[status] = 'success'
+    } else if (step?.type === 'conditional' || step?.type === 'optional') {
+      acc[status] = 'info'
+    } else if (step?.type === 'task') {
+      acc[status] = 'warning'
+    } else {
+      acc[status] = 'default'
+    }
+    if (status === 'Rejetée') {
+      acc[status] = 'error'
+    }
+    return acc
+  }, {}),
   Terminé: 'success',
   // legacy
   Bloquee: 'error',
@@ -320,22 +251,7 @@ export function formatDateTime(value) {
 }
 
 export function getStatusCounts(factureList) {
-  const counts = {
-    'Saisie de la demande': 0,
-    'Vérification métier': 0,
-    'Validation métier N+1': 0,
-    [infoRequestStatuses.validation]: 0,
-    [infoRequestStatuses.appro]: 0,
-    [infoRequestStatuses.signature]: 0,
-    'Traitement service approvisionnement': 0,
-    'Signature LAD 1': 0,
-    'Signature LAD 2': 0,
-    'Signature LAD 3': 0,
-    'Règlement en cours': 0,
-    'Paiement effectué': 0,
-    Rejetée: 0,
-    Clôturée: 0,
-  }
+  const counts = Object.fromEntries(facturationStatuses.map((status) => [status, 0]))
 
   factureList.forEach((facture) => {
     const normalizedStatus = normalizeFacturationStatus(facture.statut)

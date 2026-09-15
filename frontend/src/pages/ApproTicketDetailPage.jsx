@@ -19,27 +19,12 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import HistoryTimeline from '../components/HistoryTimeline.jsx'
 import { closeTicket, loadApproData } from '../services/approStorage.js'
+import { approStatusColor, approWorkflowSteps } from '../utils/approWorkflow.js'
 import { formatAmount } from '../utils/facturationWorkflow.js'
-
-const statusColor = {
-  Initialisation: 'default',
-  'En attente de prise en charge': 'warning',
-  'En cours': 'info',
-  'Terminé': 'success',
-  'Clôturé': 'success',
-}
-
-const workflowSteps = [
-  { label: 'Initialisation', description: 'Ticket enregistré en approvisionnement.' },
-  { label: 'En attente de prise en charge', description: 'En attente d\'analyse ou de correction budgétaire.' },
-  { label: 'En cours', description: 'Ticket en cours de traitement.' },
-  { label: 'Terminé', description: 'Traitement terminé.' },
-  { label: 'Clôturé', description: 'Ticket finalisé et fermé.' },
-]
 
 function getActiveStep(ticket) {
   if (!ticket) return 0
-  const stepIndex = workflowSteps.findIndex((step) => step.label === ticket.statut)
+  const stepIndex = approWorkflowSteps.findIndex((step) => step.label === ticket.statut)
   return stepIndex === -1 ? 0 : stepIndex
 }
 
@@ -140,15 +125,15 @@ function ApproTicketDetailPage() {
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
               <Chip
                 label={ticket.statut}
-                color={statusColor[ticket.statut] || 'default'}
+                color={approStatusColor[ticket.statut] || 'default'}
               />
             </Stack>
             <Stepper activeStep={activeStep} alternativeLabel>
-              {workflowSteps.map((step, index) => (
+              {approWorkflowSteps.map((step, index) => (
                 <Step
                   key={step.label}
                   completed={
-                    index < activeStep || (index === activeStep && ticket.statut !== 'En attente de prise en charge')
+                    index < activeStep || (index === activeStep && ticket.statut !== 'Saisie de la demande')
                   }
                 >
                   <StepLabel>{step.label}</StepLabel>
@@ -231,9 +216,9 @@ function ApproTicketDetailPage() {
                       Fermer le ticket
                     </Button>
                   </Stack>
-                  {ticket.statut === 'En attente de prise en charge' && (
+                  {ticket.statut === "Demande d'information complémentaire (Traitement service approvisionnement)" && (
                     <Alert severity="warning">
-                      Ticket en attente de prise en charge. Ajustez le budget ou fermez le ticket.
+                      Des informations complémentaires sont attendues avant de poursuivre.
                     </Alert>
                   )}
                   {ticket.statut === 'Transférée en facturation' && (
@@ -261,7 +246,7 @@ function ApproTicketDetailPage() {
                   <Divider />
                   <HistoryTimeline
                     entries={ticket.history}
-                    dotColor={statusColor[ticket.statut] || 'primary'}
+                    dotColor={approStatusColor[ticket.statut] || 'primary'}
                   />
                 </Stack>
               </CardContent>

@@ -15,7 +15,7 @@ import {
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
-import { createSupplyTicket, loadApproData } from '../services/approStorage.js'
+import { createSupplyTicket, loadApproData, loadApproDomainCatalog } from '../services/approStorage.js'
 
 const emptyTicketForm = {
   titreDemande: '',
@@ -32,14 +32,13 @@ const emptyTicketForm = {
   uploadFileName: '',
 }
 
-const domainOptions = ['Achat', 'Service', 'Infrastructure', 'Maintenance', 'Autre']
-const subDomainOptions = ['IT', 'Finance', 'RH', 'Logistique', 'Juridique', 'Autre']
 const actionOptions = ['Renouvellement', 'Nouvel achat', 'Mise a niveau', 'Reparation', 'Consultance']
 const priorityOptions = ['Basse', 'Normale', 'Haute', 'Critique']
 
 function ApproTicketCreatePage() {
   const navigate = useNavigate()
   const [state, setState] = useState({ budgets: [], tickets: [], dirfinHistory: [] })
+  const [approDomains, setApproDomains] = useState([])
   const [apiError, setApiError] = useState('')
   const [ticketForm, setTicketForm] = useState(emptyTicketForm)
   const [ticketError, setTicketError] = useState('')
@@ -50,9 +49,10 @@ function ApproTicketCreatePage() {
 
     async function fetchApproData() {
       try {
-        const data = await loadApproData()
+        const [data, catalog] = await Promise.all([loadApproData(), loadApproDomainCatalog()])
         if (isMounted) {
           setState(data)
+          setApproDomains(catalog)
           setApiError('')
         }
       } catch (error) {
@@ -69,10 +69,15 @@ function ApproTicketCreatePage() {
     }
   }, [])
 
+  const domainOptions = approDomains.map((entry) => entry.domain)
+  const selectedDomain = ticketForm.domaine || domainOptions[0] || ''
+  const subDomainOptions = approDomains.find((entry) => entry.domain === selectedDomain)?.subdomains || []
+
   const handleFormChange = (field, value) => {
     setTicketForm((prev) => ({
       ...prev,
       [field]: value,
+      ...(field === 'domaine' ? { sousDomaine: '' } : {}),
     }))
   }
 
@@ -100,6 +105,14 @@ function ApproTicketCreatePage() {
 
     if (requiredFields.some((value) => !value) || Number.isNaN(montant) || montant <= 0) {
       setTicketError('Veuillez renseigner tous les champs obligatoires et un budget previsionnel valide.')
+      setTicketSuccess('')
+      return
+    }
+
+    const matchingDomain = approDomains.find((entry) => entry.domain === ticketForm.domaine)
+    const isSubdomainLinked = matchingDomain?.subdomains?.includes(ticketForm.sousDomaine)
+    if (!matchingDomain || !isSubdomainLinked) {
+      setTicketError('Le sous-domaine doit appartenir au domaine sélectionné.')
       setTicketSuccess('')
       return
     }
@@ -138,7 +151,7 @@ function ApproTicketCreatePage() {
       setTicketForm(emptyTicketForm)
       setTicketError('')
       setApiError('')
-      setTicketSuccess(`Ticket ${createdTicket.id} enregistré au statut Initialisation.`)
+      setTicketSuccess(`Ticket ${createdTicket.id} enregistré au statut ${createdTicket.statut}.`)
       navigate(`/approvisionnement/${createdTicket.id}`, { state: { ticket: createdTicket } })
     } catch (error) {
       setApiError(error.message || 'Impossible de créer le ticket.')
@@ -192,6 +205,7 @@ function ApproTicketCreatePage() {
                   <Select
                     value={ticketForm.sousDomaine}
                     label="Sous domaine"
+                    disabled={!selectedDomain}
                     onChange={(event) => handleFormChange('sousDomaine', event.target.value)}
                   >
                     {subDomainOptions.map((option) => (

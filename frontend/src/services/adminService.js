@@ -28,6 +28,50 @@ export async function deleteAdminDirection(name) {
   return directions.map((direction) => direction.name)
 }
 
+export async function loadAdminApproDomains() {
+  const payload = await apiRequest('/api/admin/appro-domains')
+  return payload.domains || []
+}
+
+export async function createAdminApproDomain(name) {
+  const payload = await apiRequest('/api/admin/appro-domains', {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+  })
+  return payload.domains || []
+}
+
+export async function deleteAdminApproDomain(name) {
+  const payload = await apiRequest(`/api/admin/appro-domains/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  })
+  return payload.domains || []
+}
+
+export async function createAdminApproSubdomain(domain, name) {
+  const payload = await apiRequest('/api/admin/appro-subdomains', {
+    method: 'POST',
+    body: JSON.stringify({ domain, name }),
+  })
+  return payload.domains || []
+}
+
+export async function updateAdminApproSubdomain(domain, currentName, nextName) {
+  const payload = await apiRequest('/api/admin/appro-subdomains', {
+    method: 'PUT',
+    body: JSON.stringify({ domain, current_name: currentName, next_name: nextName }),
+  })
+  return payload.domains || []
+}
+
+export async function deleteAdminApproSubdomain(domain, name) {
+  const params = new URLSearchParams({ domain, name })
+  const payload = await apiRequest(`/api/admin/appro-subdomains?${params.toString()}`, {
+    method: 'DELETE',
+  })
+  return payload.domains || []
+}
+
 export async function loadAdminRoles() {
   const roles = await apiRequest('/api/admin/roles')
   return roles.map((role) => ({ code: role.code, label: role.label }))

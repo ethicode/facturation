@@ -1,14 +1,19 @@
 import { apiRequest } from './apiClient.js'
+import { approInitialStatus } from '../utils/approWorkflow.js'
 
 const oldToNewStatusMap = {
-  Nouveau: 'Initialisation',
-  'Budget valide': 'En cours',
-  'Budget insuffisant': 'En attente de prise en charge',
+  Nouveau: 'Saisie de la demande',
+  Initialisation: 'Saisie de la demande',
+  'Budget valide': 'Traitement service approvisionnement',
+  'Budget insuffisant': "Demande d'information complémentaire (Traitement service approvisionnement)",
+  'En cours': 'Traitement service approvisionnement',
+  Terminé: 'Paiement effectué',
+  Clôturé: 'Clôturée',
   'Transfere facturation': 'Transférée en facturation',
 }
 
 function normalizeTicket(ticket) {
-  const normalizedStatus = oldToNewStatusMap[ticket.statut] || ticket.statut || 'Initialisation'
+  const normalizedStatus = oldToNewStatusMap[ticket.statut] || ticket.statut || approInitialStatus
 
   return {
     ...ticket,
@@ -28,6 +33,11 @@ function normalizeState(state) {
 export async function loadApproData() {
   const state = await apiRequest('/api/appro')
   return normalizeState(state)
+}
+
+export async function loadApproDomainCatalog() {
+  const payload = await apiRequest('/api/meta/appro-domains')
+  return payload.domains || []
 }
 
 export async function saveDirectionBudget(payload) {

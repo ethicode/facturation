@@ -7,11 +7,11 @@ function formatActivityDate(value) {
   })
 }
 
-function DirfinActivityTimeline({ entries = [] }) {
+function GestionBudgetaireActivityTimeline({ entries = [] }) {
   if (!entries.length) {
     return (
       <Alert severity="info">
-        Aucune modification DirFin n’a encore été enregistrée.
+        Aucune modification de gestion budgétaire n’a encore été enregistrée.
       </Alert>
     )
   }
@@ -41,4 +41,4 @@ function DirfinActivityTimeline({ entries = [] }) {
   )
 }
 
-export default DirfinActivityTimeline
+export default GestionBudgetaireActivityTimeline
