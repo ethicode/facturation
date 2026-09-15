@@ -10,7 +10,11 @@ from fastapi.staticfiles import StaticFiles
 from .auth import decode_token
 from .config import CORS_ORIGINS, UPLOADS_DIR
 from .schemas import (
+    ApproDomainCatalog,
+    ApproDomainDefinition,
     ApproState,
+    ApproSubdomainDefinition,
+    ApproSubdomainUpdateRequest,
     AuthLoginRequest,
     AuthUserSummary,
     BudgetUpsert,
@@ -21,6 +25,8 @@ from .schemas import (
     Facture,
     FactureCreate,
     FactureStatusUpdate,
+    Mission,
+    MissionCreate,
     RoleDefinition,
     RoleUpdateRequest,
     SupplyTicket,
@@ -95,6 +101,16 @@ def healthcheck() -> HealthResponse:
 @app.get("/api/dashboard", response_model=DashboardPayload, tags=["Auth"])
 def get_dashboard(user: AuthUserSummary = Depends(get_current_user)) -> DashboardPayload:
     return DashboardPayload.model_validate(service.get_dashboard())
+
+
+@app.get("/api/missions", response_model=list[Mission], tags=["Workflow"])
+def list_missions(user: AuthUserSummary = Depends(get_current_user)) -> list[Mission]:
+    return service.list_missions()
+
+
+@app.post("/api/missions", response_model=Mission, status_code=201, tags=["Workflow"])
+def create_mission(payload: MissionCreate, user: AuthUserSummary = Depends(get_current_user)) -> Mission:
+    return service.create_mission(payload)
 
 
 @app.post("/api/auth/login", response_model=TokenResponse, tags=["Auth"])
@@ -183,6 +199,40 @@ def delete_direction(direction_name: str, user: AuthUserSummary = Depends(requir
     return service.delete_direction(direction_name)
 
 
+@app.get("/api/admin/appro-domains", response_model=ApproDomainCatalog, tags=["Administration"])
+def list_appro_domains(user: AuthUserSummary = Depends(require_admin)) -> ApproDomainCatalog:
+    return service.get_appro_domain_catalog()
+
+
+@app.post("/api/admin/appro-domains", response_model=ApproDomainCatalog, tags=["Administration"])
+def create_appro_domain(payload: ApproDomainDefinition, user: AuthUserSummary = Depends(require_admin)) -> ApproDomainCatalog:
+    return service.create_appro_domain(payload)
+
+
+@app.delete("/api/admin/appro-domains/{domain_name}", response_model=ApproDomainCatalog, tags=["Administration"])
+def delete_appro_domain(domain_name: str, user: AuthUserSummary = Depends(require_admin)) -> ApproDomainCatalog:
+    return service.delete_appro_domain(domain_name)
+
+
+@app.post("/api/admin/appro-subdomains", response_model=ApproDomainCatalog, tags=["Administration"])
+def create_appro_subdomain(payload: ApproSubdomainDefinition, user: AuthUserSummary = Depends(require_admin)) -> ApproDomainCatalog:
+    return service.create_appro_subdomain(payload)
+
+
+@app.put("/api/admin/appro-subdomains", response_model=ApproDomainCatalog, tags=["Administration"])
+def update_appro_subdomain(payload: ApproSubdomainUpdateRequest, user: AuthUserSummary = Depends(require_admin)) -> ApproDomainCatalog:
+    return service.update_appro_subdomain(payload)
+
+
+@app.delete("/api/admin/appro-subdomains", response_model=ApproDomainCatalog, tags=["Administration"])
+def delete_appro_subdomain(
+    domain_name: str = Query(..., alias="domain"),
+    subdomain_name: str = Query(..., alias="name"),
+    user: AuthUserSummary = Depends(require_admin),
+) -> ApproDomainCatalog:
+    return service.delete_appro_subdomain(domain_name, subdomain_name)
+
+
 @app.get("/api/admin/workflow-assignments", response_model=list[WorkflowStepAssignment], tags=["Administration"])
 def list_workflow_assignments(user: AuthUserSummary = Depends(require_admin)) -> list[WorkflowStepAssignment]:
     return service.list_workflow_assignments()
@@ -206,6 +256,11 @@ def delete_workflow_assignment(step: str, workflow_type: str = Query(default="fa
 @app.get("/api/meta/workflow", response_model=WorkflowMetadata, tags=["Workflow"])
 def get_workflow(user: AuthUserSummary = Depends(get_current_user)) -> WorkflowMetadata:
     return service.get_workflow_metadata()
+
+
+@app.get("/api/meta/appro-domains", response_model=ApproDomainCatalog, tags=["Workflow"])
+def get_appro_domains(user: AuthUserSummary = Depends(get_current_user)) -> ApproDomainCatalog:
+    return service.get_appro_domain_catalog()
 
 
 @app.get("/api/factures", response_model=list[Facture], tags=["Factures"])

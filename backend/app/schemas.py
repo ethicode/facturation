@@ -203,6 +203,30 @@ class DirectionDefinition(BaseModel):
     name: str
 
 
+class ApproDomainDefinition(BaseModel):
+    name: str
+
+
+class ApproSubdomainDefinition(BaseModel):
+    domain: str
+    name: str
+
+
+class ApproSubdomainUpdateRequest(BaseModel):
+    domain: str
+    current_name: str
+    next_name: str
+
+
+class ApproDomainCatalogEntry(BaseModel):
+    domain: str
+    subdomains: list[str] = Field(default_factory=list)
+
+
+class ApproDomainCatalog(BaseModel):
+    domains: list[ApproDomainCatalogEntry] = Field(default_factory=list)
+
+
 class WorkflowStepAssignment(BaseModel):
     step: str
     user_ids: list[str] = Field(default_factory=list)
@@ -361,6 +385,14 @@ class Mission(BaseModel):
     statut: str
 
 
+class MissionCreate(BaseModel):
+    code: str = ""
+    collaborateur: str
+    destination: str
+    frais: str
+    statut: str = "Soumis"
+
+
 class TraceEvent(BaseModel):
     date: str
     action: str
@@ -434,3 +466,4 @@ class AppState(BaseModel):
     users: list[User] = Field(default_factory=list)
     appro_statuses: list[str] = Field(default_factory=list)
     facturation_statuses: list[str] = Field(default_factory=list)
+    appro_domain_map: dict[str, list[str]] = Field(default_factory=dict)

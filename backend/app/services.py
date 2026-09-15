@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 from datetime import datetime, timezone
+from pathlib import Path
 from random import randint
 
 from fastapi import HTTPException
@@ -9,7 +11,12 @@ from fastapi import HTTPException
 from .auth import create_token, decode_token, hash_password, verify_password
 from .schemas import (
     AppState,
+    ApproDomainCatalog,
+    ApproDomainCatalogEntry,
+    ApproDomainDefinition,
     ApproState,
+    ApproSubdomainDefinition,
+    ApproSubdomainUpdateRequest,
     AuthLoginRequest,
     AuthUserSummary,
     BudgetUpsert,
@@ -22,6 +29,8 @@ from .schemas import (
     HistoryEntry,
     RoleDefinition,
     RoleUpdateRequest,
+    Mission,
+    MissionCreate,
     SupplyTicket,
     SupplyTicketCreate,
     TokenResponse,
@@ -41,7 +50,42 @@ class BackendService:
         self.store = store or JsonStore()
 
     @staticmethod
-    def _normalize_facturation_statuses(statuses: list[str]) -> list[str]:
+    def _facturation_workflow_statuses() -> list[str]:
+        workflow_path = Path(__file__).resolve().parents[2] / "facturation.json"
+
+        fallback_statuses = [
+            "Saisie de la demande",
+            "Vérification métier",
+            "Validation métier N+1",
+            "Demande d'information complémentaire (Validation métier N+1)",
+            "Traitement service approvisionnement",
+            "Demande d'information complémentaire (Traitement service approvisionnement)",
+            "Signature LAD 1",
+            "Demande d'information complémentaire (Signature LAD 1)",
+            "Signature LAD 2",
+            "Signature LAD 3",
+            "Règlement en cours",
+            "Paiement effectué",
+            "Rejetée",
+            "Clôturée",
+        ]
+
+        try:
+            payload = json.loads(workflow_path.read_text(encoding="utf-8"))
+            timeline = payload.get("timeline") or {}
+            statuses = [
+                *(timeline.get("mainSteps") or []),
+                *(timeline.get("conditionalSteps") or []),
+            ]
+            if statuses:
+                return list(dict.fromkeys(statuses))
+        except (OSError, json.JSONDecodeError):
+            pass
+
+        return fallback_statuses
+
+    @staticmethod
+    def _normalize_appro_statuses(statuses: list[str]) -> list[str]:
         canonical_statuses = [
             "Saisie de la demande",
             "Vérification métier",
@@ -58,6 +102,33 @@ class BackendService:
             "Rejetée",
             "Clôturée",
         ]
+
+        alias_map = {
+            "Nouveau": "Saisie de la demande",
+            "Initialisation": "Saisie de la demande",
+            "En attente de prise en charge": "Demande d'information complémentaire (Traitement service approvisionnement)",
+            "Budget insuffisant": "Demande d'information complémentaire (Traitement service approvisionnement)",
+            "En cours": "Traitement service approvisionnement",
+            "Budget valide": "Traitement service approvisionnement",
+            "Terminé": "Paiement effectué",
+            "Clôturé": "Clôturée",
+        }
+
+        normalized = []
+        for status in statuses or []:
+            if not status:
+                continue
+            normalized.append(alias_map.get(status, status))
+
+        for status in canonical_statuses:
+            if status not in normalized:
+                normalized.append(status)
+
+        return list(dict.fromkeys(normalized))
+
+    @staticmethod
+    def _normalize_facturation_statuses(statuses: list[str]) -> list[str]:
+        canonical_statuses = BackendService._facturation_workflow_statuses()
 
         normalized = []
         for status in statuses or []:
@@ -130,6 +201,19 @@ class BackendService:
 
         if not state.appro_statuses:
             state.appro_statuses = seed_state.appro_statuses
+        state.appro_statuses = self._normalize_appro_statuses(state.appro_statuses)
+
+        if not state.appro_domain_map:
+            state.appro_domain_map = seed_state.appro_domain_map
+
+        normalized_domain_map: dict[str, list[str]] = {}
+        for domain, subdomains in (state.appro_domain_map or {}).items():
+            cleaned_domain = (domain or "").strip()
+            if not cleaned_domain:
+                continue
+            cleaned_subdomains = [sub.strip() for sub in (subdomains or []) if sub and sub.strip()]
+            normalized_domain_map[cleaned_domain] = list(dict.fromkeys(cleaned_subdomains))
+        state.appro_domain_map = normalized_domain_map
 
         if not state.facturation_statuses:
             state.facturation_statuses = seed_state.facturation_statuses
@@ -157,6 +241,27 @@ class BackendService:
             if facture.statut == "Validation LAD 3":
                 facture.statut = "Signature LAD 3"
 
+        for ticket in state.appro.tickets:
+            if ticket.statut in {"Nouveau", "Initialisation"}:
+                ticket.statut = "Saisie de la demande"
+            if ticket.statut in {"En cours", "Budget valide"}:
+                ticket.statut = "Traitement service approvisionnement"
+            if ticket.statut in {"En attente de prise en charge", "Budget insuffisant"}:
+                ticket.statut = "Demande d'information complémentaire (Traitement service approvisionnement)"
+            if ticket.statut == "Terminé":
+                ticket.statut = "Paiement effectué"
+            if ticket.statut == "Clôturé":
+                ticket.statut = "Clôturée"
+
+            ticket_domain = (ticket.domaine or "").strip()
+            ticket_subdomain = (ticket.sous_domaine or "").strip()
+            if ticket_domain:
+                current_subdomains = state.appro_domain_map.get(ticket_domain, [])
+                if ticket_subdomain and ticket_subdomain not in current_subdomains:
+                    state.appro_domain_map[ticket_domain] = [*current_subdomains, ticket_subdomain]
+                elif ticket_domain not in state.appro_domain_map:
+                    state.appro_domain_map[ticket_domain] = []
+
         self.store.write(state)
         return state
 
@@ -171,6 +276,43 @@ class BackendService:
             "trace_events": state.trace_events,
             "budget_lines": state.budget_lines,
         }
+
+    def _create_mission_code(self, missions: list[Mission]) -> str:
+        existing_codes = {mission.code for mission in missions}
+        counter = len(missions) + 1
+        while True:
+            candidate = f"MS-{counter:04d}"
+            if candidate not in existing_codes:
+                return candidate
+            counter += 1
+
+    def list_missions(self) -> list[Mission]:
+        return self._state_with_seed().missions
+
+    def create_mission(self, payload: MissionCreate) -> Mission:
+        state = self._state_with_seed()
+        collaborateur = payload.collaborateur.strip()
+        destination = payload.destination.strip()
+        frais = payload.frais.strip()
+        statut = payload.statut.strip() or "Soumis"
+
+        if not collaborateur or not destination or not frais:
+            raise HTTPException(status_code=400, detail="Le collaborateur, la destination et les frais sont obligatoires.")
+
+        code = payload.code.strip() or self._create_mission_code(state.missions)
+        if any(mission.code.lower() == code.lower() for mission in state.missions):
+            raise HTTPException(status_code=409, detail="Ce code mission existe déjà.")
+
+        mission = Mission(
+            code=code,
+            collaborateur=collaborateur,
+            destination=destination,
+            frais=frais,
+            statut=statut,
+        )
+        state.missions = [mission, *state.missions]
+        self.store.write(state)
+        return mission
 
     def get_workflow_metadata(self) -> WorkflowMetadata:
         state = self._state_with_seed()
@@ -322,7 +464,7 @@ class BackendService:
             if ticket.linkedFactureId == facture_id:
                 ticket.linkedFactureId = ""
                 if ticket.statut == "Transférée en facturation":
-                    ticket.statut = "Initialisation"
+                    ticket.statut = "Saisie de la demande"
         self.store.write(state)
         return state.factures
 
@@ -425,6 +567,139 @@ class BackendService:
     def get_appro_state(self) -> ApproState:
         return self._state_with_seed().appro
 
+    def get_appro_domain_catalog(self) -> ApproDomainCatalog:
+        state = self._state_with_seed()
+        entries = [
+            ApproDomainCatalogEntry(domain=domain, subdomains=subdomains)
+            for domain, subdomains in state.appro_domain_map.items()
+        ]
+        return ApproDomainCatalog(domains=entries)
+
+    def create_appro_domain(self, payload: ApproDomainDefinition) -> ApproDomainCatalog:
+        state = self._state_with_seed()
+        domain_name = payload.name.strip()
+        if not domain_name:
+            raise HTTPException(status_code=400, detail="Le domaine est obligatoire.")
+        if any(existing.lower() == domain_name.lower() for existing in state.appro_domain_map.keys()):
+            raise HTTPException(status_code=409, detail="Ce domaine existe déjà.")
+
+        state.appro_domain_map[domain_name] = []
+        self.store.write(state)
+        return self.get_appro_domain_catalog()
+
+    def delete_appro_domain(self, domain_name: str) -> ApproDomainCatalog:
+        state = self._state_with_seed()
+        normalized = domain_name.strip()
+        if not normalized:
+            raise HTTPException(status_code=400, detail="Le domaine est obligatoire.")
+
+        existing_name = next(
+            (name for name in state.appro_domain_map.keys() if name.lower() == normalized.lower()),
+            None,
+        )
+        if existing_name is None:
+            raise HTTPException(status_code=404, detail="Domaine introuvable.")
+
+        if any((ticket.domaine or "").lower() == existing_name.lower() for ticket in state.appro.tickets):
+            raise HTTPException(status_code=400, detail="Supprimez d'abord les tickets liés à ce domaine.")
+
+        state.appro_domain_map.pop(existing_name, None)
+        self.store.write(state)
+        return self.get_appro_domain_catalog()
+
+    def create_appro_subdomain(self, payload: ApproSubdomainDefinition) -> ApproDomainCatalog:
+        state = self._state_with_seed()
+        domain_name = payload.domain.strip()
+        subdomain_name = payload.name.strip()
+        if not domain_name or not subdomain_name:
+            raise HTTPException(status_code=400, detail="Le domaine et le sous-domaine sont obligatoires.")
+
+        existing_domain = next(
+            (name for name in state.appro_domain_map.keys() if name.lower() == domain_name.lower()),
+            None,
+        )
+        if existing_domain is None:
+            raise HTTPException(status_code=404, detail="Domaine introuvable.")
+
+        current_subdomains = state.appro_domain_map.get(existing_domain, [])
+        if any(name.lower() == subdomain_name.lower() for name in current_subdomains):
+            raise HTTPException(status_code=409, detail="Ce sous-domaine existe déjà pour ce domaine.")
+
+        state.appro_domain_map[existing_domain] = [*current_subdomains, subdomain_name]
+        self.store.write(state)
+        return self.get_appro_domain_catalog()
+
+    def update_appro_subdomain(self, payload: ApproSubdomainUpdateRequest) -> ApproDomainCatalog:
+        state = self._state_with_seed()
+        domain_name = payload.domain.strip()
+        current_name = payload.current_name.strip()
+        next_name = payload.next_name.strip()
+        if not domain_name or not current_name or not next_name:
+            raise HTTPException(status_code=400, detail="Le domaine et les noms de sous-domaine sont obligatoires.")
+
+        existing_domain = next(
+            (name for name in state.appro_domain_map.keys() if name.lower() == domain_name.lower()),
+            None,
+        )
+        if existing_domain is None:
+            raise HTTPException(status_code=404, detail="Domaine introuvable.")
+
+        current_subdomains = state.appro_domain_map.get(existing_domain, [])
+        existing_subdomain = next(
+            (name for name in current_subdomains if name.lower() == current_name.lower()),
+            None,
+        )
+        if existing_subdomain is None:
+            raise HTTPException(status_code=404, detail="Sous-domaine introuvable.")
+
+        if any(name.lower() == next_name.lower() and name.lower() != current_name.lower() for name in current_subdomains):
+            raise HTTPException(status_code=409, detail="Un sous-domaine avec ce nom existe déjà.")
+
+        next_subdomains = [next_name if name == existing_subdomain else name for name in current_subdomains]
+        state.appro_domain_map[existing_domain] = list(dict.fromkeys(next_subdomains))
+
+        for ticket in state.appro.tickets:
+            if (ticket.domaine or "").lower() == existing_domain.lower() and (ticket.sous_domaine or "").lower() == existing_subdomain.lower():
+                ticket.sous_domaine = next_name
+
+        self.store.write(state)
+        return self.get_appro_domain_catalog()
+
+    def delete_appro_subdomain(self, domain_name: str, subdomain_name: str) -> ApproDomainCatalog:
+        state = self._state_with_seed()
+        normalized_domain = domain_name.strip()
+        normalized_subdomain = subdomain_name.strip()
+        if not normalized_domain or not normalized_subdomain:
+            raise HTTPException(status_code=400, detail="Le domaine et le sous-domaine sont obligatoires.")
+
+        existing_domain = next(
+            (name for name in state.appro_domain_map.keys() if name.lower() == normalized_domain.lower()),
+            None,
+        )
+        if existing_domain is None:
+            raise HTTPException(status_code=404, detail="Domaine introuvable.")
+
+        existing_subdomain = next(
+            (name for name in state.appro_domain_map.get(existing_domain, []) if name.lower() == normalized_subdomain.lower()),
+            None,
+        )
+        if existing_subdomain is None:
+            raise HTTPException(status_code=404, detail="Sous-domaine introuvable.")
+
+        if any(
+            (ticket.domaine or "").lower() == existing_domain.lower()
+            and (ticket.sous_domaine or "").lower() == existing_subdomain.lower()
+            for ticket in state.appro.tickets
+        ):
+            raise HTTPException(status_code=400, detail="Supprimez d'abord les tickets liés à ce sous-domaine.")
+
+        state.appro_domain_map[existing_domain] = [
+            name for name in state.appro_domain_map.get(existing_domain, [])
+            if name.lower() != existing_subdomain.lower()
+        ]
+        self.store.write(state)
+        return self.get_appro_domain_catalog()
+
     def save_direction_budget(self, payload: BudgetUpsert) -> ApproState:
         state = self._state_with_seed()
         direction_name = payload.direction.strip()
@@ -487,6 +762,25 @@ class BackendService:
         if not direction_value or not title_value or amount_value <= 0:
             raise HTTPException(status_code=400, detail="Champs obligatoires invalides pour le ticket approvisionnement.")
 
+        domain_value = (payload.domaine or "").strip()
+        subdomain_value = (payload.sous_domaine or "").strip()
+        if not domain_value or not subdomain_value:
+            raise HTTPException(status_code=400, detail="Le domaine et le sous-domaine sont obligatoires.")
+
+        matching_domain = next(
+            (domain for domain in state.appro_domain_map.keys() if domain.lower() == domain_value.lower()),
+            None,
+        )
+        if matching_domain is None:
+            raise HTTPException(status_code=400, detail="Le domaine sélectionné est invalide.")
+
+        matching_subdomain = next(
+            (sub for sub in state.appro_domain_map.get(matching_domain, []) if sub.lower() == subdomain_value.lower()),
+            None,
+        )
+        if matching_subdomain is None:
+            raise HTTPException(status_code=400, detail="Le sous-domaine ne correspond pas au domaine sélectionné.")
+
         ticket = SupplyTicket(
             id=self._create_ticket_reference(state.appro.tickets),
             direction=direction_value,
@@ -494,8 +788,8 @@ class BackendService:
             montant=amount_value,
             devise=payload.devise,
             titre_demande=payload.titre_demande,
-            domaine=payload.domaine,
-            sous_domaine=payload.sous_domaine,
+            domaine=matching_domain,
+            sous_domaine=matching_subdomain,
             action_demande=payload.action_demande,
             date_debut_souhaitee=payload.date_debut_souhaitee,
             date_fin_souhaitee=payload.date_fin_souhaitee,
@@ -505,7 +799,7 @@ class BackendService:
             description=payload.description,
             commentaire=payload.commentaire,
             fichier_nom=payload.fichier_nom,
-            statut="Initialisation",
+            statut="Saisie de la demande",
             linkedFactureId="",
             history=[
                 {
@@ -543,16 +837,20 @@ class BackendService:
         if is_valid:
             budget.engaged += ticket.montant
 
-        ticket.statut = "En cours" if is_valid else "En attente de prise en charge"
+        ticket.statut = (
+            "Traitement service approvisionnement"
+            if is_valid
+            else "Demande d'information complémentaire (Traitement service approvisionnement)"
+        )
         ticket.history = [
             {
                 "id": self._event_id(),
                 "at": self._now_iso(),
                 "actor": actor,
                 "action": (
-                    "Ticket pris en charge - traitement en cours"
+                    "Traitement service approvisionnement démarré"
                     if is_valid
-                    else "Budget insuffisant - en attente de prise en charge"
+                    else "Budget insuffisant - informations complémentaires requises"
                 ),
             },
             *ticket.history,

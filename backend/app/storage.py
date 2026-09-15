@@ -126,6 +126,19 @@ class JsonStore:
                 position INTEGER NOT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS appro_domains (
+                name TEXT PRIMARY KEY,
+                position INTEGER NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS appro_subdomains (
+                domain_name TEXT NOT NULL,
+                name TEXT NOT NULL,
+                position INTEGER NOT NULL,
+                PRIMARY KEY (domain_name, name),
+                FOREIGN KEY (domain_name) REFERENCES appro_domains(name) ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS status_catalog (
                 workflow TEXT NOT NULL,
                 status TEXT NOT NULL,
@@ -325,6 +338,8 @@ class JsonStore:
         for table in [
             "roles",
             "directions",
+            "appro_subdomains",
+            "appro_domains",
             "status_catalog",
             "users",
             "user_roles",
@@ -359,6 +374,17 @@ class JsonStore:
                 "INSERT INTO directions (name, position) VALUES (?, ?)",
                 (direction, pos),
             )
+
+        for pos, domain_name in enumerate(state.appro_domain_map.keys()):
+            connection.execute(
+                "INSERT INTO appro_domains (name, position) VALUES (?, ?)",
+                (domain_name, pos),
+            )
+            for sub_pos, subdomain_name in enumerate(state.appro_domain_map.get(domain_name, [])):
+                connection.execute(
+                    "INSERT INTO appro_subdomains (domain_name, name, position) VALUES (?, ?, ?)",
+                    (domain_name, subdomain_name, sub_pos),
+                )
 
         for workflow_name, statuses in [
             ("facture", state.facture_statuses),
@@ -600,6 +626,21 @@ class JsonStore:
             "SELECT workflow, status FROM status_catalog ORDER BY workflow ASC, position ASC"
         ).fetchall():
             status_catalog.setdefault(row["workflow"], []).append(row["status"])
+
+        domain_rows = connection.execute(
+            "SELECT name FROM appro_domains ORDER BY position ASC"
+        ).fetchall()
+        appro_domain_map: dict[str, list[str]] = {}
+        for domain_row in domain_rows:
+            domain_name = domain_row["name"]
+            subdomains = [
+                row["name"]
+                for row in connection.execute(
+                    "SELECT name FROM appro_subdomains WHERE domain_name = ? ORDER BY position ASC",
+                    (domain_name,),
+                ).fetchall()
+            ]
+            appro_domain_map[domain_name] = subdomains
 
         users = []
         user_rows = connection.execute(
@@ -863,6 +904,7 @@ class JsonStore:
             "users": users,
             "appro_statuses": status_catalog.get("appro", []),
             "facturation_statuses": status_catalog.get("facturation", []),
+            "appro_domain_map": appro_domain_map,
         }
 
         return AppState.model_validate(state_payload)
