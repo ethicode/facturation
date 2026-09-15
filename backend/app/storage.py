@@ -9,6 +9,16 @@ from .schemas import AppState
 from .seed_data import SEED_DATA
 
 
+def _normalize_cfa_amount(value: str) -> str:
+    normalized = str(value or "").strip()
+    if not normalized:
+        return ""
+    normalized = normalized.replace("EUR", "CFA")
+    if "CFA" not in normalized and "XAF" not in normalized:
+        normalized = f"{normalized} CFA"
+    return normalized
+
+
 class JsonStore:
     """Relational SQLite store keeping the same read/write AppState contract.
 
@@ -309,9 +319,16 @@ class JsonStore:
 
             CREATE TABLE IF NOT EXISTS missions (
                 code TEXT PRIMARY KEY,
-                collaborateur TEXT NOT NULL,
-                destination TEXT NOT NULL,
-                frais TEXT NOT NULL,
+                collaborateur TEXT NOT NULL DEFAULT '',
+                frais TEXT NOT NULL DEFAULT '',
+                objet_mission TEXT NOT NULL DEFAULT '',
+                destination TEXT NOT NULL DEFAULT '',
+                pays TEXT NOT NULL DEFAULT '',
+                date_depart TEXT NOT NULL DEFAULT '',
+                date_retour TEXT NOT NULL DEFAULT '',
+                montant_estimatif TEXT NOT NULL DEFAULT '',
+                budget_concerne TEXT NOT NULL DEFAULT '',
+                pieces_jointes TEXT NOT NULL DEFAULT '[]',
                 statut TEXT NOT NULL,
                 position INTEGER NOT NULL
             );
@@ -333,6 +350,25 @@ class JsonStore:
             );
             """
         )
+
+        mission_columns = {
+            row[1]
+            for row in connection.execute("PRAGMA table_info(missions)").fetchall()
+        }
+        mission_alterations = {
+            "collaborateur": "ALTER TABLE missions ADD COLUMN collaborateur TEXT NOT NULL DEFAULT ''",
+            "frais": "ALTER TABLE missions ADD COLUMN frais TEXT NOT NULL DEFAULT ''",
+            "objet_mission": "ALTER TABLE missions ADD COLUMN objet_mission TEXT NOT NULL DEFAULT ''",
+            "pays": "ALTER TABLE missions ADD COLUMN pays TEXT NOT NULL DEFAULT ''",
+            "date_depart": "ALTER TABLE missions ADD COLUMN date_depart TEXT NOT NULL DEFAULT ''",
+            "date_retour": "ALTER TABLE missions ADD COLUMN date_retour TEXT NOT NULL DEFAULT ''",
+            "montant_estimatif": "ALTER TABLE missions ADD COLUMN montant_estimatif TEXT NOT NULL DEFAULT ''",
+            "budget_concerne": "ALTER TABLE missions ADD COLUMN budget_concerne TEXT NOT NULL DEFAULT ''",
+            "pieces_jointes": "ALTER TABLE missions ADD COLUMN pieces_jointes TEXT NOT NULL DEFAULT '[]'",
+        }
+        for column_name, statement in mission_alterations.items():
+            if column_name not in mission_columns:
+                connection.execute(statement)
 
     def _clear_relational_data(self, connection: sqlite3.Connection) -> None:
         for table in [
@@ -589,9 +625,25 @@ class JsonStore:
             )
 
         for pos, mission in enumerate(state.missions):
+            legacy_collaborateur = getattr(mission, "collaborateur", "") or mission.objet_mission
+            legacy_frais = getattr(mission, "frais", "") or mission.montant_estimatif
             connection.execute(
-                "INSERT INTO missions (code, collaborateur, destination, frais, statut, position) VALUES (?, ?, ?, ?, ?, ?)",
-                (mission.code, mission.collaborateur, mission.destination, mission.frais, mission.statut, pos),
+                "INSERT INTO missions (code, collaborateur, frais, objet_mission, destination, pays, date_depart, date_retour, montant_estimatif, budget_concerne, pieces_jointes, statut, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    mission.code,
+                    legacy_collaborateur,
+                    legacy_frais,
+                    mission.objet_mission,
+                    mission.destination,
+                    mission.pays,
+                    mission.date_depart,
+                    mission.date_retour,
+                    mission.montant_estimatif,
+                    mission.budget_concerne,
+                    json.dumps(mission.pieces_jointes, ensure_ascii=False),
+                    mission.statut,
+                    pos,
+                ),
             )
 
         for pos, event in enumerate(state.trace_events):
@@ -852,13 +904,18 @@ class JsonStore:
         missions = [
             {
                 "code": row["code"],
-                "collaborateur": row["collaborateur"],
+                "objet_mission": row["objet_mission"] or row["collaborateur"] or "",
                 "destination": row["destination"],
-                "frais": row["frais"],
+                "pays": row["pays"],
+                "date_depart": row["date_depart"],
+                "date_retour": row["date_retour"],
+                "montant_estimatif": _normalize_cfa_amount(row["montant_estimatif"] or row["frais"] or ""),
+                "budget_concerne": row["budget_concerne"],
+                "pieces_jointes": json.loads(row["pieces_jointes"] or "[]"),
                 "statut": row["statut"],
             }
             for row in connection.execute(
-                "SELECT code, collaborateur, destination, frais, statut FROM missions ORDER BY position ASC"
+                "SELECT code, collaborateur, frais, objet_mission, destination, pays, date_depart, date_retour, montant_estimatif, budget_concerne, pieces_jointes, statut FROM missions ORDER BY position ASC"
             ).fetchall()
         ]
 

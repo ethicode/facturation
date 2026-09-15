@@ -291,13 +291,23 @@ class BackendService:
 
     def create_mission(self, payload: MissionCreate) -> Mission:
         state = self._state_with_seed()
-        collaborateur = payload.collaborateur.strip()
+        objet_mission = payload.objet_mission.strip()
         destination = payload.destination.strip()
-        frais = payload.frais.strip()
+        pays = payload.pays.strip()
+        date_depart = payload.date_depart.strip()
+        date_retour = payload.date_retour.strip()
+        montant_estimatif = payload.montant_estimatif.strip().replace("EUR", "CFA")
+        if montant_estimatif and "CFA" not in montant_estimatif and "XAF" not in montant_estimatif:
+            montant_estimatif = f"{montant_estimatif} CFA"
+        budget_concerne = payload.budget_concerne.strip()
         statut = payload.statut.strip() or "Soumis"
+        pieces_jointes = [piece.strip() for piece in payload.pieces_jointes if piece.strip()]
 
-        if not collaborateur or not destination or not frais:
-            raise HTTPException(status_code=400, detail="Le collaborateur, la destination et les frais sont obligatoires.")
+        if not objet_mission or not destination or not pays or not date_depart or not date_retour or not montant_estimatif or not budget_concerne:
+            raise HTTPException(
+                status_code=400,
+                detail="L'objet mission, la destination, le pays, les dates, le montant estimatif et le budget concerné sont obligatoires.",
+            )
 
         code = payload.code.strip() or self._create_mission_code(state.missions)
         if any(mission.code.lower() == code.lower() for mission in state.missions):
@@ -305,9 +315,14 @@ class BackendService:
 
         mission = Mission(
             code=code,
-            collaborateur=collaborateur,
+            objet_mission=objet_mission,
             destination=destination,
-            frais=frais,
+            pays=pays,
+            date_depart=date_depart,
+            date_retour=date_retour,
+            montant_estimatif=montant_estimatif,
+            budget_concerne=budget_concerne,
+            pieces_jointes=pieces_jointes,
             statut=statut,
         )
         state.missions = [mission, *state.missions]

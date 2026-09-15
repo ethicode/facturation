@@ -379,17 +379,27 @@ class Metric(BaseModel):
 
 class Mission(BaseModel):
     code: str
-    collaborateur: str
+    objet_mission: str
     destination: str
-    frais: str
+    pays: str
+    date_depart: str
+    date_retour: str
+    montant_estimatif: str
+    budget_concerne: str
+    pieces_jointes: list[str] = Field(default_factory=list)
     statut: str
 
 
 class MissionCreate(BaseModel):
     code: str = ""
-    collaborateur: str
+    objet_mission: str
     destination: str
-    frais: str
+    pays: str
+    date_depart: str
+    date_retour: str
+    montant_estimatif: str
+    budget_concerne: str
+    pieces_jointes: list[str] = Field(default_factory=list)
     statut: str = "Soumis"
 
 

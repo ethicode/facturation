@@ -8,7 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 
 from .auth import decode_token
-from .config import CORS_ORIGINS, UPLOADS_DIR
+from .config import CORS_ORIGIN_REGEX, CORS_ORIGINS, UPLOADS_DIR
 from .schemas import (
     ApproDomainCatalog,
     ApproDomainDefinition,
@@ -57,6 +57,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
+    allow_origin_regex=CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
