@@ -8,6 +8,7 @@ import ApproPage from './pages/ApproPage.jsx'
 import ApproTicketCreatePage from './pages/ApproTicketCreatePage.jsx'
 import ApproTicketDetailPage from './pages/ApproTicketDetailPage.jsx'
 import MissionsPage from './pages/MissionsPage.jsx'
+import MissionsCreatePage from './pages/MissionsCreatePage.jsx'
 import MissionsDetailPage from './pages/MissionsDetailPage.jsx'
 import FacturationPage from './pages/FacturationPage.jsx'
 import FacturationCreatePage from './pages/FacturationCreatePage.jsx'
@@ -32,6 +33,7 @@ function App() {
         <Route path="approvisionnement/creation" element={<ApproTicketCreatePage />} />
         <Route path="approvisionnement/:ticketId" element={<ApproTicketDetailPage />} />
         <Route path="frais-missions" element={<MissionsPage />} />
+        <Route path="frais-missions/creation" element={<MissionsCreatePage />} />
         <Route path="frais-missions/:missionCode" element={<MissionsDetailPage />} />
         <Route path="facturation" element={<FacturationPage />} />
         <Route path="facturation/creation" element={<FacturationCreatePage />} />

@@ -22,7 +22,7 @@ import PageHeader from '../components/PageHeader.jsx'
 import TableActionMenu from '../components/TableActionMenu.jsx'
 import { closeTicket, deleteSupplyTicket, loadApproData } from '../services/approStorage.js'
 import { formatAmount } from '../utils/facturationWorkflow.js'
-import { approStatusColor } from '../utils/approWorkflow.js'
+import { approStatusColor, getApproStepLabel } from '../utils/approWorkflow.js'
 
 function ApproPage() {
   const navigate = useNavigate()
@@ -82,7 +82,6 @@ function ApproPage() {
     <Stack spacing={2.5}>
       <PageHeader
         title="Approvisionnement"
-        subtitle="Liste des tickets, vérification budgétaire et transfert vers la facturation."
       />
 
       {apiError && <Alert severity="error">{apiError}</Alert>}
@@ -90,12 +89,13 @@ function ApproPage() {
       <Card>
         <CardContent>
           <Stack spacing={1.5}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={1.5}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
               <Typography variant="h6">Tickets d'approvisionnement</Typography>
               <Button
                 variant="contained"
                 onClick={() => navigate('/approvisionnement/creation')}
                 sx={{
+                  ml: { xs: 0, sm: 'auto' },
                   bgcolor: 'common.black',
                   color: 'common.white',
                   '&:hover': { bgcolor: 'grey.900' },
@@ -134,7 +134,7 @@ function ApproPage() {
                         <Chip
                           size="small"
                           color={approStatusColor[ticket.statut] || 'default'}
-                          label={ticket.statut}
+                          label={getApproStepLabel(ticket.statut)}
                         />
                       </TableCell>
                       <TableCell>

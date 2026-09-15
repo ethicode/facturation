@@ -1,19 +1,8 @@
 import { apiRequest } from './apiClient.js'
-import { approInitialStatus } from '../utils/approWorkflow.js'
-
-const oldToNewStatusMap = {
-  Nouveau: 'Saisie de la demande',
-  Initialisation: 'Saisie de la demande',
-  'Budget valide': 'Traitement service approvisionnement',
-  'Budget insuffisant': "Demande d'information complémentaire (Traitement service approvisionnement)",
-  'En cours': 'Traitement service approvisionnement',
-  Terminé: 'Paiement effectué',
-  Clôturé: 'Clôturée',
-  'Transfere facturation': 'Transférée en facturation',
-}
+import { normalizeApproStatus } from '../utils/approWorkflow.js'
 
 function normalizeTicket(ticket) {
-  const normalizedStatus = oldToNewStatusMap[ticket.statut] || ticket.statut || approInitialStatus
+  const normalizedStatus = normalizeApproStatus(ticket?.statut)
 
   return {
     ...ticket,

@@ -19,7 +19,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import HistoryTimeline from '../components/HistoryTimeline.jsx'
 import { closeTicket, loadApproData } from '../services/approStorage.js'
-import { approStatusColor, approWorkflowSteps } from '../utils/approWorkflow.js'
+import { approStatusColor, approWorkflowSteps, getApproStepLabel } from '../utils/approWorkflow.js'
 import { formatAmount } from '../utils/facturationWorkflow.js'
 
 function getActiveStep(ticket) {
@@ -124,7 +124,7 @@ function ApproTicketDetailPage() {
           <Stack spacing={2.5}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
               <Chip
-                label={ticket.statut}
+                label={getApproStepLabel(ticket.statut)}
                 color={approStatusColor[ticket.statut] || 'default'}
               />
             </Stack>

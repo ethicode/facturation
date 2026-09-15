@@ -314,7 +314,12 @@ function MissionsDetailPage() {
                         <Button
                           variant="contained"
                           onClick={() => selectedTransition && handleTransition(selectedTransition.to)}
-                          sx={{ alignSelf: 'flex-start' }}
+                          sx={{
+                            alignSelf: 'flex-start',
+                            bgcolor: 'common.black',
+                            color: 'common.white',
+                            '&:hover': { bgcolor: 'grey.900' },
+                          }}
                         >
                           Valider
                         </Button>

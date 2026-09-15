@@ -196,13 +196,12 @@ function FacturationPage() {
 
   return (
     <Stack spacing={2.5}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'flex-start' }} spacing={1.5}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
         <PageHeader
           title="Facturation"
-          subtitle="Pilotage complet des demandes de facturation et de leur validation."
         />
         <Button
-          variant="outlined"
+          variant="contained"
           onClick={openCreatePage}
           sx={{
             ml: { xs: 0, sm: 'auto' },

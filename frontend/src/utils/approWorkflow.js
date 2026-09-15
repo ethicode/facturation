@@ -8,9 +8,29 @@ const orderedSteps = [
 
 const fallbackOrderedSteps = (workflowDefinition.steps || []).map((step) => step.name)
 
+export const legacyApproStatusMap = {
+  Nouveau: 'Saisie de la demande',
+  Initialisation: 'Saisie de la demande',
+  'Budget valide': 'Traitement service approvisionnement',
+  'Budget insuffisant': "Demande d'information complémentaire (Traitement service approvisionnement)",
+  'En cours': 'Traitement service approvisionnement',
+  Terminé: 'Paiement effectué',
+  Clôturé: 'Clôturée',
+  'Transfere facturation': 'Transférée en facturation',
+}
+
 // ── Workflow Approvisionnement ────────────────────────────────────────────────
 export const approStatuses = Array.from(new Set(orderedSteps.length > 0 ? orderedSteps : fallbackOrderedSteps))
 export const approInitialStatus = workflowDefinition.initialStep || approStatuses[0] || 'Saisie de la demande'
+
+export function normalizeApproStatus(status) {
+  const normalizedStatus = legacyApproStatusMap[status] || status || approInitialStatus
+  return approStatuses.includes(normalizedStatus) ? normalizedStatus : normalizedStatus
+}
+
+export function getApproStepLabel(status) {
+  return normalizeApproStatus(status)
+}
 
 export const approTransitions = (workflowDefinition.transitions || []).reduce((acc, transition) => {
   const from = transition.from
