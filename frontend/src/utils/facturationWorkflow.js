@@ -214,11 +214,26 @@ export function getAllowedTransitionsForRole(currentStatus, role, workflowType =
 }
 
 export function formatAmount(amount, currency) {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount)
+  const normalizedCurrency = String(currency || '').trim().toUpperCase()
+  const numericAmount = Number(amount ?? 0)
+
+  if (normalizedCurrency === 'CFA' || normalizedCurrency === 'XAF') {
+    return `${new Intl.NumberFormat('fr-FR', {
+      maximumFractionDigits: 0,
+    }).format(numericAmount)} CFA`
+  }
+
+  try {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: normalizedCurrency || 'EUR',
+      maximumFractionDigits: 0,
+    }).format(numericAmount)
+  } catch {
+    return `${new Intl.NumberFormat('fr-FR', {
+      maximumFractionDigits: 0,
+    }).format(numericAmount)} ${normalizedCurrency || 'EUR'}`.trim()
+  }
 }
 
 export function formatDate(value) {
