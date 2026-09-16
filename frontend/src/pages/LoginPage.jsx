@@ -47,9 +47,6 @@ function LoginPage() {
           <Stack spacing={2.5} component="form" onSubmit={handleSubmit}>
             <Stack spacing={0.5}>
               <Typography variant="h5">Connexion</Typography>
-              <Typography variant="body2" color="text.secondary">
-                Connectez-vous avec un utilisateur du backend pour accéder à l’application.
-              </Typography>
             </Stack>
 
             {error && <Alert severity="error">{error}</Alert>}
@@ -97,10 +94,6 @@ function LoginPage() {
             <Button type="submit" variant="contained" disabled={isSubmitting}>
               {isSubmitting ? 'Connexion…' : 'Se connecter'}
             </Button>
-
-            <Typography variant="caption" color="text.secondary">
-              Comptes de demo : admin (administrateur), comptable (utilisateur), dirfin (manageur). Demandez le mot de passe à votre administrateur.
-            </Typography>
           </Stack>
         </CardContent>
       </Card>

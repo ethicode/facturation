@@ -17,6 +17,7 @@ import {
 } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import HistoryTimeline from '../components/HistoryTimeline.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import { loadMissions } from '../services/dashboardService.js'
 import missionWorkflow from '../../../fraisDeMissionWorkflow.json'
@@ -90,6 +91,18 @@ function formatCfaAmount(value) {
   return `${rawValue} CFA`
 }
 
+function buildMissionHistoryEntry(mission, status, timestamp = new Date()) {
+  const normalizedStatus = normalizeMissionWorkflowStatus(status) || status
+
+  return {
+    id: `${mission.code}-status-${normalizedStatus}-${timestamp.getTime()}`,
+    at: timestamp.toISOString(),
+    action: normalizedStatus,
+    actor: 'Workflow',
+    commentaire: `Mission passée à l'étape ${normalizedStatus}.`,
+  }
+}
+
 function MissionsDetailPage() {
   const { missionCode } = useParams()
   const location = useLocation()
@@ -98,6 +111,16 @@ function MissionsDetailPage() {
   const [apiError, setApiError] = useState('')
   const [isLoading, setIsLoading] = useState(() => !location.state?.mission)
   const [selectedTransition, setSelectedTransition] = useState(null)
+  const [missionHistoryEntries, setMissionHistoryEntries] = useState(() => {
+    const initialMission = location.state?.mission
+    if (!initialMission) {
+      return []
+    }
+
+    const initialStatus = normalizeMissionWorkflowStatus(initialMission.statut) || initialMission.statut
+    const initialDate = initialMission.date_depart ? new Date(`${initialMission.date_depart}T09:00:00`) : new Date()
+    return [buildMissionHistoryEntry(initialMission, initialStatus, initialDate)]
+  })
 
   const mission = useMemo(
     () => missions.find((item) => item.code === missionCode) || null,
@@ -105,6 +128,26 @@ function MissionsDetailPage() {
   )
 
   const currentWorkflowStatus = normalizeMissionWorkflowStatus(mission?.statut)
+
+  useEffect(() => {
+    if (!mission) {
+      return
+    }
+
+    const normalizedCurrentStatus = normalizeMissionWorkflowStatus(mission.statut) || mission.statut
+    if (!normalizedCurrentStatus) {
+      return
+    }
+
+    setMissionHistoryEntries((currentEntries) => {
+      if (currentEntries.some((entry) => entry.action === normalizedCurrentStatus)) {
+        return currentEntries
+      }
+
+      const timestamp = mission.date_depart ? new Date(`${mission.date_depart}T09:00:00`) : new Date()
+      return [buildMissionHistoryEntry(mission, normalizedCurrentStatus, timestamp), ...currentEntries]
+    })
+  }, [mission])
 
   const allowedTransitions = useMemo(() => {
     if (!currentWorkflowStatus) {
@@ -160,6 +203,8 @@ function MissionsDetailPage() {
       return
     }
 
+    const normalizedNextStatus = normalizeMissionWorkflowStatus(nextStatus) || nextStatus
+
     setMissions((current) => current.map((item) => {
       if (item.code !== mission.code) {
         return item
@@ -170,6 +215,14 @@ function MissionsDetailPage() {
         statut: nextStatus,
       }
     }))
+
+    setMissionHistoryEntries((currentEntries) => {
+      if (currentEntries.some((entry) => entry.action === normalizedNextStatus)) {
+        return currentEntries
+      }
+
+      return [buildMissionHistoryEntry(mission, normalizedNextStatus, new Date()), ...currentEntries]
+    })
   }
 
   return (
@@ -262,37 +315,11 @@ function MissionsDetailPage() {
                   </Stack>
                 </CardContent>
               </Card>
-            </Stack>
-          </Grid>
-
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <Stack spacing={2.5}>
-              <Card>
-                <CardContent>
-                  <Stack spacing={1}>
-                    <Typography variant="subtitle2">Résumé</Typography>
-                    <Divider />
-                    <Typography variant="body2" color="text.secondary">
-                      Code mission
-                    </Typography>
-                    <Typography variant="body1">{mission.code}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Montant estimatif
-                    </Typography>
-                    <Typography variant="body1">{formatCfaAmount(mission.montant_estimatif)}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Statut
-                    </Typography>
-                    <Chip size="small" color={missionColor[mission.statut] || 'default'} label={mission.statut} sx={{ width: 'fit-content' }} />
-                  </Stack>
-                </CardContent>
-              </Card>
 
               <Card>
                 <CardContent>
                   <Stack spacing={1.5}>
                     <Typography variant="subtitle2">Actions</Typography>
-                    <Divider />
                     {allowedTransitions.length > 0 ? (
                       <>
                         <RadioGroup
@@ -329,9 +356,23 @@ function MissionsDetailPage() {
                         Aucune action disponible pour ce statut.
                       </Typography>
                     )}
-                    <Button variant="outlined" onClick={() => navigate('/frais-missions')}>
-                      Retour à la liste
-                    </Button>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Stack>
+          </Grid>
+
+          <Grid size={{ xs: 12, lg: 4 }}>
+            <Stack spacing={2.5}>
+              <Card>
+                <CardContent>
+                  <Stack spacing={1.5}>
+                    <Typography variant="subtitle2">Historique</Typography>
+                    <Divider />
+                    <HistoryTimeline
+                      entries={missionHistoryEntries}
+                      dotColor={missionColor[currentWorkflowStatus] || 'primary'}
+                    />
                   </Stack>
                 </CardContent>
               </Card>
