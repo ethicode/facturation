@@ -20,13 +20,17 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import TableActionMenu from '../components/TableActionMenu.jsx'
+import { loadAdminUsers } from '../services/adminService.js'
 import { closeTicket, deleteSupplyTicket, loadApproData } from '../services/approStorage.js'
+import { loadWorkflowMetadata } from '../services/workflowService.js'
 import { formatAmount } from '../utils/facturationWorkflow.js'
 import { approStatusColor, getApproStepLabel } from '../utils/approWorkflow.js'
 
 function ApproPage() {
   const navigate = useNavigate()
   const [state, setState] = useState({ budgets: [], tickets: [], dirfinHistory: [] })
+  const [workflowAssignments, setWorkflowAssignments] = useState([])
+  const [userEmailById, setUserEmailById] = useState({})
   const [apiError, setApiError] = useState('')
 
   useEffect(() => {
@@ -34,13 +38,35 @@ function ApproPage() {
 
     async function fetchApproData() {
       try {
-        const data = await loadApproData()
+        const [data, metadata] = await Promise.all([
+          loadApproData(),
+          loadWorkflowMetadata(),
+        ])
+
+        let emailMap = {}
+        try {
+          const users = await loadAdminUsers()
+          emailMap = users.reduce((acc, user) => {
+            if (user?.id && user?.email) {
+              acc[user.id] = user.email
+            }
+            return acc
+          }, {})
+        } catch {
+          emailMap = {}
+        }
+
         if (isMounted) {
           setState(data)
+          setWorkflowAssignments(Array.isArray(metadata?.workflow_assignments) ? metadata.workflow_assignments : [])
+          setUserEmailById(emailMap)
           setApiError('')
         }
       } catch (error) {
         if (isMounted) {
+          setState({ budgets: [], tickets: [], dirfinHistory: [] })
+          setWorkflowAssignments([])
+          setUserEmailById({})
           setApiError(error.message || 'Impossible de charger les tickets approvisionnement.')
         }
       }
@@ -52,6 +78,30 @@ function ApproPage() {
       isMounted = false
     }
   }, [])
+
+  const getAssignedUsersForCurrentStep = (status) => {
+    const normalizedStatus = getApproStepLabel(status)
+
+    const assignment = workflowAssignments.find((item) => {
+      const normalizedWorkflowType = String(item?.workflow_type || item?.workflowType || '').trim().toLowerCase()
+      const approWorkflowNames = ['approvisionnement', 'appro', 'approvisionnement ticket', 'ticket approvisionnement']
+      return (
+        approWorkflowNames.includes(normalizedWorkflowType)
+        && String(item?.step || '').trim() === String(normalizedStatus || '').trim()
+      )
+    })
+
+    if (!assignment || !(Array.isArray(assignment.user_ids) || Array.isArray(assignment.userIds)) || (Array.isArray(assignment.user_ids) ? assignment.user_ids.length : assignment.userIds.length) === 0) {
+      return ''
+    }
+
+    const assignedUserIds = Array.isArray(assignment.user_ids) ? assignment.user_ids : assignment.userIds
+    const assignedEmails = assignedUserIds
+      .map((userId) => userEmailById[userId] || '')
+      .filter(Boolean)
+
+    return assignedEmails.length > 0 ? assignedEmails.join(', ') : ''
+  }
 
   const handleClose = async (ticketId) => {
     try {
@@ -113,7 +163,8 @@ function ApproPage() {
                     <TableCell>Direction</TableCell>
                     <TableCell>Objet</TableCell>
                     <TableCell>Montant</TableCell>
-                    <TableCell>Statut</TableCell>
+                    <TableCell>Dernière tâche</TableCell>
+                    <TableCell>Dernière tâche assignée</TableCell>
                     <TableCell>Facturation</TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
@@ -137,6 +188,7 @@ function ApproPage() {
                           label={getApproStepLabel(ticket.statut)}
                         />
                       </TableCell>
+                      <TableCell>{getAssignedUsersForCurrentStep(ticket.statut)}</TableCell>
                       <TableCell>
                         {ticket.linkedFactureId ? (
                           <Button
