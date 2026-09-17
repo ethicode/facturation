@@ -339,6 +339,21 @@ def verify_ticket(ticket_id: str, actor: str = Query(default="Agent Approvisionn
     return service.verify_ticket_budget(ticket_id, actor)
 
 
+@app.post("/api/appro/tickets/{ticket_id}/resume-treatment", response_model=ApproState, tags=["Approvisionnement"])
+def resume_ticket_treatment(ticket_id: str, actor: str = Query(default="Agent Approvisionnement"), user: AuthUserSummary = Depends(get_current_user)) -> ApproState:
+    return service.resume_ticket_treatment(ticket_id, actor)
+
+
+@app.post("/api/appro/tickets/{ticket_id}/transition", response_model=ApproState, tags=["Approvisionnement"])
+def transition_ticket_status(
+    ticket_id: str,
+    next_status: str = Query(...),
+    actor: str = Query(default="Agent Approvisionnement"),
+    user: AuthUserSummary = Depends(get_current_user),
+) -> ApproState:
+    return service.transition_ticket_status(ticket_id, next_status, actor)
+
+
 @app.post("/api/appro/tickets/{ticket_id}/close", response_model=ApproState, tags=["Approvisionnement"])
 def close_ticket(ticket_id: str, actor: str = Query(default="Agent Approvisionnement"), user: AuthUserSummary = Depends(get_current_user)) -> ApproState:
     return service.close_ticket(ticket_id, actor)

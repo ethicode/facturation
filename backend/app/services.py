@@ -127,6 +127,20 @@ class BackendService:
         return list(dict.fromkeys(normalized))
 
     @staticmethod
+    def _normalize_appro_status(status: str) -> str:
+        alias_map = {
+            "Nouveau": "Saisie de la demande",
+            "Initialisation": "Saisie de la demande",
+            "En attente de prise en charge": "Demande d'information complémentaire (Traitement service approvisionnement)",
+            "Budget insuffisant": "Demande d'information complémentaire (Traitement service approvisionnement)",
+            "En cours": "Traitement service approvisionnement",
+            "Budget valide": "Traitement service approvisionnement",
+            "Terminé": "Paiement effectué",
+            "Clôturé": "Clôturée",
+        }
+        return alias_map.get(status, status)
+
+    @staticmethod
     def _normalize_facturation_statuses(statuses: list[str]) -> list[str]:
         canonical_statuses = BackendService._facturation_workflow_statuses()
 
@@ -863,10 +877,58 @@ class BackendService:
                 "at": self._now_iso(),
                 "actor": actor,
                 "action": (
-                    "Traitement service approvisionnement démarré"
+                    "Traitement service approvisionnement"
                     if is_valid
-                    else "Budget insuffisant - informations complémentaires requises"
+                    else "Demande d'information complémentaire (Traitement service approvisionnement)"
                 ),
+            },
+            *ticket.history,
+        ]
+        self.store.write(state)
+        return state.appro
+
+    def resume_ticket_treatment(self, ticket_id: str, actor: str = "Agent Approvisionnement") -> ApproState:
+        state = self._state_with_seed()
+        ticket = self._find_ticket(state, ticket_id)
+
+        if ticket.linkedFactureId or ticket.statut == "Clôturée":
+            return state.appro
+
+        ticket.statut = "Traitement service approvisionnement"
+        ticket.history = [
+            {
+                "id": self._event_id(),
+                "at": self._now_iso(),
+                "actor": actor,
+                "action": "Traitement service approvisionnement",
+            },
+            *ticket.history,
+        ]
+        self.store.write(state)
+        return state.appro
+
+    def transition_ticket_status(self, ticket_id: str, next_status: str, actor: str = "Agent Approvisionnement") -> ApproState:
+        state = self._state_with_seed()
+        ticket = self._find_ticket(state, ticket_id)
+
+        if ticket.linkedFactureId or ticket.statut == "Clôturée":
+            return state.appro
+
+        normalized_next_status = self._normalize_appro_status((next_status or "").strip())
+        if not normalized_next_status:
+            raise HTTPException(status_code=400, detail="Le statut cible est obligatoire.")
+
+        allowed_statuses = set(self._normalize_appro_statuses(state.appro_statuses))
+        if normalized_next_status not in allowed_statuses:
+            raise HTTPException(status_code=400, detail="Le statut cible est invalide.")
+
+        ticket.statut = normalized_next_status
+        ticket.history = [
+            {
+                "id": self._event_id(),
+                "at": self._now_iso(),
+                "actor": actor,
+                "action": normalized_next_status,
             },
             *ticket.history,
         ]

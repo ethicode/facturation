@@ -18,14 +18,89 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import HistoryTimeline from '../components/HistoryTimeline.jsx'
-import { closeTicket, loadApproData } from '../services/approStorage.js'
-import { approStatusColor, approWorkflowSteps, getApproStepLabel } from '../utils/approWorkflow.js'
+import { closeTicket, loadApproData, transitionTicketStatus } from '../services/approStorage.js'
+import {
+  approStatusColor,
+  approWorkflowSteps,
+  getApproNextStatuses,
+  getApproStepLabel,
+} from '../utils/approWorkflow.js'
 import { formatAmount } from '../utils/facturationWorkflow.js'
 
 function getActiveStep(ticket) {
   if (!ticket) return 0
   const stepIndex = approWorkflowSteps.findIndex((step) => step.label === ticket.statut)
   return stepIndex === -1 ? 0 : stepIndex
+}
+
+function normalizeText(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+function normalizeApproHistoryActionToStep(action) {
+  const normalizedLabel = getApproStepLabel(action)
+  const stepLabels = approWorkflowSteps.map((step) => step.label)
+  if (stepLabels.includes(normalizedLabel)) {
+    return normalizedLabel
+  }
+
+  const text = normalizeText(action)
+
+  if (text.includes('ticket cree')) {
+    return 'Saisie de la demande'
+  }
+  if (text.includes('verification metier')) {
+    return 'Vérification métier'
+  }
+  if (text.includes('validation metier n+1') || text.includes('validation n+1')) {
+    return 'Validation métier N+1'
+  }
+  if (text.includes('traitement service approvisionnement') && (text.includes('information complementaire') || text.includes('budget insuffisant') || text.includes('en attente de prise en charge'))) {
+    return "Demande d'information complémentaire (Traitement service approvisionnement)"
+  }
+  if (text.includes('traitement service approvisionnement') || text.includes('traitement en cours') || text.includes('pris en charge')) {
+    return 'Traitement service approvisionnement'
+  }
+  if (text.includes('information complementaire') && text.includes('validation metier')) {
+    return "Demande d'information complémentaire (Validation métier N+1)"
+  }
+  if (text.includes('information complementaire') && text.includes('signature lad 1')) {
+    return "Demande d'information complémentaire (Signature LAD 1)"
+  }
+  if (text.includes('signature lad 1')) {
+    return 'Signature LAD 1'
+  }
+  if (text.includes('signature lad 2')) {
+    return 'Signature LAD 2'
+  }
+  if (text.includes('signature lad 3')) {
+    return 'Signature LAD 3'
+  }
+  if (text.includes('reglement en cours') || text.includes('reglement')) {
+    return 'Règlement en cours'
+  }
+  if (text.includes('paiement effectue') || text.includes('paiement confirme')) {
+    return 'Paiement effectué'
+  }
+  if (text.includes('cloture') || text.includes('ticket cloture')) {
+    return 'Clôturée'
+  }
+
+  return action
+}
+
+function normalizeApproHistoryEntries(entries = []) {
+  return entries.map((entry) => {
+    const action = normalizeApproHistoryActionToStep(entry?.action)
+
+    return {
+      ...entry,
+      action,
+    }
+  })
 }
 
 function ApproTicketDetailPage() {
@@ -64,7 +139,7 @@ function ApproTicketDetailPage() {
     }
   }, [ticketId])
 
-  const ticket = location.state?.ticket || state.tickets.find((item) => item.id === ticketId)
+  const ticket = state.tickets.find((item) => item.id === ticketId) || location.state?.ticket || null
 
   const handleClose = async () => {
     try {
@@ -73,6 +148,16 @@ function ApproTicketDetailPage() {
       setApiError('')
     } catch (error) {
       setApiError(error.message || 'Impossible de clôturer le ticket.')
+    }
+  }
+
+  const handleTransition = async (nextStatus) => {
+    try {
+      const nextState = await transitionTicketStatus(ticketId, nextStatus)
+      setState(nextState)
+      setApiError('')
+    } catch (error) {
+      setApiError(error.message || 'Impossible de mettre à jour le ticket.')
     }
   }
 
@@ -108,6 +193,8 @@ function ApproTicketDetailPage() {
   const activeStep = getActiveStep(ticket)
   const budget = state.budgets.find((line) => line.direction === ticket.direction)
   const remaining = budget ? budget.allocated - budget.engaged : null
+  const normalizedTicketStatus = getApproStepLabel(ticket.statut)
+  const nextStatuses = Array.from(new Set(getApproNextStatuses(normalizedTicketStatus)))
 
   return (
     <Stack spacing={2.5}>
@@ -206,6 +293,32 @@ function ApproTicketDetailPage() {
                   <Divider />
                   {apiError && <Alert severity="error">{apiError}</Alert>}
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                    {nextStatuses.map((nextStatus) => (
+                      <Button
+                        key={nextStatus}
+                        variant="contained"
+                        size="large"
+                        onClick={() => handleTransition(nextStatus)}
+                        disabled={ticket.statut === 'Clôturée' || Boolean(ticket.linkedFactureId)}
+                        sx={{
+                          bgcolor: 'common.black',
+                          color: 'common.white',
+                          '&:hover': { bgcolor: 'grey.900' },
+                        }}
+                      >
+                        {nextStatus}
+                      </Button>
+                    ))}
+                    {nextStatuses.length === 0 && (
+                      <Button
+                        variant="outlined"
+                        size="large"
+                        startIcon={<TaskAltOutlinedIcon />}
+                        disabled
+                      >
+                        {normalizedTicketStatus}
+                      </Button>
+                    )}
                     <Button
                       variant="outlined"
                       size="large"
@@ -213,14 +326,9 @@ function ApproTicketDetailPage() {
                       disabled={ticket.statut === 'Clôturée' || Boolean(ticket.linkedFactureId)}
                       onClick={handleClose}
                     >
-                      Fermer le ticket
+                      Clôturée
                     </Button>
                   </Stack>
-                  {ticket.statut === "Demande d'information complémentaire (Traitement service approvisionnement)" && (
-                    <Alert severity="warning">
-                      Des informations complémentaires sont attendues avant de poursuivre.
-                    </Alert>
-                  )}
                   {ticket.statut === 'Transférée en facturation' && (
                     <Alert severity="info">
                       Ticket transmis à la facturation. Le workflow continue sur la demande liée.
@@ -245,7 +353,7 @@ function ApproTicketDetailPage() {
                   <Typography variant="h6">Historique et dates</Typography>
                   <Divider />
                   <HistoryTimeline
-                    entries={ticket.history}
+                    entries={normalizeApproHistoryEntries(ticket.history)}
                     dotColor={approStatusColor[ticket.statut] || 'primary'}
                   />
                 </Stack>

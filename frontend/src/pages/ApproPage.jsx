@@ -163,7 +163,7 @@ function ApproPage() {
                     <TableCell>Direction</TableCell>
                     <TableCell>Objet</TableCell>
                     <TableCell>Montant</TableCell>
-                    <TableCell>Dernière tâche</TableCell>
+                    <TableCell sx={{ width: 240, maxWidth: 240 }}>Dernière tâche</TableCell>
                     <TableCell>Dernière tâche assignée</TableCell>
                     <TableCell>Facturation</TableCell>
                     <TableCell align="right">Actions</TableCell>
@@ -181,11 +181,23 @@ function ApproPage() {
                       <TableCell>{ticket.direction}</TableCell>
                       <TableCell>{ticket.objet}</TableCell>
                       <TableCell>{formatAmount(ticket.montant, ticket.devise)}</TableCell>
-                      <TableCell>
+                      <TableCell sx={{ width: 240, maxWidth: 240 }}>
                         <Chip
                           size="small"
                           color={approStatusColor[ticket.statut] || 'default'}
                           label={getApproStepLabel(ticket.statut)}
+                          sx={{
+                            maxWidth: '100%',
+                            height: 'auto',
+                            '& .MuiChip-label': {
+                              whiteSpace: 'normal',
+                              display: 'block',
+                              overflowWrap: 'anywhere',
+                              lineHeight: 1.25,
+                              paddingTop: 0.5,
+                              paddingBottom: 0.5,
+                            },
+                          }}
                         />
                       </TableCell>
                       <TableCell>{getAssignedUsersForCurrentStep(ticket.statut)}</TableCell>

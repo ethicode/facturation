@@ -76,6 +76,24 @@ export async function verifyTicketBudget(ticketId, actor = 'Agent Approvisionnem
   return normalizeState(state)
 }
 
+export async function resumeTicketTreatment(ticketId, actor = 'Agent Approvisionnement') {
+  const params = new URLSearchParams({ actor })
+  const state = await apiRequest(`/api/appro/tickets/${encodeURIComponent(ticketId)}/resume-treatment?${params.toString()}`, {
+    method: 'POST',
+  })
+
+  return normalizeState(state)
+}
+
+export async function transitionTicketStatus(ticketId, nextStatus, actor = 'Agent Approvisionnement') {
+  const params = new URLSearchParams({ actor, next_status: nextStatus })
+  const state = await apiRequest(`/api/appro/tickets/${encodeURIComponent(ticketId)}/transition?${params.toString()}`, {
+    method: 'POST',
+  })
+
+  return normalizeState(state)
+}
+
 export async function closeTicket(ticketId, actor = 'Agent Approvisionnement') {
   const params = new URLSearchParams({ actor })
   const state = await apiRequest(`/api/appro/tickets/${encodeURIComponent(ticketId)}/close?${params.toString()}`, {
