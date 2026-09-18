@@ -26,8 +26,8 @@ backend/app/__pycache__/
 backend/data/
 backend-spring/data/
 backend-spring/**/target/
-*.sqlite3
-*.sqlite3-*
+# *.sqlite3
+# *.sqlite3-*
 *.bak
 
 # Frontend (Vite/Node)
