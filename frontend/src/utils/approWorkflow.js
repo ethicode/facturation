@@ -65,14 +65,12 @@ export const approStatusColor = approStatuses.reduce((acc, status) => {
   return acc
 }, {})
 
-export const approWorkflowSteps = approStatuses
-  .filter((label) => stepLookup[label]?.main === true)
-  .map((label) => ({
-    label,
-    description: stepLookup[label]?.returnsTo
-      ? `Retour possible vers: ${stepLookup[label].returnsTo}`
-      : '',
-  }))
+export const approWorkflowSteps = approStatuses.map((label) => ({
+  label,
+  description: stepLookup[label]?.returnsTo
+    ? `Retour possible vers: ${stepLookup[label].returnsTo}`
+    : '',
+}))
 
 export function getApproNextStatuses(currentStatus) {
   return (approTransitions[currentStatus] || []).map((transition) => transition.to)
