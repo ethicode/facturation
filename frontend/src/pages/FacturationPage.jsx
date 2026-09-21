@@ -175,6 +175,7 @@ function FacturationPage() {
     const rows = displayedFactures.map((facture) => ({
       'Référence': facture.id,
       'Fournisseur': facture.fournisseur,
+      'Centre de coût': facture.centreCout,
       'Montant': formatAmount(facture.montant, facture.devise),
       'Échéance': formatDate(facture.echeance),
       'Dernière tâche': facture.statut,
@@ -184,6 +185,7 @@ function FacturationPage() {
     worksheet['!cols'] = [
       { wch: 18 },
       { wch: 28 },
+      { wch: 18 },
       { wch: 18 },
       { wch: 14 },
       { wch: 32 },
@@ -196,12 +198,13 @@ function FacturationPage() {
 
   return (
     <Stack spacing={2.5}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'flex-start' }} spacing={1.5}>
         <PageHeader
           title="Facturation"
+          subtitle="Pilotage complet des demandes de facturation et de leur validation."
         />
         <Button
-          variant="contained"
+          variant="outlined"
           onClick={openCreatePage}
           sx={{
             ml: { xs: 0, sm: 'auto' },
@@ -242,6 +245,7 @@ function FacturationPage() {
                 <TableRow>
                   <TableCell>Référence</TableCell>
                   <TableCell>Fournisseur</TableCell>
+                  <TableCell>Centre de coût</TableCell>
                   <TableCell>Montant</TableCell>
                   <TableCell>Échéance</TableCell>
                   <TableCell>Dernière tâche</TableCell>
@@ -267,6 +271,7 @@ function FacturationPage() {
                   <TableRow key={facture.id} hover onClick={() => openDetails(facture.id)} sx={{ cursor: 'pointer' }}>
                     <TableCell>{facture.id}</TableCell>
                     <TableCell>{facture.fournisseur}</TableCell>
+                    <TableCell>{facture.centreCout}</TableCell>
                     <TableCell>{formatAmount(facture.montant, facture.devise)}</TableCell>
                     <TableCell>{formatDate(facture.echeance)}</TableCell>
                     <TableCell>
@@ -312,7 +317,7 @@ function FacturationPage() {
                 ))}
                 {!isLoading && displayedFactures.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
+                    <TableCell colSpan={8} align="center">
                       {showMyFacturesOnly
                         ? 'Aucune facture disponible à votre niveau.'
                         : 'Aucune demande de facturation disponible.'}
