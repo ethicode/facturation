@@ -62,7 +62,7 @@ import { approStatuses } from '../utils/approWorkflow.js'
 import { facturationStatuses } from '../utils/facturationWorkflow.js'
 import { isAdminRole } from '../utils/roles.js'
 
-const tabKeys = ['directions', 'utilisateurs', 'workflows', 'roles']
+const tabKeys = ['directions', 'approvisionnement', 'utilisateurs', 'workflows', 'roles']
 
 function AdminSettingsPage() {
   const location = useLocation()
@@ -410,16 +410,18 @@ function AdminSettingsPage() {
     }
   }
 
-  const saveDirection = async (name) => {
-    const nextName = (directionDrafts[name] || '').trim()
-    if (!nextName) return
+  const saveDirection = async (name, nextName = directionDrafts[name]) => {
+    const normalizedNextName = (nextName || '').trim()
+    if (!normalizedNextName) return false
     try {
       setApiError('')
-      const nextDirections = await updateAdminDirection(name, nextName)
+      const nextDirections = await updateAdminDirection(name, normalizedNextName)
       setDirections(nextDirections)
       setDirectionDrafts(Object.fromEntries(nextDirections.map((direction) => [direction, direction])))
+      return true
     } catch (error) {
       handleAdminError('Impossible de mettre à jour la direction', error)
+      return false
     }
   }
 
@@ -578,13 +580,24 @@ function AdminSettingsPage() {
   }
 
   const submitDirectionModal = async () => {
-    if (directionModal.mode === 'delete') {
-      await removeDirection(directionModal.name)
-    } else {
-      setDirectionDrafts((prev) => ({ ...prev, [directionModal.name]: directionModal.value }))
-      await saveDirection(directionModal.name)
+    const nextName = directionModal.value.trim()
+    if (directionModal.mode === 'edit' && !nextName) {
+      setApiError('Le nom de la direction est obligatoire.')
+      return
     }
-    setDirectionModal({ open: false, mode: 'edit', name: '', value: '' })
+
+    try {
+      if (directionModal.mode === 'delete') {
+        await removeDirection(directionModal.name)
+      } else {
+        setDirectionDrafts((prev) => ({ ...prev, [directionModal.name]: nextName }))
+        const didUpdate = await saveDirection(directionModal.name, nextName)
+        if (!didUpdate) return
+      }
+      setDirectionModal({ open: false, mode: 'edit', name: '', value: '' })
+    } catch {
+      // The action handlers already expose the API error in the page alert.
+    }
   }
 
   const openEditRoleModal = (code) => {
@@ -677,7 +690,6 @@ function AdminSettingsPage() {
     <Stack spacing={2.5}>
       <PageHeader
         title="Parametrage Admin"
-        subtitle="Gerer les directions, les utilisateurs et les roles d'acces de la plateforme."
       />
 
       <Card>
@@ -696,6 +708,7 @@ function AdminSettingsPage() {
 
           <Tabs value={tab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
             <Tab value="directions" label="Directions" />
+            <Tab value="approvisionnement" label="Approvisionnement" />
             <Tab value="utilisateurs" label="Utilisateurs" />
             <Tab value="workflows" label="Workflows" />
             <Tab value="roles" label="Roles" />
@@ -765,9 +778,11 @@ function AdminSettingsPage() {
                   </TableBody>
                 </Table>
               </TableContainer>
+            </Stack>
+          )}
 
-              <Divider />
-
+          {tab === 'approvisionnement' && (
+            <Stack spacing={2}>
               <Typography variant="subtitle2">Domaines et sous-domaines approvisionnement</Typography>
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>

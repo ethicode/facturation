@@ -24,8 +24,14 @@ import { formatAmount } from '../utils/facturationWorkflow.js'
 
 function getActiveStep(ticket) {
   if (!ticket) return 0
-  const stepIndex = approWorkflowSteps.findIndex((step) => step.label === ticket.statut)
-  return stepIndex === -1 ? 0 : stepIndex
+  const mainSteps = approWorkflowSteps.filter((step) => step.main)
+  const stepIndex = mainSteps.findIndex((step) => step.label === ticket.statut)
+  if (stepIndex !== -1) return stepIndex
+
+  const workflowStepIndex = approWorkflowSteps.findIndex((step) => step.label === ticket.statut)
+  return workflowStepIndex === -1
+    ? 0
+    : approWorkflowSteps.slice(0, workflowStepIndex).filter((step) => step.main).length - 1
 }
 
 function ApproTicketDetailPage() {
@@ -129,7 +135,7 @@ function ApproTicketDetailPage() {
               />
             </Stack>
             <Stepper activeStep={activeStep} alternativeLabel>
-              {approWorkflowSteps.map((step, index) => (
+              {approWorkflowSteps.filter((step) => step.main).map((step, index) => (
                 <Step
                   key={step.label}
                   completed={

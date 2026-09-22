@@ -49,6 +49,22 @@ class BackendService:
     def __init__(self, store: JsonStore | None = None):
         self.store = store or JsonStore()
 
+    def _set_ticket_status(self, ticket: SupplyTicket, status: str, actor: str, commentaire: str = "") -> None:
+        if ticket.statut == status:
+            return
+
+        ticket.statut = status
+        ticket.history = [
+            {
+                "id": self._event_id(),
+                "at": self._now_iso(),
+                "actor": actor,
+                "action": f"Statut passé à {status}",
+                "commentaire": commentaire,
+            },
+            *ticket.history,
+        ]
+
     @staticmethod
     def _facturation_workflow_statuses() -> list[str]:
         workflow_path = Path(__file__).resolve().parents[2] / "facturation.json"
@@ -821,7 +837,8 @@ class BackendService:
                     "id": self._event_id(),
                     "at": self._now_iso(),
                     "actor": payload.actor,
-                    "action": "Ticket cree en approvisionnement",
+                    "action": "Statut passé à Saisie de la demande",
+                    "commentaire": "Ticket créé en approvisionnement.",
                 }
             ],
         )
@@ -852,24 +869,14 @@ class BackendService:
         if is_valid:
             budget.engaged += ticket.montant
 
-        ticket.statut = (
+        self._set_ticket_status(
+            ticket,
             "Traitement service approvisionnement"
             if is_valid
-            else "Demande d'information complémentaire (Traitement service approvisionnement)"
+            else "Demande d'information complémentaire (Traitement service approvisionnement)",
+            actor,
+            "Budget validé." if is_valid else "Budget insuffisant - informations complémentaires requises.",
         )
-        ticket.history = [
-            {
-                "id": self._event_id(),
-                "at": self._now_iso(),
-                "actor": actor,
-                "action": (
-                    "Traitement service approvisionnement démarré"
-                    if is_valid
-                    else "Budget insuffisant - informations complémentaires requises"
-                ),
-            },
-            *ticket.history,
-        ]
         self.store.write(state)
         return state.appro
 
@@ -879,16 +886,7 @@ class BackendService:
         if ticket.statut == "Clôturée" or ticket.linkedFactureId:
             return state.appro
 
-        ticket.statut = "Clôturée"
-        ticket.history = [
-            {
-                "id": self._event_id(),
-                "at": self._now_iso(),
-                "actor": actor,
-                "action": "Ticket clôturé",
-            },
-            *ticket.history,
-        ]
+        self._set_ticket_status(ticket, "Clôturée", actor, "Ticket clôturé.")
         self.store.write(state)
         return state.appro
 

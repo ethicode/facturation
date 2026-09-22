@@ -13,7 +13,6 @@ import MissionsDetailPage from './pages/MissionsDetailPage.jsx'
 import FacturationPage from './pages/FacturationPage.jsx'
 import FacturationCreatePage from './pages/FacturationCreatePage.jsx'
 import FacturationDetailPage from './pages/FacturationDetailPage.jsx'
-import BudgetPage from './pages/BudgetPage.jsx'
 import AdminSettingsPage from './pages/AdminSettingsPage.jsx'
 
 function ProtectedRoute({ children }) {
@@ -39,7 +38,6 @@ function App() {
         <Route path="facturation/creation" element={<FacturationCreatePage />} />
         <Route path="facturation/:factureId/:taskSlug" element={<FacturationDetailPage />} />
         <Route path="facturation/:factureId" element={<FacturationDetailPage />} />
-        <Route path="budget" element={<BudgetPage />} />
         <Route path="tracabilite" element={<Navigate to="/" replace />} />
         <Route path="parametrages" element={<AdminSettingsPage />} />
         <Route path="parametrage" element={<Navigate to="/parametrages#directions" replace />} />

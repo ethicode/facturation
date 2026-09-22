@@ -32,11 +32,6 @@ export const navigationItems = [
     icon: AccountBalanceOutlinedIcon,
   },
   {
-    label: 'Budget',
-    to: '/budget',
-    icon: AccountBalanceWalletOutlinedIcon,
-  },
-  {
     label: 'Parametrage',
     to: '/parametrages',
     icon: SettingsOutlinedIcon,

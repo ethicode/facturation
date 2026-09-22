@@ -58,3 +58,14 @@ def test_create_update_delete_direction(tmp_path):
 
     deleted = service.delete_direction("Affaires Juridiques")
     assert not any(direction.name == "Affaires Juridiques" for direction in deleted)
+
+
+def test_update_direction_renames_related_budget_and_ticket(tmp_path):
+    store = JsonStore(path=tmp_path / "db.json")
+    service = BackendService(store=store)
+
+    service.update_direction("Operations", "Opérations")
+    state = service.get_appro_state()
+
+    assert any(budget.direction == "Opérations" for budget in state.budgets)
+    assert next(item for item in state.tickets if item.id == "TCK-2026-301").direction == "Opérations"

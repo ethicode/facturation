@@ -232,27 +232,9 @@ function GestionBudgetairePage() {
 
   return (
     <Stack spacing={2.5}>
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }}>
-        <PageHeader
-          title="Gestion budgétaire"
-          subtitle="Gestion complete des allocations budgetaires par direction."
-        />
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignSelf: { xs: 'stretch', md: 'auto' } }}>
-          {canEdit && (
-            <Button
-              variant="contained"
-              onClick={openCreateModal}
-              sx={{
-                bgcolor: 'common.black',
-                color: 'common.white',
-                '&:hover': { bgcolor: 'grey.900' },
-              }}
-            >
-              Nouvelle allocation
-            </Button>
-          )}
-        </Stack>
-      </Stack>
+      <PageHeader
+        title="Gestion budgétaire"
+      />
 
       {!canEdit && <Alert severity="warning">Le profil courant ne peut que consulter cette page. Les modifications sont reservées aux rôles manageur et administrateur.</Alert>}
 
@@ -368,7 +350,23 @@ function GestionBudgetairePage() {
       <Card>
         <CardContent>
           <Stack spacing={1.5}>
-            <Typography variant="h6">Directions budgetaires</Typography>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
+              <Typography variant="h6">Directions budgetaires</Typography>
+              {canEdit && (
+                <Button
+                  variant="contained"
+                  onClick={openCreateModal}
+                  sx={{
+                    ml: { xs: 0, sm: 'auto' },
+                    bgcolor: 'common.black',
+                    color: 'common.white',
+                    '&:hover': { bgcolor: 'grey.900' },
+                  }}
+                >
+                  Nouvelle allocation
+                </Button>
+              )}
+            </Stack>
             <TableContainer>
               <Table size="small" sx={{ minWidth: 880 }}>
                 <TableHead>

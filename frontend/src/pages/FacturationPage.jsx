@@ -16,6 +16,7 @@ import {
   TableRow,
   TableContainer,
   TablePagination,
+  Typography,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
@@ -198,29 +199,28 @@ function FacturationPage() {
 
   return (
     <Stack spacing={2.5}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'flex-start' }} spacing={1.5}>
-        <PageHeader
-          title="Facturation"
-          subtitle="Pilotage complet des demandes de facturation et de leur validation."
-        />
-        <Button
-          variant="outlined"
-          onClick={openCreatePage}
-          sx={{
-            ml: { xs: 0, sm: 'auto' },
-            alignSelf: 'flex-start',
-            bgcolor: 'common.black',
-            color: 'common.white',
-            '&:hover': { bgcolor: 'grey.900' },
-          }}
-        >
-          Nouvelle demande
-        </Button>
-      </Stack>
+      <PageHeader
+        title="Facturation"
+      />
 
       <Card>
         <CardContent>
           {apiError && <Alert severity="error" sx={{ mb: 2 }}>{apiError}</Alert>}
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+            <Typography variant="h6">Demandes de facturation</Typography>
+            <Button
+              variant="contained"
+              onClick={openCreatePage}
+              sx={{
+                ml: { xs: 0, sm: 'auto' },
+                bgcolor: 'common.black',
+                color: 'common.white',
+                '&:hover': { bgcolor: 'grey.900' },
+              }}
+            >
+              Nouvelle demande
+            </Button>
+          </Stack>
           <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={1.5} sx={{ mb: 2 }}>
             <Button
               variant={showMyFacturesOnly ? 'contained' : 'outlined'}
