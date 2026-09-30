@@ -9,7 +9,9 @@ const orderedStatuses = [
 const fallbackStatuses = (workflowDefinition.steps || []).map((step) => step.name)
 const stepLookup = Object.fromEntries((workflowDefinition.steps || []).map((step) => [step.name, step]))
 
-export const mainFacturationStatuses = workflowDefinition.timeline?.mainSteps || []
+export const mainFacturationStatuses = (workflowDefinition.steps || [])
+  .filter((step) => step.main === true)
+  .map((step) => step.name)
 
 export const infoRequestStatuses = {
   validation: "Demande d'information complémentaire (Validation métier N+1)",
@@ -59,72 +61,7 @@ export function getVisibleFacturationStatuses(currentStatus, history = []) {
   const normalizedEntries = (history || [])
     .map((entry) => normalizeText([entry?.action, entry?.detail, entry?.commentaire].filter(Boolean).join(' ')))
 
-  const includesInfoRequest = (text) =>
-    text.includes('demander des informations complementaires')
-    || text.includes('demande d information complementaire')
-    || text.includes('demande d informations complementaire')
-
-  const hasInfoRequestFromContext = (contextMarker) =>
-    normalizedEntries.some((text) => includesInfoRequest(text) && text.includes(contextMarker))
-
-  const hasValidationInfoRequest =
-    normalizedCurrentStatus === infoRequestStatuses.validation
-    || normalizedEntries.some((text) => text.includes(normalizeText(infoRequestStatuses.validation)))
-    || hasInfoRequestFromContext('validation metier n+1')
-
-  const hasApproInfoRequest =
-    normalizedCurrentStatus === infoRequestStatuses.appro
-    || normalizedEntries.some((text) => text.includes(normalizeText(infoRequestStatuses.appro)))
-    || hasInfoRequestFromContext('traitement service approvisionnement')
-
-  const hasSignatureInfoRequest =
-    normalizedCurrentStatus === infoRequestStatuses.signature
-    || normalizedEntries.some((text) => text.includes(normalizeText(infoRequestStatuses.signature)))
-    || hasInfoRequestFromContext('signature lad 1')
-
-  const hasSignatureLad2 =
-    normalizedCurrentStatus === 'Signature LAD 2'
-    || normalizedEntries.some((text) => text.includes('signature lad 2'))
-
-  const hasSignatureLad3 =
-    normalizedCurrentStatus === 'Signature LAD 3'
-    || normalizedEntries.some((text) => text.includes('signature lad 3'))
-
-  const hasRejected =
-    normalizedCurrentStatus === 'Rejetée'
-    || normalizedEntries.some((text) => text.includes('rejete') || text.includes('rejetee'))
-
-  return facturationStatuses.filter((status) => {
-    if (mainFacturationStatuses.includes(status)) {
-      return true
-    }
-
-    if (status === infoRequestStatuses.validation) {
-      return hasValidationInfoRequest
-    }
-
-    if (status === infoRequestStatuses.appro) {
-      return hasApproInfoRequest
-    }
-
-    if (status === infoRequestStatuses.signature) {
-      return hasSignatureInfoRequest
-    }
-
-    if (status === 'Signature LAD 2') {
-      return hasSignatureLad2
-    }
-
-    if (status === 'Signature LAD 3') {
-      return hasSignatureLad3
-    }
-
-    if (status === 'Rejetée') {
-      return hasRejected
-    }
-
-    return false
-  })
+  return facturationStatuses.filter((status) => mainFacturationStatuses.includes(status))
 }
 
 const facturationTransitions = (workflowDefinition.transitions || []).reduce((acc, transition) => {

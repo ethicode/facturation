@@ -329,7 +329,7 @@ function FacturationDetailPage() {
         actor: roleActorMap[activeRole] || 'Systeme Workflow',
         email: currentUser.email || '',
         role: activeRole,
-        actionLabel: metadata.actionLabel || `Passer à ${getFacturationStepLabel(nextStatus)}`,
+        actionLabel: metadata.actionLabel || nextStatus,
         commentaire: metadata.commentaire || '',
         piecesJointes: uploadedAttachments,
       })
@@ -385,41 +385,45 @@ function FacturationDetailPage() {
   const allowedTransitions = getAllowedTransitionsForRole(facture?.statut, activeRole)
   const rawHistory = (facture?.history || [])
     .filter((entry) => !isCommentOnlyHistoryEntry(entry))
-    .map((entry) => ({
-      ...entry,
-      action: getFacturationStepLabel(getTaskLabelFromHistoryAction(entry?.action)),
-    }))
-
-  const currentStepLabel = facture?.statut ? getFacturationStepLabel(facture.statut) : ''
-  const visibleTimelineStatuses = getVisibleFacturationStatuses(facture?.statut, facture?.history || [])
-  const taskHistory = visibleTimelineStatuses
-    .filter((status) => {
-      const resolvedStatus = getFacturationStepLabel(status)
-      if (!resolvedStatus) {
-        return false
-      }
-
-      if (resolvedStatus === currentStepLabel) {
-        return true
-      }
-
-      return rawHistory.some((entry) => entry.action === resolvedStatus)
-    })
-    .map((status) => {
-      const resolvedStatus = getFacturationStepLabel(status)
-      const matchingEntry = rawHistory.find((entry) => entry.action === resolvedStatus)
-
-      if (matchingEntry) {
-        return matchingEntry
-      }
+    .map((entry, historyIndex) => {
+      const status = normalizeFacturationStatus(getTaskLabelFromHistoryAction(entry?.action))
 
       return {
-        id: `timeline-step-${resolvedStatus}-${facture?.id || 'unknown'}`,
-        action: resolvedStatus,
-        at: facture?.updatedAt || facture?.dateReception || facture?.createdAt || new Date().toISOString(),
-        detail: resolvedStatus === currentStepLabel ? 'Étape active' : 'Étape du workflow',
+        ...entry,
+        historyIndex,
+        status,
+        action: getFacturationStepLabel(status),
       }
     })
+
+  const currentStepLabel = facture?.statut ? getFacturationStepLabel(facture.statut) : ''
+  const taskHistory = rawHistory.filter((entry, index) => {
+    if (!facturationStatuses.includes(entry.status)) {
+      return false
+    }
+
+    const nextEntry = rawHistory[index + 1]
+    return !nextEntry || nextEntry.at !== entry.at
+  })
+
+  if (!taskHistory.some((entry) => entry.status === normalizeFacturationStatus(facture?.statut))) {
+    taskHistory.push({
+      id: `timeline-step-${currentStepLabel}-${facture?.id || 'unknown'}`,
+      status: normalizeFacturationStatus(facture?.statut),
+      action: currentStepLabel,
+      at: facture?.updatedAt || facture?.dateReception || facture?.createdAt || new Date().toISOString(),
+      detail: 'Étape active',
+      historyIndex: -1,
+    })
+  }
+
+  taskHistory.sort((left, right) => {
+    const rightDate = new Date(right.at || 0).getTime()
+    const leftDate = new Date(left.at || 0).getTime()
+    const rightTime = Number.isNaN(rightDate) ? 0 : rightDate
+    const leftTime = Number.isNaN(leftDate) ? 0 : leftDate
+    return rightTime - leftTime || right.historyIndex - left.historyIndex
+  })
 
   const selectedStepHistory = taskHistory.filter((entry) => matchesSelectedStep(entry, selectedTimelineStep))
   const selectedStepAttachments = selectedStepHistory.flatMap((entry) => entry.piecesJointes || [])
@@ -911,7 +915,14 @@ function FacturationDetailPage() {
                 <Stack spacing={1}>
                   <Typography variant="h6">Historique des tâches</Typography>
                   <Divider />
-                  <HistoryTimeline entries={[...taskHistory].reverse()} dotColor={statusColor[facture.statut] || 'primary'} />
+                  <Stack
+                    role="region"
+                    aria-label="Historique des tâches"
+                    tabIndex={0}
+                    sx={{ maxHeight: 360, overflowY: 'auto', pr: 1 }}
+                  >
+                    <HistoryTimeline entries={taskHistory} dotColor={statusColor[facture.statut] || 'primary'} />
+                  </Stack>
                 </Stack>
               </CardContent>
             </Card>
@@ -1002,7 +1013,7 @@ function FacturationDetailPage() {
                   variant="contained"
                   onClick={() => selectedTransition && handleTransition(selectedTransition.to, {
                     ...transitionForm,
-                    actionLabel: getFacturationStepLabel(selectedTransition.to),
+                    actionLabel: selectedTransition.to,
                   })}
                   disabled={isTransitionSubmitting || !selectedTransition}
                   sx={{

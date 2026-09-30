@@ -26,6 +26,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import RoleGate from '../components/RoleGate.jsx'
 import TableActionMenu from '../components/TableActionMenu.jsx'
@@ -43,7 +44,6 @@ const emptyBudgetForm = {
   direction: '',
   allocated: '',
   engaged: '',
-  allocatedBy: 'DirFin',
 }
 
 function validateBudgetForm(values, currentBudgets, editingDirection) {
@@ -79,6 +79,7 @@ function validateBudgetForm(values, currentBudgets, editingDirection) {
 }
 
 function GestionBudgetairePage() {
+  const navigate = useNavigate()
   const { activeRole } = useRoleContext()
   const [state, setState] = useState({ budgets: [], tickets: [], dirfinHistory: [] })
   const [directions, setDirections] = useState([])
@@ -172,7 +173,6 @@ function GestionBudgetairePage() {
       direction: budget.direction,
       allocated: String(budget.allocated),
       engaged: String(budget.engaged),
-      allocatedBy: budget.allocatedBy || 'DirFin',
     })
     setEditingDirection(budget.direction)
     setFormErrors({})
@@ -279,7 +279,7 @@ function GestionBudgetairePage() {
           <DialogTitle>{editingDirection ? `Modifier allocation: ${editingDirection}` : 'Nouvelle allocation direction'}</DialogTitle>
           <DialogContent>
             <Grid container spacing={2} sx={{ pt: 1 }}>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <FormControl fullWidth error={Boolean(formErrors.direction)}>
                   <InputLabel id="dirfin-direction-label">Direction</InputLabel>
                   <Select
@@ -297,7 +297,7 @@ function GestionBudgetairePage() {
                   {formErrors.direction ? <Typography variant="caption" color="error">{formErrors.direction}</Typography> : null}
                 </FormControl>
               </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <TextField
                   fullWidth
                   type="number"
@@ -308,7 +308,7 @@ function GestionBudgetairePage() {
                   helperText={formErrors.allocated}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <TextField
                   fullWidth
                   type="number"
@@ -317,14 +317,6 @@ function GestionBudgetairePage() {
                   onChange={(event) => handleFormChange('engaged', event.target.value)}
                   error={Boolean(formErrors.engaged)}
                   helperText={formErrors.engaged}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <TextField
-                  fullWidth
-                  label="Alloue par"
-                  value="DirFin"
-                  disabled
                 />
               </Grid>
             </Grid>
@@ -368,11 +360,10 @@ function GestionBudgetairePage() {
               )}
             </Stack>
             <TableContainer>
-              <Table size="small" sx={{ minWidth: 880 }}>
+              <Table size="small" sx={{ minWidth: 760 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Direction</TableCell>
-                    <TableCell>Alloue par</TableCell>
                     <TableCell>Budget alloue</TableCell>
                     <TableCell>Montant engage</TableCell>
                     <TableCell>Reste</TableCell>
@@ -381,9 +372,22 @@ function GestionBudgetairePage() {
                 </TableHead>
                 <TableBody>
                   {state.budgets.map((line) => (
-                    <TableRow key={line.direction} hover>
+                    <TableRow
+                      key={line.direction}
+                      hover
+                      onClick={() => navigate(`/gestion-budgetaire/${encodeURIComponent(line.direction)}`)}
+                      onKeyDown={(event) => {
+                        if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                          event.preventDefault()
+                          navigate(`/gestion-budgetaire/${encodeURIComponent(line.direction)}`)
+                        }
+                      }}
+                      tabIndex={0}
+                      role="link"
+                      aria-label={`Détails du budget ${line.direction}`}
+                      sx={{ cursor: 'pointer' }}
+                    >
                       <TableCell>{line.direction}</TableCell>
-                      <TableCell>{line.allocatedBy || 'DirFin'}</TableCell>
                       <TableCell>{formatAmount(line.allocated, 'XAF')}</TableCell>
                       <TableCell>{formatAmount(line.engaged, 'XAF')}</TableCell>
                       <TableCell>{formatAmount(line.allocated - line.engaged, 'XAF')}</TableCell>

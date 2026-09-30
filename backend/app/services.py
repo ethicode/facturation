@@ -19,6 +19,7 @@ from .schemas import (
     ApproSubdomainUpdateRequest,
     AuthLoginRequest,
     AuthUserSummary,
+    BudgetLine,
     BudgetUpsert,
     DeleteBudgetResponse,
     DirectionDefinition,
@@ -736,18 +737,18 @@ class BackendService:
         direction_name = payload.direction.strip()
         existing = next((line for line in state.appro.budgets if line.direction == direction_name), None)
 
-        budget_entry = {
-            "direction": direction_name,
-            "allocated": payload.allocated,
-            "engaged": payload.engaged,
-            "allocatedBy": payload.allocatedBy,
-        }
+        budget_entry = BudgetLine(
+            direction=direction_name,
+            allocated=payload.allocated,
+            engaged=payload.engaged,
+            allocatedBy=payload.allocatedBy,
+        )
 
         if existing is None:
             state.appro.budgets = [budget_entry, *state.appro.budgets]
             detail = (
                 f"Allocation initiale pour {direction_name}: "
-                f"{budget_entry['allocated']} alloue, {budget_entry['engaged']} engage"
+                f"{budget_entry.allocated} alloue, {budget_entry.engaged} engage"
             )
             action = "Nouvelle allocation budgetaire creee"
         else:
