@@ -16,6 +16,7 @@ import {
   TableRow,
   TableContainer,
   TablePagination,
+  TextField,
   Typography,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
@@ -32,6 +33,10 @@ import {
   statusColor,
 } from '../utils/facturationWorkflow.js'
 
+function getFactureReceptionDate(facture) {
+  return facture.dateReception || facture.echeance || ''
+}
+
 
 function FacturationPage() {
   const navigate = useNavigate()
@@ -40,6 +45,8 @@ function FacturationPage() {
   const [workflowAssignments, setWorkflowAssignments] = useState([])
   const [userEmailById, setUserEmailById] = useState({})
   const [showMyFacturesOnly, setShowMyFacturesOnly] = useState(false)
+  const [receptionFrom, setReceptionFrom] = useState('')
+  const [receptionTo, setReceptionTo] = useState('')
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [isLoading, setIsLoading] = useState(true)
@@ -131,9 +138,28 @@ function FacturationPage() {
     }
   }
 
-  const displayedFactures = showMyFacturesOnly
-    ? factureList.filter((facture) => myWorkflowSteps.includes(facture.statut))
-    : factureList
+  const filteredFactures = factureList.filter((facture) => {
+    if (showMyFacturesOnly && !myWorkflowSteps.includes(facture.statut)) {
+      return false
+    }
+
+    if (!receptionFrom && !receptionTo) {
+      return true
+    }
+
+    const receptionDateValue = getFactureReceptionDate(facture)
+    const receptionTimestamp = new Date(receptionDateValue).getTime()
+    if (!Number.isFinite(receptionTimestamp)) {
+      return false
+    }
+
+    const receptionDate = new Date(receptionTimestamp)
+    const fromDate = receptionFrom ? new Date(`${receptionFrom}T00:00:00`) : null
+    const toDate = receptionTo ? new Date(`${receptionTo}T23:59:59.999`) : null
+    return (!fromDate || receptionDate >= fromDate) && (!toDate || receptionDate <= toDate)
+  })
+
+  const displayedFactures = filteredFactures
 
   const paginatedFactures = displayedFactures.slice(
     page * rowsPerPage,
@@ -175,6 +201,7 @@ function FacturationPage() {
   const handleExportToExcel = () => {
     const rows = displayedFactures.map((facture) => ({
       'Référence': facture.id,
+      'Date de réception': formatDate(getFactureReceptionDate(facture)),
       'Fournisseur': facture.fournisseur,
       'Centre de coût': facture.centreCout,
       'Montant': formatAmount(facture.montant, facture.devise),
@@ -185,6 +212,7 @@ function FacturationPage() {
     const worksheet = XLSX.utils.json_to_sheet(rows)
     worksheet['!cols'] = [
       { wch: 18 },
+      { wch: 20 },
       { wch: 28 },
       { wch: 18 },
       { wch: 18 },
@@ -238,12 +266,52 @@ function FacturationPage() {
               Télécharger Excel
             </Button>
           </Stack>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2 }}>
+            <TextField
+              type="date"
+              label="Réception à partir du"
+              value={receptionFrom}
+              onChange={(event) => {
+                setReceptionFrom(event.target.value)
+                setPage(0)
+              }}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ max: receptionTo || undefined }}
+              sx={{ minWidth: { sm: 220 } }}
+            />
+            <TextField
+              type="date"
+              label="Réception jusqu'au"
+              value={receptionTo}
+              onChange={(event) => {
+                setReceptionTo(event.target.value)
+                setPage(0)
+              }}
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ min: receptionFrom || undefined }}
+              sx={{ minWidth: { sm: 220 } }}
+            />
+            {(receptionFrom || receptionTo) && (
+              <Button
+                variant="text"
+                onClick={() => {
+                  setReceptionFrom('')
+                  setReceptionTo('')
+                  setPage(0)
+                }}
+                sx={{ alignSelf: { xs: 'flex-start', sm: 'center' } }}
+              >
+                Effacer les dates
+              </Button>
+            )}
+          </Stack>
 
           <TableContainer>
-            <Table size="small" sx={{ minWidth: 980 }}>
+            <Table size="small" sx={{ minWidth: 1080 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Référence</TableCell>
+                  <TableCell>Date de réception</TableCell>
                   <TableCell>Fournisseur</TableCell>
                   <TableCell>Centre de coût</TableCell>
                   <TableCell>Montant</TableCell>
@@ -270,6 +338,7 @@ function FacturationPage() {
                 {paginatedFactures.map((facture) => (
                   <TableRow key={facture.id} hover onClick={() => openDetails(facture.id)} sx={{ cursor: 'pointer' }}>
                     <TableCell>{facture.id}</TableCell>
+                    <TableCell>{formatDate(getFactureReceptionDate(facture))}</TableCell>
                     <TableCell>{facture.fournisseur}</TableCell>
                     <TableCell>{facture.centreCout}</TableCell>
                     <TableCell>{formatAmount(facture.montant, facture.devise)}</TableCell>
@@ -317,7 +386,7 @@ function FacturationPage() {
                 ))}
                 {!isLoading && displayedFactures.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">
+                    <TableCell colSpan={9} align="center">
                       {showMyFacturesOnly
                         ? 'Aucune facture disponible à votre niveau.'
                         : 'Aucune demande de facturation disponible.'}
