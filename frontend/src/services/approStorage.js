@@ -14,6 +14,7 @@ function normalizeTicket(ticket) {
 function normalizeState(state) {
   return {
     budgets: Array.isArray(state?.budgets) ? state.budgets : [],
+    budgetItems: Array.isArray(state?.budgetItems) ? state.budgetItems : [],
     tickets: Array.isArray(state?.tickets) ? state.tickets.map((ticket) => normalizeTicket(ticket)) : [],
     dirfinHistory: Array.isArray(state?.dirfinHistory) ? state.dirfinHistory : [],
   }
@@ -33,6 +34,32 @@ export async function saveDirectionBudget(payload) {
   const state = await apiRequest('/api/appro/budgets', {
     method: 'POST',
     body: JSON.stringify(payload),
+  })
+
+  return normalizeState(state)
+}
+
+export async function createDirectionBudgetItem(direction, payload) {
+  const state = await apiRequest(`/api/appro/budgets/${encodeURIComponent(direction)}/items`, {
+    method: 'POST',
+    body: JSON.stringify({ ...payload, direction }),
+  })
+
+  return normalizeState(state)
+}
+
+export async function updateDirectionBudgetItem(itemId, payload) {
+  const state = await apiRequest(`/api/appro/budget-items/${encodeURIComponent(itemId)}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+
+  return normalizeState(state)
+}
+
+export async function deleteDirectionBudgetItem(itemId) {
+  const state = await apiRequest(`/api/appro/budget-items/${encodeURIComponent(itemId)}`, {
+    method: 'DELETE',
   })
 
   return normalizeState(state)

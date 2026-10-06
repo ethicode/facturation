@@ -253,6 +253,18 @@ class JsonStore:
                 position INTEGER NOT NULL
             );
 
+            CREATE TABLE IF NOT EXISTS appro_budget_items (
+                id TEXT PRIMARY KEY,
+                direction TEXT NOT NULL,
+                label TEXT NOT NULL,
+                allocated REAL NOT NULL,
+                created_at TEXT NOT NULL DEFAULT '',
+                created_by TEXT NOT NULL DEFAULT '',
+                updated_at TEXT NOT NULL DEFAULT '',
+                updated_by TEXT NOT NULL DEFAULT '',
+                position INTEGER NOT NULL
+            );
+
             CREATE TABLE IF NOT EXISTS appro_tickets (
                 id TEXT PRIMARY KEY,
                 direction TEXT NOT NULL,
@@ -370,6 +382,20 @@ class JsonStore:
             if column_name not in mission_columns:
                 connection.execute(statement)
 
+        budget_item_columns = {
+            row[1]
+            for row in connection.execute("PRAGMA table_info(appro_budget_items)").fetchall()
+        }
+        budget_item_alterations = {
+            "created_at": "ALTER TABLE appro_budget_items ADD COLUMN created_at TEXT NOT NULL DEFAULT ''",
+            "created_by": "ALTER TABLE appro_budget_items ADD COLUMN created_by TEXT NOT NULL DEFAULT ''",
+            "updated_at": "ALTER TABLE appro_budget_items ADD COLUMN updated_at TEXT NOT NULL DEFAULT ''",
+            "updated_by": "ALTER TABLE appro_budget_items ADD COLUMN updated_by TEXT NOT NULL DEFAULT ''",
+        }
+        for column_name, statement in budget_item_alterations.items():
+            if column_name not in budget_item_columns:
+                connection.execute(statement)
+
     def _clear_relational_data(self, connection: sqlite3.Connection) -> None:
         for table in [
             "roles",
@@ -385,6 +411,7 @@ class JsonStore:
             "facture_history",
             "facture_history_attachments",
             "appro_budgets",
+            "appro_budget_items",
             "appro_tickets",
             "appro_ticket_history",
             "appro_ticket_history_attachments",
@@ -548,6 +575,24 @@ class JsonStore:
             connection.execute(
                 "INSERT INTO appro_budgets (direction, allocated, engaged, allocated_by, position) VALUES (?, ?, ?, ?, ?)",
                 (budget.direction, budget.allocated, budget.engaged, budget.allocatedBy, pos),
+            )
+
+        for pos, item in enumerate(state.appro.budgetItems):
+            connection.execute(
+                """INSERT INTO appro_budget_items (
+                    id, direction, label, allocated, created_at, created_by, updated_at, updated_by, position
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    item.id,
+                    item.direction,
+                    item.label,
+                    item.allocated,
+                    item.createdAt,
+                    item.createdBy,
+                    item.updatedAt,
+                    item.updatedBy,
+                    pos,
+                ),
             )
 
         for pos, ticket in enumerate(state.appro.tickets):
@@ -818,6 +863,22 @@ class JsonStore:
             ).fetchall()
         ]
 
+        appro_budget_items = [
+            {
+                "id": row["id"],
+                "direction": row["direction"],
+                "label": row["label"],
+                "allocated": row["allocated"],
+                "createdAt": row["created_at"],
+                "createdBy": row["created_by"],
+                "updatedAt": row["updated_at"],
+                "updatedBy": row["updated_by"],
+            }
+            for row in connection.execute(
+                "SELECT * FROM appro_budget_items ORDER BY position ASC"
+            ).fetchall()
+        ]
+
         appro_tickets = []
         ticket_rows = connection.execute(
             "SELECT * FROM appro_tickets ORDER BY position ASC"
@@ -948,6 +1009,7 @@ class JsonStore:
                 "budgets": appro_budgets,
                 "tickets": appro_tickets,
                 "dirfinHistory": dirfin_history,
+                "budgetItems": appro_budget_items,
             },
             "kpi_metrics": kpi_metrics,
             "missions": missions,

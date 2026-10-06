@@ -17,6 +17,8 @@ from .schemas import (
     ApproSubdomainUpdateRequest,
     AuthLoginRequest,
     AuthUserSummary,
+    BudgetItemCreate,
+    BudgetItemUpdate,
     BudgetUpsert,
     DashboardPayload,
     DeleteBudgetResponse,
@@ -43,14 +45,31 @@ from .services import BackendService
 app = FastAPI(
     title="Facturation API",
     version="1.0.0",
-    description="Backend FastAPI pour le suivi des factures, budgets et tickets approvisionnement.",
+    description=(
+        "API de l’application de gestion financière. Les opérations protégées nécessitent un jeton Bearer; "
+        "la documentation interactive est disponible sur /docs et le schéma OpenAPI sur /openapi.json."
+    ),
     openapi_tags=[
         {"name": "Health", "description": "Vérification de l'état du backend."},
         {"name": "Auth", "description": "Authentification, tableau de bord et profil utilisateur."},
         {"name": "Administration", "description": "Gestion des rôles, utilisateurs, directions et assignations de workflow."},
         {"name": "Workflow", "description": "Métadonnées et configuration des workflows."},
-        {"name": "Factures", "description": "Gestion du cycle de vie des factures."},
-        {"name": "Approvisionnement", "description": "Gestion des budgets, tickets et transferts approvisionnement."},
+        {
+            "name": "Gestion budgétaire",
+            "description": "Consultation des budgets par direction, allocations et gestion des lignes budgétaires.",
+        },
+        {
+            "name": "Approvisionnement",
+            "description": "Création et suivi des demandes d’approvisionnement ainsi que validation et clôture des tickets.",
+        },
+        {
+            "name": "Facturation",
+            "description": "Consultation, création, suppression et progression des demandes de facturation; dépôt des pièces jointes.",
+        },
+        {
+            "name": "Frais de mission",
+            "description": "Consultation et création des demandes de frais de mission.",
+        },
     ],
 )
 
@@ -104,12 +123,25 @@ def get_dashboard(user: AuthUserSummary = Depends(get_current_user)) -> Dashboar
     return DashboardPayload.model_validate(service.get_dashboard())
 
 
-@app.get("/api/missions", response_model=list[Mission], tags=["Workflow"])
+@app.get(
+    "/api/missions",
+    response_model=list[Mission],
+    tags=["Frais de mission"],
+    summary="Lister les frais de mission",
+    description="Retourne les demandes de frais de mission enregistrées.",
+)
 def list_missions(user: AuthUserSummary = Depends(get_current_user)) -> list[Mission]:
     return service.list_missions()
 
 
-@app.post("/api/missions", response_model=Mission, status_code=201, tags=["Workflow"])
+@app.post(
+    "/api/missions",
+    response_model=Mission,
+    status_code=201,
+    tags=["Frais de mission"],
+    summary="Créer une demande de frais de mission",
+    description="Enregistre une demande de mission et renvoie sa référence.",
+)
 def create_mission(payload: MissionCreate, user: AuthUserSummary = Depends(get_current_user)) -> Mission:
     return service.create_mission(payload)
 
@@ -259,37 +291,42 @@ def get_workflow(user: AuthUserSummary = Depends(get_current_user)) -> WorkflowM
     return service.get_workflow_metadata()
 
 
-@app.get("/api/meta/appro-domains", response_model=ApproDomainCatalog, tags=["Workflow"])
+@app.get(
+    "/api/meta/appro-domains",
+    response_model=ApproDomainCatalog,
+    tags=["Approvisionnement"],
+    summary="Lister les domaines d’approvisionnement",
+)
 def get_appro_domains(user: AuthUserSummary = Depends(get_current_user)) -> ApproDomainCatalog:
     return service.get_appro_domain_catalog()
 
 
-@app.get("/api/factures", response_model=list[Facture], tags=["Factures"])
+@app.get("/api/factures", response_model=list[Facture], tags=["Facturation"], summary="Lister les demandes de facturation")
 def list_factures(user: AuthUserSummary = Depends(get_current_user)) -> list[Facture]:
     return service.list_factures()
 
 
-@app.get("/api/factures/{facture_id}", response_model=Facture, tags=["Factures"])
+@app.get("/api/factures/{facture_id}", response_model=Facture, tags=["Facturation"], summary="Consulter une demande de facturation")
 def get_facture(facture_id: str, user: AuthUserSummary = Depends(get_current_user)) -> Facture:
     return service.get_facture(facture_id)
 
 
-@app.post("/api/factures", response_model=Facture, status_code=201, tags=["Factures"])
+@app.post("/api/factures", response_model=Facture, status_code=201, tags=["Facturation"], summary="Créer une demande de facturation")
 def create_facture(payload: FactureCreate, user: AuthUserSummary = Depends(get_current_user)) -> Facture:
     return service.create_facture(payload)
 
 
-@app.delete("/api/factures/{facture_id}", response_model=list[Facture], tags=["Factures"])
+@app.delete("/api/factures/{facture_id}", response_model=list[Facture], tags=["Facturation"], summary="Supprimer une demande de facturation")
 def delete_facture(facture_id: str, user: AuthUserSummary = Depends(get_current_user)) -> list[Facture]:
     return service.delete_facture(facture_id)
 
 
-@app.patch("/api/factures/{facture_id}/status", response_model=Facture, tags=["Factures"])
+@app.patch("/api/factures/{facture_id}/status", response_model=Facture, tags=["Facturation"], summary="Mettre à jour le statut d’une demande")
 def update_facture_status(facture_id: str, payload: FactureStatusUpdate, user: AuthUserSummary = Depends(get_current_user)) -> Facture:
     return service.update_facture_status(facture_id, payload)
 
 
-@app.post("/api/uploads", response_model=list[str], tags=["Factures"])
+@app.post("/api/uploads", response_model=list[str], tags=["Facturation"], summary="Déposer des pièces jointes")
 async def upload_files(files: list[UploadFile] = File(...), user: AuthUserSummary = Depends(get_current_user)) -> list[str]:
     stored_attachments: list[str] = []
 
@@ -309,36 +346,101 @@ async def upload_files(files: list[UploadFile] = File(...), user: AuthUserSummar
     return stored_attachments
 
 
-@app.get("/api/appro", response_model=ApproState, tags=["Approvisionnement"])
+@app.get(
+    "/api/appro",
+    response_model=ApproState,
+    tags=["Gestion budgétaire"],
+    summary="Consulter l’état des budgets et tickets",
+    description="Retourne les allocations par direction, lignes budgétaires, tickets et historique budgétaire.",
+)
 def get_appro(user: AuthUserSummary = Depends(get_current_user)) -> ApproState:
     return service.get_appro_state()
 
 
-@app.post("/api/appro/budgets", response_model=ApproState, tags=["Approvisionnement"])
+@app.post(
+    "/api/appro/budgets",
+    response_model=ApproState,
+    tags=["Gestion budgétaire"],
+    summary="Créer ou modifier l’allocation d’une direction",
+)
 def save_direction_budget(payload: BudgetUpsert, user: AuthUserSummary = Depends(get_current_user)) -> ApproState:
     return service.save_direction_budget(payload)
 
 
-@app.delete("/api/appro/budgets/{direction_name}", response_model=DeleteBudgetResponse, tags=["Approvisionnement"])
+@app.post(
+    "/api/appro/budgets/{direction_name}/items",
+    response_model=ApproState,
+    tags=["Gestion budgétaire"],
+    summary="Ajouter une ligne budgétaire",
+)
+def create_direction_budget_item(
+    direction_name: str,
+    payload: BudgetItemCreate,
+    user: AuthUserSummary = Depends(get_current_user),
+) -> ApproState:
+    if direction_name != payload.direction:
+        raise HTTPException(status_code=400, detail="La direction de la ligne ne correspond pas à l'URL.")
+    return service.create_direction_budget_item(payload.model_copy(update={"actor": user.email}))
+
+
+@app.put(
+    "/api/appro/budget-items/{item_id}",
+    response_model=ApproState,
+    tags=["Gestion budgétaire"],
+    summary="Modifier une ligne budgétaire",
+)
+def update_direction_budget_item(
+    item_id: str,
+    payload: BudgetItemUpdate,
+    user: AuthUserSummary = Depends(get_current_user),
+) -> ApproState:
+    return service.update_direction_budget_item(item_id, payload.model_copy(update={"actor": user.email}))
+
+
+@app.delete(
+    "/api/appro/budget-items/{item_id}",
+    response_model=ApproState,
+    tags=["Gestion budgétaire"],
+    summary="Supprimer une ligne budgétaire",
+)
+def delete_direction_budget_item(
+    item_id: str,
+    user: AuthUserSummary = Depends(get_current_user),
+) -> ApproState:
+    return service.delete_direction_budget_item(item_id, user.email)
+
+
+@app.delete(
+    "/api/appro/budgets/{direction_name}",
+    response_model=DeleteBudgetResponse,
+    tags=["Gestion budgétaire"],
+    summary="Supprimer l’allocation d’une direction",
+)
 def delete_direction_budget(direction_name: str, actor: str = Query(default="DirFin"), user: AuthUserSummary = Depends(get_current_user)) -> DeleteBudgetResponse:
     return service.delete_direction_budget(direction_name, actor)
 
 
-@app.post("/api/appro/tickets", response_model=SupplyTicket, status_code=201, tags=["Approvisionnement"])
+@app.post(
+    "/api/appro/tickets",
+    response_model=SupplyTicket,
+    status_code=201,
+    tags=["Approvisionnement"],
+    summary="Créer une demande d’approvisionnement",
+)
 def create_supply_ticket(payload: SupplyTicketCreate, user: AuthUserSummary = Depends(get_current_user)) -> SupplyTicket:
     return service.create_supply_ticket(payload)
 
 
-@app.delete("/api/appro/tickets/{ticket_id}", response_model=ApproState, tags=["Approvisionnement"])
+@app.delete("/api/appro/tickets/{ticket_id}", response_model=ApproState, tags=["Approvisionnement"], summary="Supprimer un ticket d’approvisionnement")
 def delete_supply_ticket(ticket_id: str, user: AuthUserSummary = Depends(get_current_user)) -> ApproState:
     return service.delete_supply_ticket(ticket_id)
 
 
-@app.post("/api/appro/tickets/{ticket_id}/verify", response_model=ApproState, tags=["Approvisionnement"])
+@app.post("/api/appro/tickets/{ticket_id}/verify", response_model=ApproState, tags=["Approvisionnement"], summary="Vérifier le budget d’un ticket")
 def verify_ticket(ticket_id: str, actor: str = Query(default="Agent Approvisionnement"), user: AuthUserSummary = Depends(get_current_user)) -> ApproState:
     return service.verify_ticket_budget(ticket_id, actor)
 
 
-@app.post("/api/appro/tickets/{ticket_id}/close", response_model=ApproState, tags=["Approvisionnement"])
+@app.post("/api/appro/tickets/{ticket_id}/close", response_model=ApproState, tags=["Approvisionnement"], summary="Clôturer un ticket d’approvisionnement")
 def close_ticket(ticket_id: str, actor: str = Query(default="Agent Approvisionnement"), user: AuthUserSummary = Depends(get_current_user)) -> ApproState:
     return service.close_ticket(ticket_id, actor)

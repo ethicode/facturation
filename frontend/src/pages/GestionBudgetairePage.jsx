@@ -67,12 +67,8 @@ function validateBudgetForm(values, currentBudgets, editingDirection) {
     errors.allocated = 'Allocation invalide'
   }
 
-  if (!values.engaged || Number.isNaN(engaged) || engaged < 0) {
+  if (values.engaged === '' || !Number.isFinite(engaged) || engaged < 0) {
     errors.engaged = 'Montant engage invalide'
-  }
-
-  if (!errors.allocated && !errors.engaged && engaged > allocated) {
-    errors.engaged = 'Le montant engage ne peut pas depasser l allocation'
   }
 
   return errors
@@ -390,7 +386,14 @@ function GestionBudgetairePage() {
                       <TableCell>{line.direction}</TableCell>
                       <TableCell>{formatAmount(line.allocated, 'XAF')}</TableCell>
                       <TableCell>{formatAmount(line.engaged, 'XAF')}</TableCell>
-                      <TableCell>{formatAmount(line.allocated - line.engaged, 'XAF')}</TableCell>
+                      <TableCell
+                        sx={{
+                          color: line.allocated - line.engaged < 0 ? 'error.main' : 'inherit',
+                          fontWeight: line.allocated - line.engaged < 0 ? 600 : 'inherit',
+                        }}
+                      >
+                        {formatAmount(line.allocated - line.engaged, 'XAF')}
+                      </TableCell>
                       <TableCell align="right">
                         {canEdit ? (
                           <TableActionMenu

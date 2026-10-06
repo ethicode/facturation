@@ -19,6 +19,9 @@ from .schemas import (
     ApproSubdomainUpdateRequest,
     AuthLoginRequest,
     AuthUserSummary,
+    BudgetItem,
+    BudgetItemCreate,
+    BudgetItemUpdate,
     BudgetLine,
     BudgetUpsert,
     DeleteBudgetResponse,
@@ -768,6 +771,97 @@ class BackendService:
         self.store.write(state)
         return state.appro
 
+    def create_direction_budget_item(self, payload: BudgetItemCreate) -> ApproState:
+        state = self._state_with_seed()
+        direction_name = payload.direction.strip()
+        label = payload.label.strip()
+        budget = next((line for line in state.appro.budgets if line.direction == direction_name), None)
+
+        if budget is None:
+            raise HTTPException(status_code=404, detail="Aucune allocation trouvée pour cette direction.")
+        if not label:
+            raise HTTPException(status_code=400, detail="Le libellé de la ligne budgétaire est obligatoire.")
+        if payload.allocated <= 0:
+            raise HTTPException(status_code=400, detail="Le montant de la ligne budgétaire doit être supérieur à zéro.")
+
+        item = BudgetItem(
+            id=self._event_id(),
+            direction=direction_name,
+            label=label,
+            allocated=payload.allocated,
+            createdAt=self._now_iso(),
+            createdBy=payload.actor,
+        )
+        state.appro.budgetItems = [item, *state.appro.budgetItems]
+        budget.allocated += item.allocated
+        state.appro.dirfinHistory = [
+            self._dirfin_event(
+                payload.actor,
+                "Ligne budgétaire ajoutée",
+                f"{direction_name} — {label}: {item.allocated} alloué",
+            ),
+            *state.appro.dirfinHistory,
+        ]
+        self.store.write(state)
+        return state.appro
+
+    def update_direction_budget_item(self, item_id: str, payload: BudgetItemUpdate) -> ApproState:
+        state = self._state_with_seed()
+        item = next((line for line in state.appro.budgetItems if line.id == item_id), None)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Ligne budgétaire introuvable.")
+
+        label = payload.label.strip()
+        if not label:
+            raise HTTPException(status_code=400, detail="Le libellé de la ligne budgétaire est obligatoire.")
+        if payload.allocated <= 0:
+            raise HTTPException(status_code=400, detail="Le montant de la ligne budgétaire doit être supérieur à zéro.")
+
+        budget = next((line for line in state.appro.budgets if line.direction == item.direction), None)
+        if budget is None:
+            raise HTTPException(status_code=404, detail="Aucune allocation trouvée pour cette direction.")
+
+        previous_label = item.label
+        previous_amount = item.allocated
+        item.label = label
+        item.allocated = payload.allocated
+        item.updatedAt = self._now_iso()
+        item.updatedBy = payload.actor
+        budget.allocated += item.allocated - previous_amount
+        state.appro.dirfinHistory = [
+            self._dirfin_event(
+                payload.actor,
+                "Ligne budgétaire modifiée",
+                f"{item.direction} — {previous_label} → {label}; {previous_amount} → {item.allocated}",
+            ),
+            *state.appro.dirfinHistory,
+        ]
+        self.store.write(state)
+        return state.appro
+
+    def delete_direction_budget_item(self, item_id: str, actor: str = "DirFin") -> ApproState:
+        state = self._state_with_seed()
+        item = next((line for line in state.appro.budgetItems if line.id == item_id), None)
+        if item is None:
+            raise HTTPException(status_code=404, detail="Ligne budgétaire introuvable.")
+
+        budget = next((line for line in state.appro.budgets if line.direction == item.direction), None)
+        if budget is None:
+            raise HTTPException(status_code=404, detail="Aucune allocation trouvée pour cette direction.")
+
+        state.appro.budgetItems = [line for line in state.appro.budgetItems if line.id != item_id]
+        budget.allocated -= item.allocated
+        state.appro.dirfinHistory = [
+            self._dirfin_event(
+                actor,
+                "Ligne budgétaire supprimée",
+                f"{item.direction} — {item.label}: {item.allocated} retiré",
+            ),
+            *state.appro.dirfinHistory,
+        ]
+        self.store.write(state)
+        return state.appro
+
     def delete_direction_budget(self, direction_name: str, actor: str = "DirFin") -> DeleteBudgetResponse:
         state = self._state_with_seed()
         linked_tickets = any(ticket.direction == direction_name for ticket in state.appro.tickets)
@@ -778,6 +872,7 @@ class BackendService:
             )
 
         state.appro.budgets = [line for line in state.appro.budgets if line.direction != direction_name]
+        state.appro.budgetItems = [line for line in state.appro.budgetItems if line.direction != direction_name]
         state.appro.dirfinHistory = [
             self._dirfin_event(actor, "Allocation budgetaire supprimee", f"Suppression de {direction_name}"),
             *state.appro.dirfinHistory,

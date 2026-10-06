@@ -71,6 +71,30 @@ class BudgetLine(BaseModel):
     allocatedBy: str
 
 
+class BudgetItem(BaseModel):
+    id: str
+    direction: str
+    label: str
+    allocated: float
+    createdAt: str = ""
+    createdBy: str = ""
+    updatedAt: str = ""
+    updatedBy: str = ""
+
+
+class BudgetItemCreate(BaseModel):
+    direction: str
+    label: str
+    allocated: float
+    actor: str = "DirFin"
+
+
+class BudgetItemUpdate(BaseModel):
+    label: str
+    allocated: float
+    actor: str = "DirFin"
+
+
 class User(BaseModel):
     id: str
     username: str
@@ -368,6 +392,7 @@ class ApproState(BaseModel):
     budgets: list[BudgetLine]
     tickets: list[SupplyTicket]
     dirfinHistory: list[DirfinHistoryEntry] = Field(default_factory=list)
+    budgetItems: list[BudgetItem] = Field(default_factory=list)
 
 
 class Metric(BaseModel):
