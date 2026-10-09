@@ -4,13 +4,15 @@ import {
   Card,
   CardContent,
   Grid,
+  MenuItem,
   Stack,
   TextField,
   Typography,
 } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
+import { loadApproData } from '../services/approStorage.js'
 import { createMission } from '../services/dashboardService.js'
 import { uploadAttachments } from '../services/uploadService.js'
 
@@ -44,6 +46,25 @@ function MissionsCreatePage() {
   const [formErrors, setFormErrors] = useState({})
   const [apiError, setApiError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [budgetItems, setBudgetItems] = useState([])
+
+  useEffect(() => {
+    let isMounted = true
+
+    loadApproData()
+      .then((data) => {
+        if (isMounted) setBudgetItems(data.budgetItems)
+      })
+      .catch((error) => {
+        if (isMounted) {
+          setApiError(error.message || 'Impossible de charger les lignes budgétaires.')
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const handleFormChange = (field, value) => {
     setFormValues((prev) => ({ ...prev, [field]: value }))
@@ -73,7 +94,7 @@ function MissionsCreatePage() {
     if (!formValues.montant_estimatif || Number(formValues.montant_estimatif) <= 0) {
       errors.montant_estimatif = 'Montant estimatif invalide.'
     }
-    if (!formValues.budget_concerne.trim()) {
+    if (!formValues.budget_concerne) {
       errors.budget_concerne = 'Budget concerné obligatoire.'
     }
 
@@ -98,6 +119,12 @@ function MissionsCreatePage() {
       return
     }
 
+    const selectedBudgetItem = budgetItems.find((item) => item.id === formValues.budget_concerne)
+    if (!selectedBudgetItem) {
+      setFormErrors({ budget_concerne: 'Sélectionnez une ligne budgétaire valide.' })
+      return
+    }
+
     try {
       setIsSubmitting(true)
       setApiError('')
@@ -111,7 +138,7 @@ function MissionsCreatePage() {
         date_depart: formValues.date_depart,
         date_retour: formValues.date_retour,
         montant_estimatif: formatCfaAmount(formValues.montant_estimatif),
-        budget_concerne: formValues.budget_concerne.trim(),
+        budget_concerne: `${selectedBudgetItem.direction} — ${selectedBudgetItem.label}`,
         pieces_jointes: uploadedAttachments,
       }
 
@@ -207,12 +234,21 @@ function MissionsCreatePage() {
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
+                  select
                   label="Budget concerné"
                   value={formValues.budget_concerne}
                   onChange={(event) => handleFormChange('budget_concerne', event.target.value)}
                   error={Boolean(formErrors.budget_concerne)}
-                  helperText={formErrors.budget_concerne}
-                />
+                  helperText={formErrors.budget_concerne || (budgetItems.length ? '' : 'Aucune ligne budgétaire disponible.')}
+                  disabled={budgetItems.length === 0}
+                >
+                  <MenuItem value="">Sélectionner une ligne budgétaire</MenuItem>
+                  {budgetItems.map((item) => (
+                    <MenuItem key={item.id} value={item.id}>
+                      {item.direction} — {item.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
 
               <Grid size={{ xs: 12 }}>
