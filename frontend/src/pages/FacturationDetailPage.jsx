@@ -6,11 +6,14 @@ import {
   CardContent,
   Chip,
   Divider,
+  FormControlLabel,
   Grid,
   IconButton,
   MenuItem,
   MenuList,
   Paper,
+  Radio,
+  RadioGroup,
   Stack,
   Step,
   StepButton,
@@ -250,6 +253,7 @@ function FacturationDetailPage() {
   const [isLoading, setIsLoading] = useState(() => !location.state?.facture)
   const [transitionForm, setTransitionForm] = useState({ piecesJointes: [] })
   const [isTransitionSubmitting, setIsTransitionSubmitting] = useState(false)
+  const [selectedTransition, setSelectedTransition] = useState(null)
   const [selectedTimelineStep, setSelectedTimelineStep] = useState('')
   const [commentInput, setCommentInput] = useState('')
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false)
@@ -422,10 +426,7 @@ function FacturationDetailPage() {
   })
 
   const selectedStepHistory = taskHistory.filter((entry) => matchesSelectedStep(entry, selectedTimelineStep))
-  const allFactureAttachments = [...new Set([
-    ...(facture?.piecesJointes || []),
-    ...(facture?.history || []).flatMap((entry) => entry.piecesJointes || []),
-  ])]
+  const selectedStepAttachments = selectedStepHistory.flatMap((entry) => entry.piecesJointes || [])
   const commentHistory = (facture?.history || []).filter(isCommentOnlyHistoryEntry)
   const selectedStepResolution = selectedStepHistory[0] || null
   const isSelectedStepValidated = Boolean(selectedStepResolution?.actor)
@@ -452,6 +453,20 @@ function FacturationDetailPage() {
       })
       .slice(0, 6)
     : []
+
+  useEffect(() => {
+    if (!allowedTransitions.length) {
+      setSelectedTransition(null)
+      return
+    }
+
+    setSelectedTransition((currentValue) => {
+      if (currentValue && allowedTransitions.some((transition) => transition.to === currentValue.to)) {
+        return currentValue
+      }
+      return allowedTransitions[0]
+    })
+  }, [allowedTransitions])
 
   useEffect(() => {
     if (!facture?.statut) {
@@ -852,9 +867,9 @@ function FacturationDetailPage() {
                 <Stack spacing={2}>
                   <Typography variant="h6">Pièces jointes</Typography>
                   <Divider />
-                  {allFactureAttachments.length > 0 ? (
+                  {selectedStepAttachments.length > 0 ? (
                     <Stack spacing={0.5}>
-                      {allFactureAttachments.map((attachmentRef) => {
+                      {selectedStepAttachments.map((attachmentRef) => {
                         const attachment = parseAttachmentReference(attachmentRef)
                         return attachment.href ? (
                           <Typography key={`${attachmentRef}-${attachment.href}`} variant="body2">
@@ -867,7 +882,7 @@ function FacturationDetailPage() {
                     </Stack>
                   ) : (
                     <Typography variant="body2" color="text.secondary">
-                      Aucune pièce jointe pour cette demande.
+                      Aucune pièce jointe pour cette étape.
                     </Typography>
                   )}
                   {canAddTransitionContext && (
@@ -900,14 +915,7 @@ function FacturationDetailPage() {
                 <Stack spacing={1}>
                   <Typography variant="h6">Historique des tâches</Typography>
                   <Divider />
-                  <Stack
-                    role="region"
-                    aria-label="Historique des tâches"
-                    tabIndex={0}
-                    sx={{ maxHeight: 360, overflowY: 'auto', pr: 1 }}
-                  >
-                    <HistoryTimeline entries={taskHistory} dotColor={statusColor[facture.statut] || 'primary'} />
-                  </Stack>
+                  <HistoryTimeline entries={taskHistory} dotColor={statusColor[facture.statut] || 'primary'} />
                 </Stack>
               </CardContent>
             </Card>
@@ -977,29 +985,40 @@ function FacturationDetailPage() {
               <Typography variant="h6">Actions</Typography>
             </Stack>
             {allowedTransitions.length > 0 ? (
-              <Stack direction="column" spacing={1} alignItems="flex-start">
-                {allowedTransitions.map((transition) => (
-                  <Button
-                    key={transition.to}
-                    variant="contained"
-                    onClick={() => handleTransition(transition.to, {
-                      ...transitionForm,
-                      actionLabel: transition.label || transition.to,
-                    })}
-                    disabled={isTransitionSubmitting}
-                    sx={{
-                      alignSelf: 'flex-start',
-                      width: 'fit-content',
-                      minWidth: 0,
-                      bgcolor: 'common.black',
-                      color: 'common.white',
-                      '&:hover': { bgcolor: 'grey.900' },
-                    }}
-                  >
-                    {getFacturationStepLabel(transition.to)}
-                  </Button>
-                ))}
-              </Stack>
+              <>
+                <RadioGroup
+                  value={selectedTransition?.to || ''}
+                  onChange={(event) => {
+                    const nextTransition = allowedTransitions.find((transition) => transition.to === event.target.value)
+                    setSelectedTransition(nextTransition || null)
+                  }}
+                >
+                  {allowedTransitions.map((transition) => (
+                    <FormControlLabel
+                      key={transition.to}
+                      value={transition.to}
+                      control={<Radio />}
+                      label={getFacturationStepLabel(transition.to)}
+                    />
+                  ))}
+                </RadioGroup>
+                <Button
+                  variant="contained"
+                  onClick={() => selectedTransition && handleTransition(selectedTransition.to, {
+                    ...transitionForm,
+                    actionLabel: selectedTransition.to,
+                  })}
+                  disabled={isTransitionSubmitting || !selectedTransition}
+                  sx={{
+                    alignSelf: 'flex-start',
+                    bgcolor: 'common.black',
+                    color: 'common.white',
+                    '&:hover': { bgcolor: 'grey.900' },
+                  }}
+                >
+                  Valider
+                </Button>
+              </>
             ) : (
               <Typography variant="body2" color="text.secondary">
                 Aucune action disponible pour ce statut.

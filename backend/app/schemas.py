@@ -411,6 +411,9 @@ class Mission(BaseModel):
     date_retour: str
     montant_estimatif: str
     budget_concerne: str
+    budget_item_id: str = ""
+    budget_consumed: float = 0
+    budget_consumed_at: str = ""
     pieces_jointes: list[str] = Field(default_factory=list)
     statut: str
 
@@ -424,6 +427,7 @@ class MissionCreate(BaseModel):
     date_retour: str
     montant_estimatif: str
     budget_concerne: str
+    budget_item_id: str = ""
     pieces_jointes: list[str] = Field(default_factory=list)
     statut: str = "Soumis"
 

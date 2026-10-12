@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
@@ -282,6 +283,22 @@ class BackendService:
                 elif ticket_domain not in state.appro_domain_map:
                     state.appro_domain_map[ticket_domain] = []
 
+        budget_item_labels = {
+            f"{item.direction} — {item.label}": item
+            for item in state.appro.budgetItems
+        }
+        for mission in state.missions:
+            if mission.budget_item_id or not mission.budget_concerne:
+                continue
+            legacy_item = budget_item_labels.get(mission.budget_concerne)
+            if not legacy_item:
+                continue
+            try:
+                mission.budget_consumed = self._parse_mission_amount(mission.montant_estimatif)
+            except HTTPException:
+                continue
+            mission.budget_item_id = legacy_item.id
+
         self.store.write(state)
         return state
 
@@ -306,6 +323,17 @@ class BackendService:
                 return candidate
             counter += 1
 
+    @staticmethod
+    def _parse_mission_amount(value: str) -> float:
+        normalized = re.sub(r"\s|CFA|XAF|EUR", "", value, flags=re.IGNORECASE).replace(",", ".")
+        try:
+            amount = float(normalized)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="Le montant estimatif doit être numérique pour être imputé.") from exc
+        if not (amount > 0 and amount < float("inf")):
+            raise HTTPException(status_code=400, detail="Le montant estimatif doit être supérieur à zéro.")
+        return amount
+
     def list_missions(self) -> list[Mission]:
         return self._state_with_seed().missions
 
@@ -320,14 +348,38 @@ class BackendService:
         if montant_estimatif and "CFA" not in montant_estimatif and "XAF" not in montant_estimatif:
             montant_estimatif = f"{montant_estimatif} CFA"
         budget_concerne = payload.budget_concerne.strip()
+        budget_item_id = payload.budget_item_id.strip()
+        budget_consumed = 0.0
         statut = payload.statut.strip() or "Soumis"
         pieces_jointes = [piece.strip() for piece in payload.pieces_jointes if piece.strip()]
 
-        if not objet_mission or not destination or not pays or not date_depart or not date_retour or not montant_estimatif or not budget_concerne:
+        if not objet_mission or not destination or not pays or not date_depart or not date_retour or not montant_estimatif or (not budget_concerne and not budget_item_id):
             raise HTTPException(
                 status_code=400,
                 detail="L'objet mission, la destination, le pays, les dates, le montant estimatif et le budget concerné sont obligatoires.",
             )
+
+        if budget_item_id:
+            budget_item = next(
+                (item for item in state.appro.budgetItems if item.id == budget_item_id),
+                None,
+            )
+            if budget_item is None:
+                raise HTTPException(status_code=404, detail="La ligne budgétaire sélectionnée est introuvable.")
+            budget_consumed = self._parse_mission_amount(montant_estimatif)
+
+            already_consumed = sum(
+                mission.budget_consumed
+                for mission in state.missions
+                if mission.budget_item_id == budget_item_id
+            )
+            remaining = budget_item.allocated - already_consumed
+            if budget_consumed > remaining:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Budget insuffisant sur cette ligne. Reste disponible : {remaining} CFA.",
+                )
+            budget_concerne = f"{budget_item.direction} — {budget_item.label}"
 
         code = payload.code.strip() or self._create_mission_code(state.missions)
         if any(mission.code.lower() == code.lower() for mission in state.missions):
@@ -342,6 +394,9 @@ class BackendService:
             date_retour=date_retour,
             montant_estimatif=montant_estimatif,
             budget_concerne=budget_concerne,
+            budget_item_id=budget_item_id,
+            budget_consumed=budget_consumed if budget_item_id else 0,
+            budget_consumed_at=self._now_iso() if budget_item_id else "",
             pieces_jointes=pieces_jointes,
             statut=statut,
         )
@@ -817,6 +872,17 @@ class BackendService:
         if payload.allocated <= 0:
             raise HTTPException(status_code=400, detail="Le montant de la ligne budgétaire doit être supérieur à zéro.")
 
+        consumed = sum(
+            mission.budget_consumed
+            for mission in state.missions
+            if mission.budget_item_id == item.id
+        )
+        if payload.allocated < consumed:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Le montant alloué ne peut pas être inférieur au montant déjà consommé ({consumed}).",
+            )
+
         budget = next((line for line in state.appro.budgets if line.direction == item.direction), None)
         if budget is None:
             raise HTTPException(status_code=404, detail="Aucune allocation trouvée pour cette direction.")
@@ -845,6 +911,12 @@ class BackendService:
         if item is None:
             raise HTTPException(status_code=404, detail="Ligne budgétaire introuvable.")
 
+        if any(mission.budget_item_id == item_id for mission in state.missions):
+            raise HTTPException(
+                status_code=400,
+                detail="Cette ligne budgétaire est référencée par une ou plusieurs missions et ne peut pas être supprimée.",
+            )
+
         budget = next((line for line in state.appro.budgets if line.direction == item.direction), None)
         if budget is None:
             raise HTTPException(status_code=404, detail="Aucune allocation trouvée pour cette direction.")
@@ -869,6 +941,13 @@ class BackendService:
             return DeleteBudgetResponse(
                 state=state.appro,
                 error="Impossible de supprimer: des tickets approvisionnement sont lies a cette direction.",
+            )
+
+        budget_item_ids = {item.id for item in state.appro.budgetItems if item.direction == direction_name}
+        if any(mission.budget_item_id in budget_item_ids for mission in state.missions):
+            return DeleteBudgetResponse(
+                state=state.appro,
+                error="Impossible de supprimer: des missions consomment une ou plusieurs lignes budgétaires de cette direction.",
             )
 
         state.appro.budgets = [line for line in state.appro.budgets if line.direction != direction_name]

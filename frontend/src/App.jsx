@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage.jsx'
 import OverviewPage from './pages/OverviewPage.jsx'
 import GestionBudgetairePage from './pages/GestionBudgetairePage.jsx'
 import GestionBudgetaireDetailPage from './pages/GestionBudgetaireDetailPage.jsx'
+import GestionBudgetaireLineDetailPage from './pages/GestionBudgetaireLineDetailPage.jsx'
 import ApproPage from './pages/ApproPage.jsx'
 import ApproTicketCreatePage from './pages/ApproTicketCreatePage.jsx'
 import ApproTicketDetailPage from './pages/ApproTicketDetailPage.jsx'
@@ -28,6 +29,7 @@ function App() {
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route index element={<OverviewPage />} />
         <Route path="gestion-budgetaire" element={<GestionBudgetairePage />} />
+        <Route path="gestion-budgetaire/:direction/lignes/:itemId" element={<GestionBudgetaireLineDetailPage />} />
         <Route path="gestion-budgetaire/:direction" element={<GestionBudgetaireDetailPage />} />
         <Route path="dirfin" element={<Navigate to="/gestion-budgetaire" replace />} />
         <Route path="approvisionnement" element={<ApproPage />} />

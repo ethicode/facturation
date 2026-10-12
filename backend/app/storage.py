@@ -340,6 +340,9 @@ class JsonStore:
                 date_retour TEXT NOT NULL DEFAULT '',
                 montant_estimatif TEXT NOT NULL DEFAULT '',
                 budget_concerne TEXT NOT NULL DEFAULT '',
+                budget_item_id TEXT NOT NULL DEFAULT '',
+                budget_consumed REAL NOT NULL DEFAULT 0,
+                budget_consumed_at TEXT NOT NULL DEFAULT '',
                 pieces_jointes TEXT NOT NULL DEFAULT '[]',
                 statut TEXT NOT NULL,
                 position INTEGER NOT NULL
@@ -376,6 +379,9 @@ class JsonStore:
             "date_retour": "ALTER TABLE missions ADD COLUMN date_retour TEXT NOT NULL DEFAULT ''",
             "montant_estimatif": "ALTER TABLE missions ADD COLUMN montant_estimatif TEXT NOT NULL DEFAULT ''",
             "budget_concerne": "ALTER TABLE missions ADD COLUMN budget_concerne TEXT NOT NULL DEFAULT ''",
+            "budget_item_id": "ALTER TABLE missions ADD COLUMN budget_item_id TEXT NOT NULL DEFAULT ''",
+            "budget_consumed": "ALTER TABLE missions ADD COLUMN budget_consumed REAL NOT NULL DEFAULT 0",
+            "budget_consumed_at": "ALTER TABLE missions ADD COLUMN budget_consumed_at TEXT NOT NULL DEFAULT ''",
             "pieces_jointes": "ALTER TABLE missions ADD COLUMN pieces_jointes TEXT NOT NULL DEFAULT '[]'",
         }
         for column_name, statement in mission_alterations.items():
@@ -673,7 +679,7 @@ class JsonStore:
             legacy_collaborateur = getattr(mission, "collaborateur", "") or mission.objet_mission
             legacy_frais = getattr(mission, "frais", "") or mission.montant_estimatif
             connection.execute(
-                "INSERT INTO missions (code, collaborateur, frais, objet_mission, destination, pays, date_depart, date_retour, montant_estimatif, budget_concerne, pieces_jointes, statut, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO missions (code, collaborateur, frais, objet_mission, destination, pays, date_depart, date_retour, montant_estimatif, budget_concerne, budget_item_id, budget_consumed, budget_consumed_at, pieces_jointes, statut, position) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     mission.code,
                     legacy_collaborateur,
@@ -685,6 +691,9 @@ class JsonStore:
                     mission.date_retour,
                     mission.montant_estimatif,
                     mission.budget_concerne,
+                    mission.budget_item_id,
+                    mission.budget_consumed,
+                    mission.budget_consumed_at,
                     json.dumps(mission.pieces_jointes, ensure_ascii=False),
                     mission.statut,
                     pos,
@@ -972,11 +981,14 @@ class JsonStore:
                 "date_retour": row["date_retour"],
                 "montant_estimatif": _normalize_cfa_amount(row["montant_estimatif"] or row["frais"] or ""),
                 "budget_concerne": row["budget_concerne"],
+                "budget_item_id": row["budget_item_id"],
+                "budget_consumed": row["budget_consumed"],
+                "budget_consumed_at": row["budget_consumed_at"],
                 "pieces_jointes": json.loads(row["pieces_jointes"] or "[]"),
                 "statut": row["statut"],
             }
             for row in connection.execute(
-                "SELECT code, collaborateur, frais, objet_mission, destination, pays, date_depart, date_retour, montant_estimatif, budget_concerne, pieces_jointes, statut FROM missions ORDER BY position ASC"
+                "SELECT code, collaborateur, frais, objet_mission, destination, pays, date_depart, date_retour, montant_estimatif, budget_concerne, budget_item_id, budget_consumed, budget_consumed_at, pieces_jointes, statut FROM missions ORDER BY position ASC"
             ).fetchall()
         ]
 

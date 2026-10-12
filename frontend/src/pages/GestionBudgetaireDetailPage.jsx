@@ -35,6 +35,7 @@ import {
   loadApproData,
   updateDirectionBudgetItem,
 } from '../services/approStorage.js'
+import { loadMissions } from '../services/dashboardService.js'
 import { getStoredAuth } from '../services/authService.js'
 import { formatAmount } from '../utils/facturationWorkflow.js'
 import { isAdminRole } from '../utils/roles.js'
@@ -53,6 +54,7 @@ function GestionBudgetaireDetailPage() {
   const { activeRole } = useRoleContext()
   const [budget, setBudget] = useState(null)
   const [budgetItems, setBudgetItems] = useState([])
+  const [missions, setMissions] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [apiError, setApiError] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -69,11 +71,12 @@ function GestionBudgetaireDetailPage() {
     setIsLoading(true)
     setBudget(null)
 
-    loadApproData()
-      .then((data) => {
+    Promise.all([loadApproData(), loadMissions()])
+      .then(([data, missionList]) => {
         if (isMounted) {
           setBudget(data.budgets.find((line) => line.direction === direction) || null)
           setBudgetItems(data.budgetItems.filter((line) => line.direction === direction))
+          setMissions(missionList)
           setApiError('')
         }
       })
@@ -93,6 +96,11 @@ function GestionBudgetaireDetailPage() {
 
   const remaining = budget ? budget.allocated - budget.engaged : 0
   const engagementRate = budget?.allocated > 0 ? (budget.engaged / budget.allocated) * 100 : 0
+  const getItemConsumed = (item) => missions
+    .filter((mission) => mission.budget_item_id === item.id || (
+      !mission.budget_item_id && mission.budget_concerne === `${item.direction} — ${item.label}`
+    ))
+    .reduce((sum, mission) => sum + Number(mission.budget_consumed || mission.montant_estimatif?.replace(/[^\d.,-]/g, '').replace(',', '.') || 0), 0)
 
   const currentActor = () => {
     const user = getStoredAuth()?.user
@@ -172,7 +180,6 @@ function GestionBudgetaireDetailPage() {
               <Grid container spacing={3}>
                 {[
                   ['Direction', budget.direction],
-                  ['Alloué par', budget.allocatedBy || 'DirFin'],
                   ['Budget alloué', formatAmount(budget.allocated, 'XAF')],
                   ['Montant engagé', formatAmount(budget.engaged, 'XAF')],
                   ['Reste disponible', formatAmount(remaining, 'XAF')],
@@ -220,11 +227,13 @@ function GestionBudgetaireDetailPage() {
               </Stack>
               {budgetItems.length ? (
                 <TableContainer>
-                  <Table size="small" sx={{ minWidth: 1120 }}>
+                  <Table size="small" sx={{ minWidth: 1280 }}>
                     <TableHead>
                       <TableRow>
                         <TableCell>Libellé</TableCell>
                         <TableCell align="right">Budget alloué</TableCell>
+                        <TableCell align="right">Consommé</TableCell>
+                        <TableCell align="right">Disponible</TableCell>
                         <TableCell>Ajoutée le</TableCell>
                         <TableCell>Ajoutée par</TableCell>
                         <TableCell>Modifiée le</TableCell>
@@ -234,9 +243,25 @@ function GestionBudgetaireDetailPage() {
                     </TableHead>
                     <TableBody>
                       {budgetItems.map((item) => (
-                        <TableRow key={item.id}>
+                        <TableRow
+                          key={item.id}
+                          hover
+                          tabIndex={0}
+                          role="link"
+                          aria-label={`Historique de consommation de ${item.label}`}
+                          onClick={() => navigate(`/gestion-budgetaire/${encodeURIComponent(direction)}/lignes/${encodeURIComponent(item.id)}`)}
+                          onKeyDown={(event) => {
+                            if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                              event.preventDefault()
+                              navigate(`/gestion-budgetaire/${encodeURIComponent(direction)}/lignes/${encodeURIComponent(item.id)}`)
+                            }
+                          }}
+                          sx={{ cursor: 'pointer' }}
+                        >
                           <TableCell>{item.label}</TableCell>
                           <TableCell align="right">{formatAmount(item.allocated, 'XAF')}</TableCell>
+                          <TableCell align="right">{formatAmount(getItemConsumed(item), 'XAF')}</TableCell>
+                          <TableCell align="right">{formatAmount(item.allocated - getItemConsumed(item), 'XAF')}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatAuditDate(item.createdAt)}</TableCell>
                           <TableCell>{item.createdBy || '—'}</TableCell>
                           <TableCell sx={{ whiteSpace: 'nowrap' }}>{formatAuditDate(item.updatedAt)}</TableCell>

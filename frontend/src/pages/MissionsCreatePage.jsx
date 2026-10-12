@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
 import { loadApproData } from '../services/approStorage.js'
-import { createMission } from '../services/dashboardService.js'
+import { createMission, loadMissions } from '../services/dashboardService.js'
 import { uploadAttachments } from '../services/uploadService.js'
 
 const emptyForm = {
@@ -47,13 +47,17 @@ function MissionsCreatePage() {
   const [apiError, setApiError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [budgetItems, setBudgetItems] = useState([])
+  const [missions, setMissions] = useState([])
 
   useEffect(() => {
     let isMounted = true
 
-    loadApproData()
-      .then((data) => {
-        if (isMounted) setBudgetItems(data.budgetItems)
+    Promise.all([loadApproData(), loadMissions()])
+      .then(([data, missionList]) => {
+        if (isMounted) {
+          setBudgetItems(data.budgetItems)
+          setMissions(missionList)
+        }
       })
       .catch((error) => {
         if (isMounted) {
@@ -91,7 +95,7 @@ function MissionsCreatePage() {
     if (!formValues.date_retour) {
       errors.date_retour = 'Date de retour obligatoire.'
     }
-    if (!formValues.montant_estimatif || Number(formValues.montant_estimatif) <= 0) {
+    if (!formValues.montant_estimatif || !Number.isFinite(Number(formValues.montant_estimatif)) || Number(formValues.montant_estimatif) <= 0) {
       errors.montant_estimatif = 'Montant estimatif invalide.'
     }
     if (!formValues.budget_concerne) {
@@ -124,6 +128,12 @@ function MissionsCreatePage() {
       setFormErrors({ budget_concerne: 'Sélectionnez une ligne budgétaire valide.' })
       return
     }
+    if (Number(formValues.montant_estimatif) > getItemRemaining(selectedBudgetItem)) {
+      setFormErrors({
+        montant_estimatif: `Montant supérieur au solde disponible (${formatCfaAmount(getItemRemaining(selectedBudgetItem))}).`,
+      })
+      return
+    }
 
     try {
       setIsSubmitting(true)
@@ -139,6 +149,7 @@ function MissionsCreatePage() {
         date_retour: formValues.date_retour,
         montant_estimatif: formatCfaAmount(formValues.montant_estimatif),
         budget_concerne: `${selectedBudgetItem.direction} — ${selectedBudgetItem.label}`,
+        budget_item_id: selectedBudgetItem.id,
         pieces_jointes: uploadedAttachments,
       }
 
@@ -150,6 +161,12 @@ function MissionsCreatePage() {
       setIsSubmitting(false)
     }
   }
+
+  const getItemRemaining = (item) => item.allocated - missions
+    .filter((mission) => mission.budget_item_id === item.id)
+    .reduce((sum, mission) => sum + Number(mission.budget_consumed || 0), 0)
+
+  const selectedBudgetItem = budgetItems.find((item) => item.id === formValues.budget_concerne)
 
   return (
     <Stack spacing={2.5}>
@@ -223,7 +240,9 @@ function MissionsCreatePage() {
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
+                  type="number"
                   label="Montant estimatif"
+                  inputProps={{ min: 0.01, step: '0.01' }}
                   value={formValues.montant_estimatif}
                   onChange={(event) => handleFormChange('montant_estimatif', event.target.value)}
                   error={Boolean(formErrors.montant_estimatif)}
@@ -239,13 +258,15 @@ function MissionsCreatePage() {
                   value={formValues.budget_concerne}
                   onChange={(event) => handleFormChange('budget_concerne', event.target.value)}
                   error={Boolean(formErrors.budget_concerne)}
-                  helperText={formErrors.budget_concerne || (budgetItems.length ? '' : 'Aucune ligne budgétaire disponible.')}
+                  helperText={formErrors.budget_concerne || (selectedBudgetItem
+                    ? `Disponible : ${formatCfaAmount(getItemRemaining(selectedBudgetItem))}`
+                    : budgetItems.length ? '' : 'Aucune ligne budgétaire disponible.')}
                   disabled={budgetItems.length === 0}
                 >
                   <MenuItem value="">Sélectionner une ligne budgétaire</MenuItem>
                   {budgetItems.map((item) => (
                     <MenuItem key={item.id} value={item.id}>
-                      {item.direction} — {item.label}
+                      {item.direction} — {item.label} (reste : {formatCfaAmount(getItemRemaining(item))})
                     </MenuItem>
                   ))}
                 </TextField>

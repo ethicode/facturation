@@ -1,0 +1,1097 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-system-meta
+      author: copilot
+      changes:
+        - createTable:
+            tableName: system_meta
+            columns:
+              - column:
+                  name: key
+                  type: varchar(100)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: value
+                  type: text
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 002-create-roles-and-users
+      author: copilot
+      changes:
+        - createTable:
+            tableName: roles
+            columns:
+              - column:
+                  name: code
+                  type: varchar(100)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: label
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: full_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: first_name
+                  type: varchar(255)
+              - column:
+                  name: last_name
+                  type: varchar(255)
+              - column:
+                  name: email
+                  type: varchar(320)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: employee_id
+                  type: varchar(100)
+              - column:
+                  name: department
+                  type: varchar(255)
+              - column:
+                  name: job_title
+                  type: varchar(255)
+              - column:
+                  name: phone_number
+                  type: varchar(50)
+              - column:
+                  name: manager_id
+                  type: varchar(64)
+              - column:
+                  name: locale
+                  type: varchar(20)
+                  defaultValue: fr-FR
+                  constraints:
+                    nullable: false
+              - column:
+                  name: timezone
+                  type: varchar(100)
+                  defaultValue: Africa/Dakar
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password_hash
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_active
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(30)
+                  defaultValue: active
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: last_login_at
+                  type: timestamp
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: user_roles
+            columns:
+              - column:
+                  name: user_id
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_user_roles_user
+                    referencedTableName: users
+                    referencedColumnNames: id
+                    deleteCascade: true
+              - column:
+                  name: role
+                  type: varchar(100)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_user_roles_role
+                    referencedTableName: roles
+                    referencedColumnNames: code
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 003-create-directions-workflow-and-status
+      author: copilot
+      changes:
+        - createTable:
+            tableName: directions
+            columns:
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: workflow_assignments
+            columns:
+              - column:
+                  name: workflow_type
+                  type: varchar(50)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: step
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_workflow_assignments_user
+                    referencedTableName: users
+                    referencedColumnNames: id
+                    deleteCascade: true
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: status_catalog
+            columns:
+              - column:
+                  name: workflow
+                  type: varchar(50)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 004-create-facturation
+      author: copilot
+      changes:
+        - createTable:
+            tableName: factures
+            columns:
+              - column:
+                  name: id
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: fournisseur
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: montant
+                  type: decimal(19,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: devise
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: centre_cout
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: echeance
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: priorite
+                  type: varchar(50)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: direction
+                  type: varchar(255)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: resume
+                  type: text
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: numero_facture
+                  type: varchar(100)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: compte_charge
+                  type: varchar(100)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_reception
+                  type: varchar(40)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: mode_reception
+                  type: varchar(100)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: statut
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: facture_attachments
+            columns:
+              - column:
+                  name: facture_id
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_facture_attachment_facture
+                    referencedTableName: factures
+                    referencedColumnNames: id
+                    deleteCascade: true
+              - column:
+                  name: filename
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+        - createTable:
+            tableName: facture_history
+            columns:
+              - column:
+                  name: id
+                  type: integer
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: facture_id
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_facture_history_facture
+                    referencedTableName: factures
+                    referencedColumnNames: id
+                    deleteCascade: true
+              - column:
+                  name: event_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actor
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(320)
+              - column:
+                  name: action
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: varchar(100)
+              - column:
+                  name: detail
+                  type: text
+              - column:
+                  name: commentaire
+                  type: text
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: facture_history_attachments
+            columns:
+              - column:
+                  name: history_id
+                  type: integer
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_facture_history_attachment_history
+                    referencedTableName: facture_history
+                    referencedColumnNames: id
+                    deleteCascade: true
+              - column:
+                  name: filename
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+  - changeSet:
+      id: 005-create-budget-and-approvisionnement
+      author: copilot
+      changes:
+        - createTable:
+            tableName: appro_budgets
+            columns:
+              - column:
+                  name: direction
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_appro_budget_direction
+                    referencedTableName: directions
+                    referencedColumnNames: name
+              - column:
+                  name: allocated
+                  type: decimal(19,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: engaged
+                  type: decimal(19,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: allocated_by
+                  type: varchar(255)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: appro_budget_items
+            columns:
+              - column:
+                  name: id
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: direction
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_budget_item_direction
+                    referencedTableName: appro_budgets
+                    referencedColumnNames: direction
+                    deleteCascade: true
+              - column:
+                  name: label
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: allocated
+                  type: decimal(19,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_by
+                  type: varchar(320)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+              - column:
+                  name: updated_by
+                  type: varchar(320)
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: appro_domains
+            columns:
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: appro_subdomains
+            columns:
+              - column:
+                  name: domain_name
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_appro_subdomain_domain
+                    referencedTableName: appro_domains
+                    referencedColumnNames: name
+                    deleteCascade: true
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: appro_tickets
+            columns:
+              - column:
+                  name: id
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: direction
+                  type: varchar(255)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: objet
+                  type: text
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: montant
+                  type: decimal(19,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: devise
+                  type: varchar(10)
+                  defaultValue: XAF
+                  constraints:
+                    nullable: false
+              - column:
+                  name: titre_demande
+                  type: varchar(255)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: domaine
+                  type: varchar(255)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sous_domaine
+                  type: varchar(255)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: action_demande
+                  type: text
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_debut_souhaitee
+                  type: varchar(40)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_fin_souhaitee
+                  type: varchar(40)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: direction_demandeur
+                  type: varchar(255)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: budget_previsionnel
+                  type: decimal(19,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: priorite
+                  type: varchar(50)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: commentaire
+                  type: text
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: fichier_nom
+                  type: text
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: statut
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: linked_facture_id
+                  type: varchar(64)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: appro_ticket_history
+            columns:
+              - column:
+                  name: id
+                  type: integer
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: ticket_id
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_appro_ticket_history_ticket
+                    referencedTableName: appro_tickets
+                    referencedColumnNames: id
+                    deleteCascade: true
+              - column:
+                  name: event_id
+                  type: varchar(64)
+              - column:
+                  name: event_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actor
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: varchar(320)
+              - column:
+                  name: action
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: varchar(100)
+              - column:
+                  name: detail
+                  type: text
+              - column:
+                  name: commentaire
+                  type: text
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: appro_ticket_history_attachments
+            columns:
+              - column:
+                  name: history_id
+                  type: integer
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    foreignKeyName: fk_appro_history_attachment_history
+                    referencedTableName: appro_ticket_history
+                    referencedColumnNames: id
+                    deleteCascade: true
+              - column:
+                  name: filename
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+        - createTable:
+            tableName: dirfin_history
+            columns:
+              - column:
+                  name: id
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: event_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actor
+                  type: varchar(320)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: action
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: detail
+                  type: text
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 006-create-missions-and-dashboard
+      author: copilot
+      changes:
+        - createTable:
+            tableName: missions
+            columns:
+              - column:
+                  name: code
+                  type: varchar(64)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: collaborateur
+                  type: varchar(255)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: frais
+                  type: text
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: objet_mission
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: destination
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: pays
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_depart
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: date_retour
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: montant_estimatif
+                  type: decimal(19,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: budget_concerne
+                  type: varchar(255)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: budget_item_id
+                  type: varchar(64)
+                  constraints:
+                    foreignKeyName: fk_mission_budget_item
+                    referencedTableName: appro_budget_items
+                    referencedColumnNames: id
+              - column:
+                  name: pieces_jointes
+                  type: text
+                  defaultValue: '[]'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: statut
+                  type: varchar(100)
+                  defaultValue: Soumis
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: mission_attachments
+            columns:
+              - column:
+                  name: id
+                  type: integer
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: mission_code
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_mission_attachment_mission
+                    referencedTableName: missions
+                    referencedColumnNames: code
+                    deleteCascade: true
+              - column:
+                  name: filename
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: kpi_metrics
+            columns:
+              - column:
+                  name: id
+                  type: integer
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: label
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: value
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: trend
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tone
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: trace_events
+            columns:
+              - column:
+                  name: id
+                  type: integer
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: event_date
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: action
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: actor
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: budget_lines
+            columns:
+              - column:
+                  name: poste
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: consomme
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: plafond
+                  type: varchar(100)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tendance
+                  type: varchar(100)
+                  defaultValue: ''
+                  constraints:
+                    nullable: false
+              - column:
+                  name: position
+                  type: integer
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 007-create-query-indexes
+      author: copilot
+      changes:
+        - createIndex:
+            indexName: idx_factures_statut
+            tableName: factures
+            columns:
+              - column:
+                  name: statut
+        - createIndex:
+            indexName: idx_factures_echeance
+            tableName: factures
+            columns:
+              - column:
+                  name: echeance
+        - createIndex:
+            indexName: idx_facture_history_facture
+            tableName: facture_history
+            columns:
+              - column:
+                  name: facture_id
+              - column:
+                  name: position
+        - createIndex:
+            indexName: idx_appro_budget_items_direction
+            tableName: appro_budget_items
+            columns:
+              - column:
+                  name: direction
+              - column:
+                  name: position
+        - createIndex:
+            indexName: idx_appro_tickets_direction
+            tableName: appro_tickets
+            columns:
+              - column:
+                  name: direction
+        - createIndex:
+            indexName: idx_appro_tickets_statut
+            tableName: appro_tickets
+            columns:
+              - column:
+                  name: statut
+        - createIndex:
+            indexName: idx_appro_ticket_history_ticket
+            tableName: appro_ticket_history
+            columns:
+              - column:
+                  name: ticket_id
+              - column:
+                  name: position
+        - createIndex:
+            indexName: idx_missions_dates
+            tableName: missions
+            columns:
+              - column:
+                  name: date_depart
+              - column:
+                  name: date_retour
+        - createIndex:
+            indexName: idx_workflow_assignments_user
+            tableName: workflow_assignments
+            columns:
+              - column:
+                  name: user_id
