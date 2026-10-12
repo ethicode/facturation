@@ -5,10 +5,7 @@ import {
   CardContent,
   Chip,
   Divider,
-  FormControlLabel,
   Grid,
-  Radio,
-  RadioGroup,
   Stack,
   Step,
   StepLabel,
@@ -110,7 +107,6 @@ function MissionsDetailPage() {
   const [missions, setMissions] = useState(() => (location.state?.mission ? [location.state.mission] : []))
   const [apiError, setApiError] = useState('')
   const [isLoading, setIsLoading] = useState(() => !location.state?.mission)
-  const [selectedTransition, setSelectedTransition] = useState(null)
   const [missionHistoryEntries, setMissionHistoryEntries] = useState(() => {
     const initialMission = location.state?.mission
     if (!initialMission) {
@@ -155,20 +151,6 @@ function MissionsDetailPage() {
     }
     return (missionWorkflow.transitions || []).filter((transition) => transition.from === currentWorkflowStatus)
   }, [currentWorkflowStatus])
-
-  useEffect(() => {
-    if (!allowedTransitions.length) {
-      setSelectedTransition(null)
-      return
-    }
-
-    setSelectedTransition((currentValue) => {
-      if (currentValue && allowedTransitions.some((transition) => transition.to === currentValue.to)) {
-        return currentValue
-      }
-      return allowedTransitions[0]
-    })
-  }, [allowedTransitions])
 
   useEffect(() => {
     let isMounted = true
@@ -321,36 +303,19 @@ function MissionsDetailPage() {
                   <Stack spacing={1.5}>
                     <Typography variant="subtitle2">Actions</Typography>
                     {allowedTransitions.length > 0 ? (
-                      <>
-                        <RadioGroup
-                          value={selectedTransition?.to || ''}
-                          onChange={(event) => {
-                            const nextTransition = allowedTransitions.find((transition) => transition.to === event.target.value)
-                            setSelectedTransition(nextTransition || null)
-                          }}
-                        >
-                          {allowedTransitions.map((transition) => (
-                            <FormControlLabel
-                              key={`${transition.from}->${transition.to}`}
-                              value={transition.to}
-                              control={<Radio />}
-                              label={transition.to}
-                            />
-                          ))}
-                        </RadioGroup>
-                        <Button
-                          variant="contained"
-                          onClick={() => selectedTransition && handleTransition(selectedTransition.to)}
-                          sx={{
-                            alignSelf: 'flex-start',
-                            bgcolor: 'common.black',
-                            color: 'common.white',
-                            '&:hover': { bgcolor: 'grey.900' },
-                          }}
-                        >
-                          Valider
-                        </Button>
-                      </>
+                      <Stack direction="column" spacing={1.5} alignItems="flex-start">
+                        {allowedTransitions.map((transition) => (
+                          <Button
+                            key={`${transition.from}->${transition.to}`}
+                            variant="contained"
+                            color={transition.to === 'Rejetee' ? 'error' : transition.to.startsWith('Retour') || transition.to === 'Creation' ? 'warning' : 'primary'}
+                            onClick={() => handleTransition(transition.to)}
+                            disabled={isLoading}
+                          >
+                            {transition.to}
+                          </Button>
+                        ))}
+                      </Stack>
                     ) : (
                       <Typography variant="body2" color="text.secondary">
                         Aucune action disponible pour ce statut.
