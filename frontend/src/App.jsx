@@ -37,6 +37,7 @@ function App() {
         <Route path="approvisionnement/:ticketId" element={<ApproTicketDetailPage />} />
         <Route path="frais-missions" element={<MissionsPage />} />
         <Route path="frais-missions/creation" element={<MissionsCreatePage />} />
+        <Route path="frais-missions/:missionCode/:historyEntryId" element={<MissionsDetailPage />} />
         <Route path="frais-missions/:missionCode" element={<MissionsDetailPage />} />
         <Route path="facturation" element={<FacturationPage />} />
         <Route path="facturation/creation" element={<FacturationCreatePage />} />

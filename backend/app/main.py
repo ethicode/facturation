@@ -29,6 +29,7 @@ from .schemas import (
     FactureStatusUpdate,
     Mission,
     MissionCreate,
+    MissionStatusUpdate,
     RoleDefinition,
     RoleUpdateRequest,
     SupplyTicket,
@@ -143,7 +144,21 @@ def list_missions(user: AuthUserSummary = Depends(get_current_user)) -> list[Mis
     description="Enregistre une demande de mission et renvoie sa référence.",
 )
 def create_mission(payload: MissionCreate, user: AuthUserSummary = Depends(get_current_user)) -> Mission:
-    return service.create_mission(payload)
+    return service.create_mission(payload, actor=user.email)
+
+
+@app.patch(
+    "/api/missions/{mission_code}/status",
+    response_model=Mission,
+    tags=["Frais de mission"],
+    summary="Enregistrer une transition du workflow de mission",
+)
+def update_mission_status(
+    mission_code: str,
+    payload: MissionStatusUpdate,
+    user: AuthUserSummary = Depends(get_current_user),
+) -> Mission:
+    return service.update_mission_status(mission_code, payload, user.email)
 
 
 @app.post("/api/auth/login", response_model=TokenResponse, tags=["Auth"])

@@ -12,6 +12,7 @@ import {
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/PageHeader.jsx'
+import { MissionWorkflowStepper } from './MissionsDetailPage.jsx'
 import { loadApproData } from '../services/approStorage.js'
 import { createMission, loadMissions } from '../services/dashboardService.js'
 import { uploadAttachments } from '../services/uploadService.js'
@@ -171,6 +172,12 @@ function MissionsCreatePage() {
   return (
     <Stack spacing={2.5}>
       <PageHeader title="Ajouter un frais de mission" />
+
+      <Card>
+        <CardContent>
+          <MissionWorkflowStepper currentStatus="Creation" />
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent>

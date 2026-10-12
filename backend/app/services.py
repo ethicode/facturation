@@ -36,6 +36,7 @@ from .schemas import (
     RoleUpdateRequest,
     Mission,
     MissionCreate,
+    MissionStatusUpdate,
     SupplyTicket,
     SupplyTicketCreate,
     TokenResponse,
@@ -337,7 +338,47 @@ class BackendService:
     def list_missions(self) -> list[Mission]:
         return self._state_with_seed().missions
 
-    def create_mission(self, payload: MissionCreate) -> Mission:
+    def update_mission_status(self, mission_code: str, payload: MissionStatusUpdate, actor: str) -> Mission:
+        state = self._state_with_seed()
+        mission = next((item for item in state.missions if item.code == mission_code), None)
+        if mission is None:
+            raise HTTPException(status_code=404, detail="Mission introuvable.")
+
+        aliases = {"Soumis": "Creation", "Valide": "Validation responsable metier", "A completer": "Creation"}
+        current_status = aliases.get(mission.statut, mission.statut)
+        if payload.expected_status is not None:
+            expected = aliases.get(payload.expected_status, payload.expected_status)
+            if expected != current_status:
+                raise HTTPException(status_code=409, detail="Le statut de cette mission a changé. Actualisez la page.")
+
+        workflow_path = Path(__file__).resolve().parents[2] / "fraisDeMissionWorkflow.json"
+        workflow = json.loads(workflow_path.read_text(encoding="utf-8"))
+        if not any(
+            transition["from"] == current_status and transition["to"] == payload.next_status
+            for transition in workflow.get("transitions", [])
+        ):
+            raise HTTPException(status_code=400, detail="Transition non autorisée pour cette étape de mission.")
+
+        mission.statut = (
+            "Creation"
+            if payload.next_status == "Retour demande (Validation responsable metier)"
+            else payload.next_status
+        )
+        mission.history = [
+            HistoryEntry(
+                id=self._event_id(),
+                at=self._now_iso(),
+                actor=actor,
+                email=actor,
+                action=payload.next_status,
+                commentaire=f"Mission passée de {current_status} à {mission.statut}.",
+            ),
+            *mission.history,
+        ]
+        self.store.write(state)
+        return mission
+
+    def create_mission(self, payload: MissionCreate, actor: str = "Systeme") -> Mission:
         state = self._state_with_seed()
         objet_mission = payload.objet_mission.strip()
         destination = payload.destination.strip()
@@ -351,6 +392,8 @@ class BackendService:
         budget_item_id = payload.budget_item_id.strip()
         budget_consumed = 0.0
         statut = payload.statut.strip() or "Soumis"
+        if statut in {"Soumis", "Creation"}:
+            statut = "Validation responsable metier"
         pieces_jointes = [piece.strip() for piece in payload.pieces_jointes if piece.strip()]
 
         if not objet_mission or not destination or not pays or not date_depart or not date_retour or not montant_estimatif or (not budget_concerne and not budget_item_id):
@@ -399,6 +442,21 @@ class BackendService:
             budget_consumed_at=self._now_iso() if budget_item_id else "",
             pieces_jointes=pieces_jointes,
             statut=statut,
+            history=[
+                HistoryEntry(
+                    id=self._event_id(),
+                    at=self._now_iso(),
+                    actor=actor,
+                    action=statut,
+                    commentaire="Formulaire de création soumis.",
+                ),
+                HistoryEntry(
+                    id=self._event_id(),
+                    at=self._now_iso(),
+                    actor=actor,
+                    action="Creation",
+                ),
+            ],
         )
         state.missions = [mission, *state.missions]
         self.store.write(state)

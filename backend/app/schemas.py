@@ -416,6 +416,12 @@ class Mission(BaseModel):
     budget_consumed_at: str = ""
     pieces_jointes: list[str] = Field(default_factory=list)
     statut: str
+    history: list[HistoryEntry] = Field(default_factory=list)
+
+
+class MissionStatusUpdate(BaseModel):
+    next_status: str
+    expected_status: str | None = None
 
 
 class MissionCreate(BaseModel):

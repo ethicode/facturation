@@ -16,7 +16,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import HistoryTimeline from '../components/HistoryTimeline.jsx'
 import PageHeader from '../components/PageHeader.jsx'
-import { loadMissions } from '../services/dashboardService.js'
+import { loadMissions, updateMissionStatus } from '../services/dashboardService.js'
 import missionWorkflow from '../../../fraisDeMissionWorkflow.json'
 
 const missionColor = {
@@ -55,7 +55,7 @@ function normalizeMissionWorkflowStatus(status) {
   return legacyMap[status] || status
 }
 
-function MissionWorkflowStepper({ currentStatus }) {
+export function MissionWorkflowStepper({ currentStatus }) {
   const activeStep = missionWorkflowStepOrder.indexOf(normalizeMissionWorkflowStatus(currentStatus))
   const safeStep = activeStep >= 0 ? activeStep : 0
 
@@ -88,35 +88,14 @@ function formatCfaAmount(value) {
   return `${rawValue} CFA`
 }
 
-function buildMissionHistoryEntry(mission, status, timestamp = new Date()) {
-  const normalizedStatus = normalizeMissionWorkflowStatus(status) || status
-
-  return {
-    id: `${mission.code}-status-${normalizedStatus}-${timestamp.getTime()}`,
-    at: timestamp.toISOString(),
-    action: normalizedStatus,
-    actor: 'Workflow',
-    commentaire: `Mission passée à l'étape ${normalizedStatus}.`,
-  }
-}
-
 function MissionsDetailPage() {
-  const { missionCode } = useParams()
+  const { missionCode, historyEntryId } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
   const [missions, setMissions] = useState(() => (location.state?.mission ? [location.state.mission] : []))
   const [apiError, setApiError] = useState('')
   const [isLoading, setIsLoading] = useState(() => !location.state?.mission)
-  const [missionHistoryEntries, setMissionHistoryEntries] = useState(() => {
-    const initialMission = location.state?.mission
-    if (!initialMission) {
-      return []
-    }
-
-    const initialStatus = normalizeMissionWorkflowStatus(initialMission.statut) || initialMission.statut
-    const initialDate = initialMission.date_depart ? new Date(`${initialMission.date_depart}T09:00:00`) : new Date()
-    return [buildMissionHistoryEntry(initialMission, initialStatus, initialDate)]
-  })
+  const [isTransitionSubmitting, setIsTransitionSubmitting] = useState(false)
 
   const mission = useMemo(
     () => missions.find((item) => item.code === missionCode) || null,
@@ -124,26 +103,12 @@ function MissionsDetailPage() {
   )
 
   const currentWorkflowStatus = normalizeMissionWorkflowStatus(mission?.statut)
-
-  useEffect(() => {
-    if (!mission) {
-      return
-    }
-
-    const normalizedCurrentStatus = normalizeMissionWorkflowStatus(mission.statut) || mission.statut
-    if (!normalizedCurrentStatus) {
-      return
-    }
-
-    setMissionHistoryEntries((currentEntries) => {
-      if (currentEntries.some((entry) => entry.action === normalizedCurrentStatus)) {
-        return currentEntries
-      }
-
-      const timestamp = mission.date_depart ? new Date(`${mission.date_depart}T09:00:00`) : new Date()
-      return [buildMissionHistoryEntry(mission, normalizedCurrentStatus, timestamp), ...currentEntries]
-    })
-  }, [mission])
+  const selectedHistoryEntry = historyEntryId
+    ? mission?.history?.find((entry) => entry.id === historyEntryId)
+    : null
+  const displayedEntry = selectedHistoryEntry || (!historyEntryId ? mission?.history?.[0] : null)
+  const displayedStatus = selectedHistoryEntry?.action || currentWorkflowStatus
+  const authorEmail = displayedEntry?.email || (displayedEntry?.actor?.includes('@') ? displayedEntry.actor : '')
 
   const allowedTransitions = useMemo(() => {
     if (!currentWorkflowStatus) {
@@ -178,33 +143,22 @@ function MissionsDetailPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [missionCode])
 
-  const handleTransition = (nextStatus) => {
-    if (!mission?.code || !nextStatus) {
+  const handleTransition = async (nextStatus) => {
+    if (!mission?.code || !nextStatus || isTransitionSubmitting || historyEntryId) {
       return
     }
-
-    const normalizedNextStatus = normalizeMissionWorkflowStatus(nextStatus) || nextStatus
-
-    setMissions((current) => current.map((item) => {
-      if (item.code !== mission.code) {
-        return item
-      }
-
-      return {
-        ...item,
-        statut: nextStatus,
-      }
-    }))
-
-    setMissionHistoryEntries((currentEntries) => {
-      if (currentEntries.some((entry) => entry.action === normalizedNextStatus)) {
-        return currentEntries
-      }
-
-      return [buildMissionHistoryEntry(mission, normalizedNextStatus, new Date()), ...currentEntries]
-    })
+    setIsTransitionSubmitting(true)
+    setApiError('')
+    try {
+      const updatedMission = await updateMissionStatus(mission.code, nextStatus, mission.statut)
+      setMissions((current) => current.map((item) => item.code === updatedMission.code ? updatedMission : item))
+    } catch (error) {
+      setApiError(error.message || 'Impossible d’enregistrer cette action de mission.')
+    } finally {
+      setIsTransitionSubmitting(false)
+    }
   }
 
   return (
@@ -216,13 +170,21 @@ function MissionsDetailPage() {
       {apiError && <Alert severity="error">{apiError}</Alert>}
       {isLoading && <Alert severity="info">Chargement de la mission...</Alert>}
       {!isLoading && !mission && !apiError && <Alert severity="warning">Mission introuvable.</Alert>}
+      {historyEntryId && mission && !selectedHistoryEntry && (
+        <Alert
+          severity="warning"
+          action={<Button onClick={() => navigate(`/frais-missions/${encodeURIComponent(missionCode)}`)}>Étape actuelle</Button>}
+        >
+          Cette étape est introuvable dans l’historique de la mission.
+        </Alert>
+      )}
 
       {mission && (
         <Grid container spacing={2.5}>
           <Grid size={{ xs: 12 }}>
             <Card>
               <CardContent>
-                <MissionWorkflowStepper currentStatus={currentWorkflowStatus} />
+                <MissionWorkflowStepper currentStatus={displayedStatus} />
               </CardContent>
             </Card>
           </Grid>
@@ -236,10 +198,10 @@ function MissionsDetailPage() {
                       <Stack spacing={0.5}>
                         <Typography variant="h6">{mission.objet_mission}</Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Mission {mission.code} · {mission.destination}, {mission.pays}
+                          Mission {mission.code} · {authorEmail || 'E-mail non renseigné'}
                         </Typography>
                       </Stack>
-                      <Chip size="small" color={missionColor[mission.statut] || 'default'} label={mission.statut} />
+                      <Chip size="small" color={missionColor[displayedStatus] || 'default'} label={displayedStatus} />
                     </Stack>
 
                     <Divider />
@@ -302,7 +264,12 @@ function MissionsDetailPage() {
                 <CardContent>
                   <Stack spacing={1.5}>
                     <Typography variant="subtitle2">Actions</Typography>
-                    {allowedTransitions.length > 0 ? (
+                    {historyEntryId ? (
+                      <Stack spacing={1} alignItems="flex-start">
+                        <Typography variant="body2" color="text.secondary">Étape enregistrée en lecture seule.</Typography>
+                        <Button onClick={() => navigate(`/frais-missions/${encodeURIComponent(missionCode)}`)}>Revenir à l’étape actuelle</Button>
+                      </Stack>
+                    ) : allowedTransitions.length > 0 ? (
                       <Stack direction="column" spacing={1.5} alignItems="flex-start">
                         {allowedTransitions.map((transition) => (
                           <Button
@@ -310,7 +277,7 @@ function MissionsDetailPage() {
                             variant="contained"
                             color={transition.to === 'Rejetee' ? 'error' : transition.to.startsWith('Retour') || transition.to === 'Creation' ? 'warning' : 'primary'}
                             onClick={() => handleTransition(transition.to)}
-                            disabled={isLoading}
+                            disabled={isLoading || isTransitionSubmitting}
                           >
                             {transition.to}
                           </Button>
@@ -335,7 +302,10 @@ function MissionsDetailPage() {
                     <Typography variant="subtitle2">Historique</Typography>
                     <Divider />
                     <HistoryTimeline
-                      entries={missionHistoryEntries}
+                      entries={mission.history || []}
+                      showComment={false}
+                      selectedEntryId={historyEntryId}
+                      onEntryClick={(entry) => navigate(`/frais-missions/${encodeURIComponent(missionCode)}/${encodeURIComponent(entry.id)}`)}
                       dotColor={missionColor[currentWorkflowStatus] || 'primary'}
                     />
                   </Stack>
