@@ -1,0 +1,1130 @@
+{
+  "factures": [
+    {
+      "id": "FAC-2026-449",
+      "fournisseur": "iiiiiiiiiiiiiiiiiiiii",
+      "montant": 11222.0,
+      "devise": "XAF",
+      "centreCout": "00999999999",
+      "description": "kkkkkkkkkkkkkkkkkkkkkkkkkkk",
+      "echeance": "2026-08-21",
+      "priorite": "Moyenne",
+      "direction": "Direction Generale",
+      "resume": "test",
+      "numeroFacture": "jjjjjjjjjjjjjjjjjj",
+      "compteCharge": "00999999999",
+      "dateReception": "2026-08-21",
+      "modeReception": "Depot physique",
+      "piecesJointes": [
+        "1.png"
+      ],
+      "statut": "Clôturée",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-14T16:23:02.666840Z",
+          "actor": "Administrateur ORFL",
+          "email": "admin@sgsn.fr",
+          "action": "Clôturer la demande",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-14T16:22:59.870702Z",
+          "actor": "Administrateur ORFL",
+          "email": "admin@sgsn.fr",
+          "action": "Confirmer le paiement (OK)",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-14T16:22:43.796073Z",
+          "actor": "Administrateur ORFL",
+          "email": "admin@sgsn.fr",
+          "action": "Passer directement au règlement",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-14T16:22:08.955564Z",
+          "actor": "Administrateur ORFL",
+          "email": "admin@sgsn.fr",
+          "action": "Traitement validé (OK)",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-14T16:20:59.394369Z",
+          "actor": "Administrateur ORFL",
+          "email": "admin@sgsn.fr",
+          "action": "Valider N+1 (OK)",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-14T16:03:29.271858Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Valider la vérification métier",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-14T15:48:31.152545Z",
+          "actor": "Utilisateur ORFL",
+          "email": null,
+          "action": "Demande soumise et étape de saisie validée automatiquement",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        }
+      ]
+    },
+    {
+      "id": "FAC-2026-448",
+      "fournisseur": "huu",
+      "montant": 977878.0,
+      "devise": "XAF",
+      "centreCout": "GHHH",
+      "description": "uuiiu",
+      "echeance": "2026-09-04",
+      "priorite": "Moyenne",
+      "direction": "Informatique",
+      "resume": "uhhuihiu",
+      "numeroFacture": "uyuyu",
+      "compteCharge": "GHHH",
+      "dateReception": "2026-09-04",
+      "modeReception": "Courrier",
+      "piecesJointes": [],
+      "statut": "Traitement service approvisionnement",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-14T16:23:24.122291Z",
+          "actor": "Administrateur ORFL",
+          "email": "admin@sgsn.fr",
+          "action": "Valider N+1 (OK)",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-12T14:38:04.842131Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Valider la vérification métier",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-12T12:40:29.175597Z",
+          "actor": "Utilisateur ORFL",
+          "email": null,
+          "action": "Demande soumise et étape de saisie validée automatiquement",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        }
+      ]
+    },
+    {
+      "id": "FAC-2026-447",
+      "fournisseur": "Test debug 2",
+      "montant": 456.0,
+      "devise": "XAF",
+      "centreCout": "CC-DBG2",
+      "description": "debug after restart",
+      "echeance": "2026-08-12",
+      "priorite": "Haute",
+      "direction": "Finance",
+      "resume": "Test restart",
+      "numeroFacture": "DBG-002",
+      "compteCharge": "CC-DBG2",
+      "dateReception": "2026-08-12",
+      "modeReception": "Email",
+      "piecesJointes": [],
+      "statut": "Vérification métier",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-12T12:26:32.553670Z",
+          "actor": "Utilisateur test",
+          "email": null,
+          "action": "Demande soumise et étape de saisie validée automatiquement",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        }
+      ]
+    },
+    {
+      "id": "FAC-2026-446",
+      "fournisseur": "Test debug",
+      "montant": 123.0,
+      "devise": "XAF",
+      "centreCout": "CC-DBG",
+      "description": "debug",
+      "echeance": "2026-08-12",
+      "priorite": "Haute",
+      "direction": "Finance",
+      "resume": "Test",
+      "numeroFacture": "DBG-001",
+      "compteCharge": "CC-DBG",
+      "dateReception": "2026-08-12",
+      "modeReception": "Email",
+      "piecesJointes": [],
+      "statut": "Traitement service approvisionnement",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-13T18:30:55.766206Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Valider N+1 (OK)",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-13T18:30:50.409846Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Valider la vérification métier",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-13T18:28:25.961591Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Soumettre pour vérification métier",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-12T12:19:07.293708Z",
+          "actor": "Utilisateur test",
+          "email": null,
+          "action": "Demande soumise",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        }
+      ]
+    },
+    {
+      "id": "FAC-2026-445",
+      "fournisseur": "kmkjmkjk",
+      "montant": 7679875656568565.0,
+      "devise": "XAF",
+      "centreCout": "jljljhjjl",
+      "description": "mjk",
+      "echeance": "2026-08-28",
+      "priorite": "Moyenne",
+      "direction": "Informatique",
+      "resume": "test",
+      "numeroFacture": "kmjkjklkmj",
+      "compteCharge": "jljljhjjl",
+      "dateReception": "2026-08-28",
+      "modeReception": "Portail",
+      "piecesJointes": [],
+      "statut": "Traitement service approvisionnement",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-12T12:50:52.247277Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Valider N+1 (OK)",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-12T12:50:18.336019Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Valider la vérification métier",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-12T12:47:44.741955Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Soumettre pour vérification métier",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-12T12:17:12.959627Z",
+          "actor": "Utilisateur ORFL",
+          "email": null,
+          "action": "Demande soumise",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        }
+      ]
+    },
+    {
+      "id": "FAC-2026-443",
+      "fournisseur": "zz",
+      "montant": 2222.0,
+      "devise": "XAF",
+      "centreCout": "ddd",
+      "description": "dd",
+      "echeance": "2026-08-28",
+      "priorite": "Moyenne",
+      "direction": "Informatique",
+      "resume": "Portail",
+      "numeroFacture": "zzz",
+      "compteCharge": "ddd",
+      "dateReception": "2026-08-28",
+      "modeReception": "Courrier",
+      "piecesJointes": [],
+      "statut": "Vérification métier",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-12T11:26:44.884016Z",
+          "actor": "Utilisateur ORFL",
+          "email": null,
+          "action": "Soumettre pour vérification métier",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-12T11:00:33.243312Z",
+          "actor": "Utilisateur ORFL",
+          "email": null,
+          "action": "Demande soumise",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        }
+      ]
+    },
+    {
+      "id": "FAC-2026-442",
+      "fournisseur": "test",
+      "montant": 7777.0,
+      "devise": "XAF",
+      "centreCout": "7777",
+      "description": "test",
+      "echeance": "2026-08-27",
+      "priorite": "Moyenne",
+      "direction": "Operations",
+      "resume": "test",
+      "numeroFacture": "testttt",
+      "compteCharge": "7777",
+      "dateReception": "2026-08-27",
+      "modeReception": "Courrier",
+      "piecesJointes": [
+        "1.png"
+      ],
+      "statut": "Clôturée",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-11T16:49:35.439525Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Terminer",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-11T16:49:19.497181Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Confirmer paiement",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-11T16:49:13.103873Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Signer LAD 1",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-11T16:49:06.837046Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Transmettre pour signature",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-11T16:48:54.871549Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Valider N+1",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-11T16:48:49.877343Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Valider vérification métier",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-11T16:07:20.995404Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Démarrer la vérification métier",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-11T16:07:09.481871Z",
+          "actor": "Administrateur ORFL",
+          "email": null,
+          "action": "Soumettre pour vérification",
+          "role": "administrateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-11T15:25:14.671234Z",
+          "actor": "Utilisateur ORFL",
+          "email": null,
+          "action": "Facture creee",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        }
+      ]
+    },
+    {
+      "id": "FAC-2026-441",
+      "fournisseur": "Delta Consulting",
+      "montant": 24400.0,
+      "devise": "EUR",
+      "centreCout": "IT-OPS",
+      "description": "Maintenance plateforme ORFL",
+      "echeance": "2026-08-08",
+      "priorite": "",
+      "direction": "",
+      "resume": "",
+      "numeroFacture": "",
+      "compteCharge": "",
+      "dateReception": "",
+      "modeReception": "",
+      "piecesJointes": [],
+      "statut": "Validation LAD 2",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-05T09:02:00.000Z",
+          "actor": "M. Fall",
+          "email": null,
+          "action": "Facture creee",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-05T10:21:00.000Z",
+          "actor": "M. Fall",
+          "email": null,
+          "action": "Soumise pour prise en charge",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-05T11:00:00.000Z",
+          "actor": "A. Ndiaye",
+          "email": null,
+          "action": "Prise en charge LAD 1",
+          "role": "manageur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-05T14:30:00.000Z",
+          "actor": "A. Ndiaye",
+          "email": null,
+          "action": "Validation LAD 1 accordee",
+          "role": "manageur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        }
+      ]
+    },
+    {
+      "id": "FAC-2026-438",
+      "fournisseur": "VoyagePro",
+      "montant": 7920.0,
+      "devise": "EUR",
+      "centreCout": "MISSIONS",
+      "description": "Billetterie missions Dakar et Thies",
+      "echeance": "2026-08-07",
+      "priorite": "",
+      "direction": "",
+      "resume": "",
+      "numeroFacture": "",
+      "compteCharge": "",
+      "dateReception": "",
+      "modeReception": "",
+      "piecesJointes": [],
+      "statut": "Validation LAD 3",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-04T08:41:00.000Z",
+          "actor": "A. Ndiaye",
+          "email": null,
+          "action": "Facture creee",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-04T09:26:00.000Z",
+          "actor": "A. Ndiaye",
+          "email": null,
+          "action": "Soumise pour prise en charge",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-04T11:03:00.000Z",
+          "actor": "S. Mbaye",
+          "email": null,
+          "action": "Validation LAD 1 accordee",
+          "role": "manageur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-04T13:20:00.000Z",
+          "actor": "K. Diop",
+          "email": null,
+          "action": "Validation LAD 2 accordee",
+          "role": "manageur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        }
+      ]
+    },
+    {
+      "id": "FAC-2026-430",
+      "fournisseur": "Eco Transports",
+      "montant": 12160.0,
+      "devise": "EUR",
+      "centreCout": "LOGISTIQUE",
+      "description": "Location vehicules terrain",
+      "echeance": "2026-08-11",
+      "priorite": "",
+      "direction": "",
+      "resume": "",
+      "numeroFacture": "",
+      "compteCharge": "",
+      "dateReception": "",
+      "modeReception": "",
+      "piecesJointes": [],
+      "statut": "Bloquee",
+      "history": [
+        {
+          "id": null,
+          "at": "2026-08-03T13:10:00.000Z",
+          "actor": "K. Diop",
+          "email": null,
+          "action": "Facture creee",
+          "role": "utilisateur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        },
+        {
+          "id": null,
+          "at": "2026-08-03T16:15:00.000Z",
+          "actor": "S. Mbaye",
+          "email": null,
+          "action": "Facture bloquee - piece justificative manquante",
+          "role": "manageur",
+          "detail": null,
+          "commentaire": "",
+          "piecesJointes": []
+        }
+      ]
+    }
+  ],
+  "appro": {
+    "budgets": [
+      {
+        "direction": "Operations",
+        "allocated": 320000.0,
+        "engaged": 184000.0,
+        "allocatedBy": "DirFin"
+      },
+      {
+        "direction": "Commerciale",
+        "allocated": 210000.0,
+        "engaged": 116000.0,
+        "allocatedBy": "DirFin"
+      },
+      {
+        "direction": "Support",
+        "allocated": 170000.0,
+        "engaged": 89000.0,
+        "allocatedBy": "DirFin"
+      }
+    ],
+    "tickets": [
+      {
+        "id": "TCK-2026-298",
+        "direction": "Commerciale",
+        "objet": "Renouvellement abonnements CRM",
+        "montant": 12000.0,
+        "devise": "EUR",
+        "titre_demande": "",
+        "domaine": "",
+        "sous_domaine": "",
+        "action_demande": "",
+        "date_debut_souhaitee": "",
+        "date_fin_souhaitee": "",
+        "direction_demandeur": "",
+        "budget_previsionnel": 0.0,
+        "priorite": "",
+        "description": "",
+        "commentaire": "",
+        "fichier_nom": "",
+        "statut": "En cours",
+        "linkedFactureId": "",
+        "history": [
+          {
+            "id": null,
+            "at": "2026-08-05T14:22:00.000Z",
+            "actor": "Demandeur Commercial",
+            "email": null,
+            "action": "Ticket cree en approvisionnement",
+            "role": null,
+            "detail": null,
+            "commentaire": "",
+            "piecesJointes": []
+          },
+          {
+            "id": null,
+            "at": "2026-08-05T15:01:00.000Z",
+            "actor": "Agent Approvisionnement",
+            "email": null,
+            "action": "Ticket pris en charge - traitement en cours",
+            "role": null,
+            "detail": null,
+            "commentaire": "",
+            "piecesJointes": []
+          }
+        ]
+      },
+      {
+        "id": "TCK-2026-294",
+        "direction": "Support",
+        "objet": "Maintenance climatiseurs salle serveur",
+        "montant": 96000.0,
+        "devise": "EUR",
+        "titre_demande": "",
+        "domaine": "",
+        "sous_domaine": "",
+        "action_demande": "",
+        "date_debut_souhaitee": "",
+        "date_fin_souhaitee": "",
+        "direction_demandeur": "",
+        "budget_previsionnel": 0.0,
+        "priorite": "",
+        "description": "",
+        "commentaire": "",
+        "fichier_nom": "",
+        "statut": "En attente de prise en charge",
+        "linkedFactureId": "",
+        "history": [
+          {
+            "id": null,
+            "at": "2026-08-05T09:40:00.000Z",
+            "actor": "Demandeur Support",
+            "email": null,
+            "action": "Ticket cree en approvisionnement",
+            "role": null,
+            "detail": null,
+            "commentaire": "",
+            "piecesJointes": []
+          },
+          {
+            "id": null,
+            "at": "2026-08-05T10:18:00.000Z",
+            "actor": "Agent Approvisionnement",
+            "email": null,
+            "action": "Budget insuffisant - en attente de prise en charge",
+            "role": null,
+            "detail": null,
+            "commentaire": "",
+            "piecesJointes": []
+          }
+        ]
+      }
+    ],
+    "dirfinHistory": []
+  },
+  "kpi_metrics": [
+    {
+      "label": "Factures en attente",
+      "value": "18",
+      "trend": "+6% vs semaine",
+      "tone": "warning"
+    },
+    {
+      "label": "Frais valides",
+      "value": "142 500 EUR",
+      "trend": "+12% vs mois",
+      "tone": "success"
+    },
+    {
+      "label": "Pieces tracees",
+      "value": "98.4%",
+      "trend": "+1.1 pts",
+      "tone": "info"
+    },
+    {
+      "label": "Budget restant T3",
+      "value": "410 000 EUR",
+      "trend": "-3.8% consommation",
+      "tone": "primary"
+    }
+  ],
+  "missions": [
+    {
+      "code": "MS-0912",
+      "collaborateur": "M. Bernard",
+      "destination": "Lyon",
+      "frais": "1 230 EUR",
+      "statut": "Soumis"
+    },
+    {
+      "code": "MS-0910",
+      "collaborateur": "S. Idrissi",
+      "destination": "Casablanca",
+      "frais": "2 040 EUR",
+      "statut": "Valide"
+    },
+    {
+      "code": "MS-0908",
+      "collaborateur": "L. Garnier",
+      "destination": "Bruxelles",
+      "frais": "1 780 EUR",
+      "statut": "A completer"
+    }
+  ],
+  "trace_events": [
+    {
+      "date": "06/08/2026 09:15",
+      "action": "FACTURE FAC-2026-441 routee vers validation manager",
+      "actor": "Workflow Finance"
+    },
+    {
+      "date": "06/08/2026 08:49",
+      "action": "MISSION MS-0912 justificatifs ajoutes",
+      "actor": "M. Bernard"
+    },
+    {
+      "date": "05/08/2026 17:22",
+      "action": "ALERTE budget Projet ORFL niveau critique",
+      "actor": "Moteur Budget"
+    }
+  ],
+  "budget_lines": [
+    {
+      "poste": "Transport",
+      "consomme": 84,
+      "plafond": "180 000 EUR",
+      "tendance": "Hausse"
+    },
+    {
+      "poste": "Hebergement",
+      "consomme": 61,
+      "plafond": "120 000 EUR",
+      "tendance": "Stable"
+    },
+    {
+      "poste": "Prestations externes",
+      "consomme": 46,
+      "plafond": "420 000 EUR",
+      "tendance": "Maitrisee"
+    }
+  ],
+  "facture_statuses": [
+    "Saisie de la demande",
+    "Vérification métier",
+    "Validation N+1",
+    "Traitement service approvisionnement",
+    "Signature LAD 1",
+    "Règlement en cours",
+    "Paiement effectué",
+    "Terminé",
+    "Demande d'informations complémentaire",
+    "Signature LAD 2",
+    "Signature LAD 3",
+    "Rejetée",
+    "Clôturée"
+  ],
+  "user_roles": [
+    "administrateur",
+    "utilisateur",
+    "manageur"
+  ],
+  "role_labels": {
+    "administrateur": "Administrateur",
+    "utilisateur": "Utilisateur",
+    "manageur": "Manageur"
+  },
+  "directions": [
+    "Direction Generale",
+    "Informatique",
+    "Operations",
+    "siop",
+    "dcpp",
+    "dmcq"
+  ],
+  "workflow_assignments": [
+    {
+      "step": "Validation LAD 1",
+      "user_ids": [],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "Saisie de la demande",
+      "user_ids": [
+        "USR-007",
+        "USR-000",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "workflow_type": "appro"
+    },
+    {
+      "step": "Signature LAD 3",
+      "user_ids": [
+        "USR-007",
+        "USR-000",
+        "USR-001"
+      ],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "En attente de prise en charge",
+      "user_ids": [
+        "USR-007",
+        "USR-000",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "workflow_type": "appro"
+    },
+    {
+      "step": "En cours",
+      "user_ids": [
+        "USR-007",
+        "USR-000",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "workflow_type": "appro"
+    },
+    {
+      "step": "Clôturé",
+      "user_ids": [
+        "USR-007",
+        "USR-000",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "workflow_type": "appro"
+    },
+    {
+      "step": "Terminé",
+      "user_ids": [
+        "USR-007",
+        "USR-000",
+        "USR-001",
+        "USR-002",
+        "USR-003",
+        "USR-004",
+        "USR-005",
+        "USR-006"
+      ],
+      "workflow_type": "appro"
+    },
+    {
+      "step": "Validation N+1",
+      "user_ids": [
+        "USR-002"
+      ],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "Vérification métier",
+      "user_ids": [
+        "USR-007"
+      ],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "Traitement service approvisionnement",
+      "user_ids": [
+        "USR-000"
+      ],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "Signature LAD 1",
+      "user_ids": [
+        "USR-000"
+      ],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "Règlement en cours",
+      "user_ids": [
+        "USR-000"
+      ],
+      "workflow_type": "facturation"
+    },
+    {
+      "step": "Paiement effectué",
+      "user_ids": [
+        "USR-000"
+      ],
+      "workflow_type": "facturation"
+    }
+  ],
+  "users": [
+    {
+      "id": "USR-007",
+      "username": "admin2",
+      "full_name": "Administrateur secondaire",
+      "email": "admin2@sgsn.fr",
+      "role": "administrateur",
+      "roles": [
+        "administrateur"
+      ],
+      "password_hash": "pbkdf2_sha256$Z+qxsXkK16iM2sJQn2AUBg==$QSUaGRVOxFm0b3L+unM0ALha7bH3ndJBq53JOjqeFmY=",
+      "is_active": true
+    },
+    {
+      "id": "USR-000",
+      "username": "admin",
+      "full_name": "Administrateur principal",
+      "email": "admin@sgsn.fr",
+      "role": "administrateur",
+      "roles": [
+        "administrateur"
+      ],
+      "password_hash": "pbkdf2_sha256$6YUqcyUZ2KM3gDpVAWtgnw==$EaDYIY00lxiCn8tAq5NkjfHBBWK/O91JOgfE6VW+qUI=",
+      "is_active": true
+    },
+    {
+      "id": "USR-001",
+      "username": "comptable",
+      "full_name": "Comptable principal",
+      "email": "comptable@sgsn.fr",
+      "role": "utilisateur",
+      "roles": [
+        "utilisateur"
+      ],
+      "password_hash": "pbkdf2_sha256$EQ6meUrllWzpTt/heohciA==$FEinHbFqsRd0Nj/s/3iIc8ASUO+h5huU1CnjhIvYiqY=",
+      "is_active": true
+    },
+    {
+      "id": "USR-002",
+      "username": "lad1",
+      "full_name": "Valideur LAD 1",
+      "email": "lad1@sgsn.fr",
+      "role": "utilisateur",
+      "roles": [
+        "utilisateur"
+      ],
+      "password_hash": "pbkdf2_sha256$3GgNcvApKpqNiu5WgVqDtg==$Fq5shKMJWx70yk37dzEiqNDubOR3hHDawQa+HGLHBTM=",
+      "is_active": true
+    },
+    {
+      "id": "USR-003",
+      "username": "lad2",
+      "full_name": "Valideur LAD 2",
+      "email": "lad2@sgsn.fr",
+      "role": "utilisateur",
+      "roles": [
+        "utilisateur"
+      ],
+      "password_hash": "pbkdf2_sha256$azXxBfcTjFD2KSw0W/dKQQ==$xo8rCpYzcjNoihuzZ/g9RN9T/xCD6P/18viFEb6g+4Q=",
+      "is_active": true
+    },
+    {
+      "id": "USR-004",
+      "username": "lad3",
+      "full_name": "Valideur LAD 3",
+      "email": "lad3@sgsn.fr",
+      "role": "manageur",
+      "roles": [
+        "manageur"
+      ],
+      "password_hash": "pbkdf2_sha256$fhd813NQQ0H7l+fDv4tB+w==$h2nhhUAWv5ML7ikF/35dimj7QH2YQHGlh93Ts14Mn94=",
+      "is_active": true
+    },
+    {
+      "id": "USR-005",
+      "username": "tresorerie",
+      "full_name": "Responsable trésorerie",
+      "email": "tresorerie@sgsn.fr",
+      "role": "manageur",
+      "roles": [
+        "manageur"
+      ],
+      "password_hash": "pbkdf2_sha256$3vNOoATcXm14qkEhRX42Lg==$LMrFmB12yhhZrTeS9MbxGkZDX4VnfwnrIklEOYHD1IA=",
+      "is_active": true
+    },
+    {
+      "id": "USR-006",
+      "username": "dirfin",
+      "full_name": "Direction Financière",
+      "email": "dirfin@sgsn.fr",
+      "role": "manageur",
+      "roles": [
+        "manageur"
+      ],
+      "password_hash": "pbkdf2_sha256$tjkbcAkD9KW02fBheE/kMA==$cr0stavOWAampNf3brtx/DIVv2/F4z4ap36tKsPEtQA=",
+      "is_active": true
+    }
+  ],
+  "appro_statuses": [
+    "Initialisation",
+    "En attente de prise en charge",
+    "En cours",
+    "Terminé",
+    "Clôturé"
+  ],
+  "facturation_statuses": [
+    "Saisie de la demande",
+    "Vérification métier",
+    "Validation N+1",
+    "Traitement service approvisionnement",
+    "Signature LAD 1",
+    "Règlement en cours",
+    "Paiement effectué",
+    "Terminé",
+    "Demande d'informations complémentaire",
+    "Signature LAD 2",
+    "Signature LAD 3",
+    "Rejetée",
+    "Clôturée"
+  ]
+}
