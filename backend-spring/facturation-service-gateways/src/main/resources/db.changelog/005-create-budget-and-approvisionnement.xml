@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="005-create-budget-and-approvisionnement" author="copilot">
+        <createTable tableName="appro_budgets">
+            <column name="direction" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_appro_budget_direction"
+                             referencedTableName="directions" referencedColumnNames="name"/>
+            </column>
+            <column name="allocated" type="decimal(19,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="engaged" type="decimal(19,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="allocated_by" type="varchar(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="appro_budget_items">
+            <column name="id" type="varchar(64)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="direction" type="varchar(255)">
+                <constraints nullable="false"
+                             foreignKeyName="fk_budget_item_direction"
+                             referencedTableName="appro_budgets" referencedColumnNames="direction"
+                             deleteCascade="true"/>
+            </column>
+            <column name="label" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="allocated" type="decimal(19,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="varchar(320)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp"/>
+            <column name="updated_by" type="varchar(320)"/>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="appro_domains">
+            <column name="name" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="appro_subdomains">
+            <column name="domain_name" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_appro_subdomain_domain"
+                             referencedTableName="appro_domains" referencedColumnNames="name"
+                             deleteCascade="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="appro_tickets">
+            <column name="id" type="varchar(64)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="direction" type="varchar(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="objet" type="text" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="montant" type="decimal(19,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="devise" type="varchar(10)" defaultValue="XAF">
+                <constraints nullable="false"/>
+            </column>
+            <column name="titre_demande" type="varchar(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domaine" type="varchar(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sous_domaine" type="varchar(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action_demande" type="text" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_debut_souhaitee" type="varchar(40)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_fin_souhaitee" type="varchar(40)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="direction_demandeur" type="varchar(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="budget_previsionnel" type="decimal(19,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="priorite" type="varchar(50)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="commentaire" type="text" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fichier_nom" type="text" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="statut" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="linked_facture_id" type="varchar(64)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="appro_ticket_history">
+            <column name="id" type="integer" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="ticket_id" type="varchar(64)">
+                <constraints nullable="false"
+                             foreignKeyName="fk_appro_ticket_history_ticket"
+                             referencedTableName="appro_tickets" referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+            <column name="event_id" type="varchar(64)"/>
+            <column name="event_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar(320)"/>
+            <column name="action" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="varchar(100)"/>
+            <column name="detail" type="text"/>
+            <column name="commentaire" type="text" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="appro_ticket_history_attachments">
+            <column name="history_id" type="integer">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_appro_history_attachment_history"
+                             referencedTableName="appro_ticket_history" referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+            <column name="filename" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="dirfin_history">
+            <column name="id" type="varchar(64)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="event_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor" type="varchar(320)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="detail" type="text" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

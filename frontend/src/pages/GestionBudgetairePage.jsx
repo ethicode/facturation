@@ -43,7 +43,7 @@ import { isAdminRole } from '../utils/roles.js'
 const emptyBudgetForm = {
   direction: '',
   allocated: '',
-  engaged: '',
+  engaged: '0',
 }
 
 function validateBudgetForm(values, currentBudgets, editingDirection) {
@@ -67,7 +67,7 @@ function validateBudgetForm(values, currentBudgets, editingDirection) {
     errors.allocated = 'Allocation invalide'
   }
 
-  if (values.engaged === '' || !Number.isFinite(engaged) || engaged < 0) {
+  if (editingDirection && (values.engaged === '' || !Number.isFinite(engaged) || engaged < 0)) {
     errors.engaged = 'Montant engage invalide'
   }
 
@@ -192,7 +192,7 @@ function GestionBudgetairePage() {
       const nextState = await saveDirectionBudget({
         ...formValues,
         allocated: Number(formValues.allocated),
-        engaged: Number(formValues.engaged),
+        engaged: editingDirection ? Number(formValues.engaged) : 0,
         allocatedBy: 'DirFin',
         actor: 'DirFin',
       })
@@ -304,17 +304,19 @@ function GestionBudgetairePage() {
                   helperText={formErrors.allocated}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Montant engage"
-                  value={formValues.engaged}
-                  onChange={(event) => handleFormChange('engaged', event.target.value)}
-                  error={Boolean(formErrors.engaged)}
-                  helperText={formErrors.engaged}
-                />
-              </Grid>
+              {editingDirection && (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Montant engage"
+                    value={formValues.engaged}
+                    onChange={(event) => handleFormChange('engaged', event.target.value)}
+                    error={Boolean(formErrors.engaged)}
+                    helperText={formErrors.engaged}
+                  />
+                </Grid>
+              )}
             </Grid>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2 }}>

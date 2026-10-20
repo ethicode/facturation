@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="006-create-missions-and-dashboard" author="copilot">
+        <createTable tableName="missions">
+            <column name="code" type="varchar(64)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="collaborateur" type="varchar(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="frais" type="text" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="objet_mission" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="destination" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pays" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_depart" type="varchar(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_retour" type="varchar(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="montant_estimatif" type="decimal(19,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="budget_concerne" type="varchar(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="budget_item_id" type="varchar(64)">
+                <constraints foreignKeyName="fk_mission_budget_item"
+                             referencedTableName="appro_budget_items" referencedColumnNames="id"/>
+            </column>
+            <column name="pieces_jointes" type="text" defaultValue="[]">
+                <constraints nullable="false"/>
+            </column>
+            <column name="statut" type="varchar(100)" defaultValue="Soumis">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="mission_attachments">
+            <column name="id" type="integer" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="mission_code" type="varchar(64)">
+                <constraints nullable="false"
+                             foreignKeyName="fk_mission_attachment_mission"
+                             referencedTableName="missions" referencedColumnNames="code"
+                             deleteCascade="true"/>
+            </column>
+            <column name="filename" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="kpi_metrics">
+            <column name="id" type="integer" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="label" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trend" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tone" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="trace_events">
+            <column name="id" type="integer" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="event_date" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="action" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="budget_lines">
+            <column name="poste" type="varchar(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="consomme" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="plafond" type="varchar(100)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tendance" type="varchar(100)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

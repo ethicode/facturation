@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Colonnes et historique utilisés par le backend actuel mais absents du schéma initial. -->
+    <changeSet id="008-mission-budget-consumption" author="copilot">
+        <addColumn tableName="missions">
+            <column name="budget_consumed" type="decimal(19,2)" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="budget_consumed_at" type="timestamp"/>
+        </addColumn>
+        <createIndex indexName="idx_missions_budget_item" tableName="missions">
+            <column name="budget_item_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="008-create-mission-history" author="copilot">
+        <createTable tableName="mission_history">
+            <column name="id" type="integer" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="mission_code" type="varchar(64)">
+                <constraints nullable="false"
+                             foreignKeyName="fk_mission_history_mission"
+                             referencedTableName="missions" referencedColumnNames="code"
+                             deleteCascade="true"/>
+            </column>
+            <column name="event_id" type="varchar(64)"/>
+            <column name="event_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar(320)"/>
+            <column name="action" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="varchar(100)"/>
+            <column name="detail" type="text"/>
+            <column name="commentaire" type="text" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_mission_history_mission" tableName="mission_history">
+            <column name="mission_code"/>
+            <column name="position"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

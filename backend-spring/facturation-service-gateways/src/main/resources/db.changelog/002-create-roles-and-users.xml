@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="002-create-roles-and-users" author="copilot">
+        <createTable tableName="roles">
+            <column name="code" type="varchar(100)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="label" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="users">
+            <column name="id" type="varchar(64)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="varchar(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="full_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="first_name" type="varchar(255)"/>
+            <column name="last_name" type="varchar(255)"/>
+            <column name="email" type="varchar(320)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="employee_id" type="varchar(100)"/>
+            <column name="department" type="varchar(255)"/>
+            <column name="job_title" type="varchar(255)"/>
+            <column name="phone_number" type="varchar(50)"/>
+            <column name="manager_id" type="varchar(64)"/>
+            <column name="locale" type="varchar(20)" defaultValue="fr-FR">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timezone" type="varchar(100)" defaultValue="Africa/Dakar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="password_hash" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(30)" defaultValue="active">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_login_at" type="timestamp"/>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="user_roles">
+            <column name="user_id" type="varchar(64)">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_user_roles_user"
+                             referencedTableName="users" referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+            <column name="role" type="varchar(100)">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_user_roles_role"
+                             referencedTableName="roles" referencedColumnNames="code"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

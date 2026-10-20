@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="004-create-facturation" author="copilot">
+        <createTable tableName="factures">
+            <column name="id" type="varchar(64)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="fournisseur" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="montant" type="decimal(19,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="devise" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="centre_cout" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="echeance" type="varchar(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="priorite" type="varchar(50)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="direction" type="varchar(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resume" type="text" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="numero_facture" type="varchar(100)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="compte_charge" type="varchar(100)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_reception" type="varchar(40)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="mode_reception" type="varchar(100)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="statut" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="facture_attachments">
+            <column name="facture_id" type="varchar(64)">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_facture_attachment_facture"
+                             referencedTableName="factures" referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+            <column name="filename" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="facture_history">
+            <column name="id" type="integer" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="facture_id" type="varchar(64)">
+                <constraints nullable="false"
+                             foreignKeyName="fk_facture_history_facture"
+                             referencedTableName="factures" referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+            <column name="event_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="actor" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar(320)"/>
+            <column name="action" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="varchar(100)"/>
+            <column name="detail" type="text"/>
+            <column name="commentaire" type="text" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="facture_history_attachments">
+            <column name="history_id" type="integer">
+                <constraints primaryKey="true" nullable="false"
+                             foreignKeyName="fk_facture_history_attachment_history"
+                             referencedTableName="facture_history" referencedColumnNames="id"
+                             deleteCascade="true"/>
+            </column>
+            <column name="filename" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="position" type="integer">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

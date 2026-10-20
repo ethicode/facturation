@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <include file="db.changelog/001-create-system-meta.xml" relativeToChangelogFile="true"/>
+    <include file="db.changelog/002-create-roles-and-users.xml" relativeToChangelogFile="true"/>
+    <include file="db.changelog/003-create-directions-workflow-and-status.xml" relativeToChangelogFile="true"/>
+    <include file="db.changelog/004-create-facturation.xml" relativeToChangelogFile="true"/>
+    <include file="db.changelog/005-create-budget-and-approvisionnement.xml" relativeToChangelogFile="true"/>
+    <include file="db.changelog/006-create-missions-and-dashboard.xml" relativeToChangelogFile="true"/>
+    <include file="db.changelog/007-create-query-indexes.xml" relativeToChangelogFile="true"/>
+    <include file="db.changelog/008-mission-budget-consumption-and-history.xml" relativeToChangelogFile="true"/>
+    <include file="db.changelog/009-insert-reference-data.xml" relativeToChangelogFile="true"/>
+</databaseChangeLog>

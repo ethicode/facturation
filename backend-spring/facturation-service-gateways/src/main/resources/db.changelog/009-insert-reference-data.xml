@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Référentiels issus de backend/app/seed_data.py. Les utilisateurs sont créés au démarrage (hash du mot de passe). -->
+    <changeSet id="009-insert-roles" author="copilot">
+        <insert tableName="roles"><column name="code" value="administrateur"/><column name="label" value="Administrateur"/><column name="position" valueNumeric="0"/></insert>
+        <insert tableName="roles"><column name="code" value="utilisateur"/><column name="label" value="Utilisateur"/><column name="position" valueNumeric="1"/></insert>
+        <insert tableName="roles"><column name="code" value="manageur"/><column name="label" value="Manageur"/><column name="position" valueNumeric="2"/></insert>
+    </changeSet>
+
+    <changeSet id="009-insert-directions" author="copilot">
+        <insert tableName="directions"><column name="name" value="Direction Generale"/><column name="position" valueNumeric="0"/></insert>
+        <insert tableName="directions"><column name="name" value="Informatique"/><column name="position" valueNumeric="1"/></insert>
+        <insert tableName="directions"><column name="name" value="Finance"/><column name="position" valueNumeric="2"/></insert>
+        <insert tableName="directions"><column name="name" value="Operations"/><column name="position" valueNumeric="3"/></insert>
+    </changeSet>
+
+    <changeSet id="009-insert-appro-domains" author="copilot">
+        <insert tableName="appro_domains"><column name="name" value="Achat"/><column name="position" valueNumeric="0"/></insert>
+        <insert tableName="appro_domains"><column name="name" value="Service"/><column name="position" valueNumeric="1"/></insert>
+        <insert tableName="appro_domains"><column name="name" value="Infrastructure"/><column name="position" valueNumeric="2"/></insert>
+        <insert tableName="appro_domains"><column name="name" value="Maintenance"/><column name="position" valueNumeric="3"/></insert>
+        <insert tableName="appro_domains"><column name="name" value="Autre"/><column name="position" valueNumeric="4"/></insert>
+
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Achat"/><column name="name" value="IT"/><column name="position" valueNumeric="0"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Achat"/><column name="name" value="Logistique"/><column name="position" valueNumeric="1"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Achat"/><column name="name" value="Autre"/><column name="position" valueNumeric="2"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Service"/><column name="name" value="Finance"/><column name="position" valueNumeric="0"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Service"/><column name="name" value="RH"/><column name="position" valueNumeric="1"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Service"/><column name="name" value="Juridique"/><column name="position" valueNumeric="2"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Service"/><column name="name" value="Autre"/><column name="position" valueNumeric="3"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Infrastructure"/><column name="name" value="IT"/><column name="position" valueNumeric="0"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Infrastructure"/><column name="name" value="Logistique"/><column name="position" valueNumeric="1"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Infrastructure"/><column name="name" value="Autre"/><column name="position" valueNumeric="2"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Maintenance"/><column name="name" value="IT"/><column name="position" valueNumeric="0"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Maintenance"/><column name="name" value="Logistique"/><column name="position" valueNumeric="1"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Maintenance"/><column name="name" value="Autre"/><column name="position" valueNumeric="2"/></insert>
+        <insert tableName="appro_subdomains"><column name="domain_name" value="Autre"/><column name="name" value="Autre"/><column name="position" valueNumeric="0"/></insert>
+    </changeSet>
+
+    <changeSet id="009-insert-status-catalog" author="copilot">
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Saisie de la demande"/><column name="position" valueNumeric="0"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Vérification métier"/><column name="position" valueNumeric="1"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Validation métier N+1"/><column name="position" valueNumeric="2"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Demande d'information complémentaire (Validation métier N+1)"/><column name="position" valueNumeric="3"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Traitement service approvisionnement"/><column name="position" valueNumeric="4"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Demande d'information complémentaire (Traitement service approvisionnement)"/><column name="position" valueNumeric="5"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Signature LAD 1"/><column name="position" valueNumeric="6"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Demande d'information complémentaire (Signature LAD 1)"/><column name="position" valueNumeric="7"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Signature LAD 2"/><column name="position" valueNumeric="8"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Signature LAD 3"/><column name="position" valueNumeric="9"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Règlement en cours"/><column name="position" valueNumeric="10"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Paiement effectué"/><column name="position" valueNumeric="11"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Rejetée"/><column name="position" valueNumeric="12"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="facturation"/><column name="status" value="Clôturée"/><column name="position" valueNumeric="13"/></insert>
+
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Saisie de la demande"/><column name="position" valueNumeric="0"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Vérification métier"/><column name="position" valueNumeric="1"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Validation métier N+1"/><column name="position" valueNumeric="2"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Demande d'information complémentaire (Validation métier N+1)"/><column name="position" valueNumeric="3"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Traitement service approvisionnement"/><column name="position" valueNumeric="4"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Demande d'information complémentaire (Traitement service approvisionnement)"/><column name="position" valueNumeric="5"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Signature LAD 1"/><column name="position" valueNumeric="6"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Demande d'information complémentaire (Signature LAD 1)"/><column name="position" valueNumeric="7"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Signature LAD 2"/><column name="position" valueNumeric="8"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Signature LAD 3"/><column name="position" valueNumeric="9"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Règlement en cours"/><column name="position" valueNumeric="10"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Paiement effectué"/><column name="position" valueNumeric="11"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Rejetée"/><column name="position" valueNumeric="12"/></insert>
+        <insert tableName="status_catalog"><column name="workflow" value="appro"/><column name="status" value="Clôturée"/><column name="position" valueNumeric="13"/></insert>
+    </changeSet>
+
+    <changeSet id="009-insert-dashboard-data" author="copilot">
+        <insert tableName="kpi_metrics"><column name="label" value="Factures en attente"/><column name="value" value="18"/><column name="trend" value="+6% vs semaine"/><column name="tone" value="warning"/><column name="position" valueNumeric="0"/></insert>
+        <insert tableName="kpi_metrics"><column name="label" value="Frais valides"/><column name="value" value="142 500 XAF"/><column name="trend" value="+12% vs mois"/><column name="tone" value="success"/><column name="position" valueNumeric="1"/></insert>
+        <insert tableName="kpi_metrics"><column name="label" value="Pieces tracees"/><column name="value" value="98.4%"/><column name="trend" value="+1.1 pts"/><column name="tone" value="info"/><column name="position" valueNumeric="2"/></insert>
+        <insert tableName="kpi_metrics"><column name="label" value="Budget restant T3"/><column name="value" value="410 000 XAF"/><column name="trend" value="-3.8% consommation"/><column name="tone" value="primary"/><column name="position" valueNumeric="3"/></insert>
+
+        <insert tableName="trace_events"><column name="event_date" value="06/08/2026 09:15"/><column name="action" value="FACTURE FAC-2026-441 routee vers validation manager"/><column name="actor" value="Workflow Finance"/><column name="position" valueNumeric="0"/></insert>
+        <insert tableName="trace_events"><column name="event_date" value="06/08/2026 08:49"/><column name="action" value="MISSION MS-0912 justificatifs ajoutes"/><column name="actor" value="M. Bernard"/><column name="position" valueNumeric="1"/></insert>
+        <insert tableName="trace_events"><column name="event_date" value="05/08/2026 17:22"/><column name="action" value="ALERTE budget Projet ORFL niveau critique"/><column name="actor" value="Moteur Budget"/><column name="position" valueNumeric="2"/></insert>
+
+        <insert tableName="budget_lines"><column name="poste" value="Transport"/><column name="consomme" valueNumeric="84"/><column name="plafond" value="180 000 EUR"/><column name="tendance" value="Hausse"/><column name="position" valueNumeric="0"/></insert>
+        <insert tableName="budget_lines"><column name="poste" value="Hebergement"/><column name="consomme" valueNumeric="61"/><column name="plafond" value="120 000 EUR"/><column name="tendance" value="Stable"/><column name="position" valueNumeric="1"/></insert>
+        <insert tableName="budget_lines"><column name="poste" value="Prestations externes"/><column name="consomme" valueNumeric="46"/><column name="plafond" value="420 000 EUR"/><column name="tendance" value="Maitrisee"/><column name="position" valueNumeric="2"/></insert>
+    </changeSet>
+</databaseChangeLog>

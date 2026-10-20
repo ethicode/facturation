@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="007-create-query-indexes" author="copilot">
+        <createIndex indexName="idx_factures_statut" tableName="factures">
+            <column name="statut"/>
+        </createIndex>
+        <createIndex indexName="idx_factures_echeance" tableName="factures">
+            <column name="echeance"/>
+        </createIndex>
+        <createIndex indexName="idx_facture_history_facture" tableName="facture_history">
+            <column name="facture_id"/>
+            <column name="position"/>
+        </createIndex>
+        <createIndex indexName="idx_appro_budget_items_direction" tableName="appro_budget_items">
+            <column name="direction"/>
+            <column name="position"/>
+        </createIndex>
+        <createIndex indexName="idx_appro_tickets_direction" tableName="appro_tickets">
+            <column name="direction"/>
+        </createIndex>
+        <createIndex indexName="idx_appro_tickets_statut" tableName="appro_tickets">
+            <column name="statut"/>
+        </createIndex>
+        <createIndex indexName="idx_appro_ticket_history_ticket" tableName="appro_ticket_history">
+            <column name="ticket_id"/>
+            <column name="position"/>
+        </createIndex>
+        <createIndex indexName="idx_missions_dates" tableName="missions">
+            <column name="date_depart"/>
+            <column name="date_retour"/>
+        </createIndex>
+        <createIndex indexName="idx_workflow_assignments_user" tableName="workflow_assignments">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

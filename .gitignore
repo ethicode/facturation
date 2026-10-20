@@ -4,6 +4,9 @@ Thumbs.db
 *.log
 *.tmp
 
+# Reference project contains private repository credentials; keep local only.
+/unibank-service-sgsn-demo/
+
 # Environment files
 .env
 .env.*
@@ -28,7 +31,8 @@ backend/data/
 backend/data/*
 !backend/data/app.sqlite3
 backend-spring/data/
-backend-spring/**/target/
+backend-spring/.gradle/
+backend-spring/**/build/
 
 *.bak
 

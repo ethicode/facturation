@@ -1,0 +1,56 @@
+# Gradle
+.gradle/
+build/
+gradle-app.setting
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# Visual Studio Code
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# Compiled class files
+*.class
+
+# Package Files
+*.jar
+*.war
+*.ear
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local data (SQLite database, uploads)
+data/
+
+# Sensitive Spring configuration (keep local only)
+application*.yml
+application*.yaml
+application*.properties
+.env
+.env.*
+!.env.example
+!.env.sample
+secrets/
+credentials/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+gradle.properties
+
+# Virtual Machine
+hs_err_pid*
