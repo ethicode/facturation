@@ -249,14 +249,16 @@ function FacturationPage() {
               Nouvelle demande
             </Button>
           </Stack>
-          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={1.5} sx={{ mb: 2 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1.5} sx={{ mb: 2 }}>
             <Button
+              size="small"
               variant={showMyFacturesOnly ? 'contained' : 'outlined'}
               onClick={() => setShowMyFacturesOnly((prev) => !prev)}
             >
               {showMyFacturesOnly ? 'Toutes les factures' : 'Mes factures'}
             </Button>
             <Button
+              size="small"
               variant="outlined"
               startIcon={<FileDownloadOutlinedIcon />}
               onClick={handleExportToExcel}
@@ -265,9 +267,8 @@ function FacturationPage() {
             >
               Télécharger Excel
             </Button>
-          </Stack>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2 }}>
             <TextField
+              size="small"
               type="date"
               label="Réception à partir du"
               value={receptionFrom}
@@ -275,11 +276,14 @@ function FacturationPage() {
                 setReceptionFrom(event.target.value)
                 setPage(0)
               }}
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ max: receptionTo || undefined }}
+              slotProps={{
+                inputLabel: { shrink: true },
+                htmlInput: { max: receptionTo || undefined },
+              }}
               sx={{ minWidth: { sm: 220 } }}
             />
             <TextField
+              size="small"
               type="date"
               label="Réception jusqu'au"
               value={receptionTo}
@@ -287,12 +291,15 @@ function FacturationPage() {
                 setReceptionTo(event.target.value)
                 setPage(0)
               }}
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: receptionFrom || undefined }}
+              slotProps={{
+                inputLabel: { shrink: true },
+                htmlInput: { min: receptionFrom || undefined },
+              }}
               sx={{ minWidth: { sm: 220 } }}
             />
             {(receptionFrom || receptionTo) && (
               <Button
+                size="small"
                 variant="text"
                 onClick={() => {
                   setReceptionFrom('')
@@ -304,6 +311,9 @@ function FacturationPage() {
                 Effacer les dates
               </Button>
             )}
+          </Stack>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mb: 2 }}>
+           
           </Stack>
 
           <TableContainer>
