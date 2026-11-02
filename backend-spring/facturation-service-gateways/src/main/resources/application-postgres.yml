@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: ${FACTURATION_DB_URL:jdbc:postgresql://localhost:5432/facturation}
+    username: ${FACTURATION_DB_USERNAME}
+    password: ${FACTURATION_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${FACTURATION_DB_POOL_SIZE:10}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      # Liquibase crée les tables et applique les évolutions avant le démarrage de JPA.
+      ddl-auto: none
+  liquibase:
+    enabled: true
+    change-log: classpath:db.changelog-master.xml

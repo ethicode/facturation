@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- InstantIsoConverter lie des chaînes ISO-8601, pas des timestamps JDBC.
+         SQLite les accepte déjà. PostgreSQL nécessite des colonnes textuelles.
+         Les timestamps historiques sans fuseau sont interprétés en UTC. -->
+    <changeSet id="010-postgres-instant-storage" author="copilot" dbms="postgresql">
+        <sql>
+            ALTER TABLE users
+                ALTER COLUMN created_at TYPE varchar(40) USING to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
+                ALTER COLUMN updated_at TYPE varchar(40) USING to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
+                ALTER COLUMN last_login_at TYPE varchar(40) USING to_char(last_login_at, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"');
+            ALTER TABLE appro_budget_items
+                ALTER COLUMN created_at TYPE varchar(40) USING to_char(created_at, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
+                ALTER COLUMN updated_at TYPE varchar(40) USING to_char(updated_at, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"');
+            ALTER TABLE facture_history
+                ALTER COLUMN event_at TYPE varchar(40) USING to_char(event_at, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"');
+            ALTER TABLE appro_ticket_history
+                ALTER COLUMN event_at TYPE varchar(40) USING to_char(event_at, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"');
+            ALTER TABLE dirfin_history
+                ALTER COLUMN event_at TYPE varchar(40) USING to_char(event_at, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"');
+            ALTER TABLE missions
+                ALTER COLUMN budget_consumed_at TYPE varchar(40) USING to_char(budget_consumed_at, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"');
+            ALTER TABLE mission_history
+                ALTER COLUMN event_at TYPE varchar(40) USING to_char(event_at, 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"');
+        </sql>
+    </changeSet>
+</databaseChangeLog>

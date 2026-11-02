@@ -38,6 +38,8 @@ data/
 application*.yml
 application*.yaml
 application*.properties
+# Profil partageable : les identifiants sont fournis uniquement par l'environnement.
+!facturation-service-gateways/src/main/resources/application-postgres.yml
 .env
 .env.*
 !.env.example

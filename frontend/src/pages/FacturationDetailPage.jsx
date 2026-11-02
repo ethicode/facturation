@@ -6,14 +6,11 @@ import {
   CardContent,
   Chip,
   Divider,
-  FormControlLabel,
   Grid,
   IconButton,
   MenuItem,
   MenuList,
   Paper,
-  Radio,
-  RadioGroup,
   Stack,
   Step,
   StepButton,
@@ -253,7 +250,6 @@ function FacturationDetailPage() {
   const [isLoading, setIsLoading] = useState(() => !location.state?.facture)
   const [transitionForm, setTransitionForm] = useState({ piecesJointes: [] })
   const [isTransitionSubmitting, setIsTransitionSubmitting] = useState(false)
-  const [selectedTransition, setSelectedTransition] = useState(null)
   const [selectedTimelineStep, setSelectedTimelineStep] = useState('')
   const [commentInput, setCommentInput] = useState('')
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false)
@@ -413,10 +409,11 @@ function FacturationDetailPage() {
       action: currentStepLabel,
       at: facture?.updatedAt || facture?.dateReception || facture?.createdAt || new Date().toISOString(),
       detail: 'Étape active',
-      historyIndex: -1,
+      historyIndex: Number.MAX_SAFE_INTEGER,
     })
   }
 
+  // La Timeline affiche les entrées dans l'ordre du tableau : la plus récente doit être en haut.
   taskHistory.sort((left, right) => {
     const rightDate = new Date(right.at || 0).getTime()
     const leftDate = new Date(left.at || 0).getTime()
@@ -453,20 +450,6 @@ function FacturationDetailPage() {
       })
       .slice(0, 6)
     : []
-
-  useEffect(() => {
-    if (!allowedTransitions.length) {
-      setSelectedTransition(null)
-      return
-    }
-
-    setSelectedTransition((currentValue) => {
-      if (currentValue && allowedTransitions.some((transition) => transition.to === currentValue.to)) {
-        return currentValue
-      }
-      return allowedTransitions[0]
-    })
-  }, [allowedTransitions])
 
   useEffect(() => {
     if (!facture?.statut) {
@@ -985,40 +968,26 @@ function FacturationDetailPage() {
               <Typography variant="h6">Actions</Typography>
             </Stack>
             {allowedTransitions.length > 0 ? (
-              <>
-                <RadioGroup
-                  value={selectedTransition?.to || ''}
-                  onChange={(event) => {
-                    const nextTransition = allowedTransitions.find((transition) => transition.to === event.target.value)
-                    setSelectedTransition(nextTransition || null)
-                  }}
-                >
-                  {allowedTransitions.map((transition) => (
-                    <FormControlLabel
-                      key={transition.to}
-                      value={transition.to}
-                      control={<Radio />}
-                      label={getFacturationStepLabel(transition.to)}
-                    />
-                  ))}
-                </RadioGroup>
-                <Button
-                  variant="contained"
-                  onClick={() => selectedTransition && handleTransition(selectedTransition.to, {
-                    ...transitionForm,
-                    actionLabel: selectedTransition.to,
-                  })}
-                  disabled={isTransitionSubmitting || !selectedTransition}
-                  sx={{
-                    alignSelf: 'flex-start',
-                    bgcolor: 'common.black',
-                    color: 'common.white',
-                    '&:hover': { bgcolor: 'grey.900' },
-                  }}
-                >
-                  Valider
-                </Button>
-              </>
+              <Stack direction="column" spacing={1} alignItems="flex-start">
+                {allowedTransitions.map((transition) => (
+                  <Button
+                    key={transition.to}
+                    variant="contained"
+                    onClick={() => handleTransition(transition.to, {
+                      ...transitionForm,
+                      actionLabel: transition.to,
+                    })}
+                    disabled={isTransitionSubmitting}
+                    sx={{
+                      backgroundColor: 'black', 
+                      width: 'fit-content',
+                      minWidth: 0,
+                    }}
+                  >
+                    {getFacturationStepLabel(transition.to)}
+                  </Button>
+                ))}
+              </Stack>
             ) : (
               <Typography variant="body2" color="text.secondary">
                 Aucune action disponible pour ce statut.

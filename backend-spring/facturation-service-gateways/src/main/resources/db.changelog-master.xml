@@ -14,4 +14,5 @@
     <include file="db.changelog/007-create-query-indexes.xml" relativeToChangelogFile="true"/>
     <include file="db.changelog/008-mission-budget-consumption-and-history.xml" relativeToChangelogFile="true"/>
     <include file="db.changelog/009-insert-reference-data.xml" relativeToChangelogFile="true"/>
+    <include file="db.changelog/010-postgres-instant-storage.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
